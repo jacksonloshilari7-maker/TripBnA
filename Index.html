@@ -162,7 +162,23 @@
     .table th { background:#f7fcfa; font-weight:700; }
 
     /* ---------- Payment modal ---------- */
-    .modal {
+.modal-content {
+  background: #fff;
+  width: 90%;
+  max-width: 600px;
+
+  /* 🔥 KEY FIX */
+  max-height: 90vh;   /* prevents overflow outside screen */
+  overflow-y: auto;   /* allows scrolling inside */
+
+  padding: 20px;
+  border-radius: 10px;
+}
+ 
+ 
+ 
+ 
+ .modal {
       position:fixed; inset:0; display:none; justify-content:center; align-items:center; background:rgba(12,20,28,0.45); z-index:1300;
     }
     .modal .panel { width:95%; max-width:520px; background:#fff; padding:16px; border-radius:10px; }
@@ -923,6 +939,13 @@ body { font-family: Arial, sans-serif; margin:0; padding:20px; background:#f0f2f
 /* Responsive */
 @media(max-width:600px){
   .overlayHeader, .overlayBody, .overlayFooter{ width:95%; }
+}
+
+
+
+
+.dash{
+  display: none;
 }
   </style>
 </head>
@@ -2129,9 +2152,10 @@ function renderView(){
       <a href="#" onclick="openModal('bookingModal'); return false;">Booking history</a>
       <a href="#" onclick="openModal('settingModal'); return false;" >🏦Setting</a>
       <a href="#" onclick="openModal('tripcoinModal'); return false;">🏆TripCoin</a>
-      <a href="#" onclick="openModal('safetyModal'); return false;">Safety and Policy</a>
+      <a href="#" onclick="openModal('safetyModal'); return false;">About</a>
       <!-- Dashboard link - new location for Provider form and tables -->
-      <a href="#" onclick="openDashboard(); return false;">📊 Dashboard</a>
+     <div class="dash"> <a href="#" onclick="openDashboard(); return false;">📊 Dashboard</a>
+     </div>
 
       <div class="card" style="margin-top:16px;">
   <h4>🌐 Language Settings</h4>
@@ -2291,14 +2315,8 @@ function renderView(){
   
   <div id="safetyModal" class="modal"><div class="panel card">
     <button style="float:right" onclick="closeModal('safetyModal')">Close</button>
-    <h3>safety and policy</h3>
-     
-     
-<div class="policy-container">
-
-<h1>TripBnA Platform Policies & Legal Framework</h1>
-
-
+    <h3>About
+<h1>TripBnA Platform</h1>
 
 <h2>Company Overview</h2>
 
@@ -2313,6 +2331,7 @@ Founder, Chief Executive Officer (CEO) and Chief Technology Officer (CTO):
 <strong>Jackson Charles</strong>.
 </p>
 
+
 <p>
 TripBnA focuses on innovation, safety, transparency, and trust. These policies define
 standards for users and partners to ensure a secure and reliable platform.
@@ -2320,218 +2339,36 @@ standards for users and partners to ensure a secure and reliable platform.
 
 
 
-<h2>User Safety & Responsibility Policy</h2>
 
-<ul>
 
-<li>Users must register with accurate personal information.</li>
+</h3>
+  <div id="safetyModal" class="modal">
+  <div class="modal-content">
 
-<li>Users must respect drivers, hosts, vendors, and trip organizers.</li>
+    <h3>safety and policy</h3>
 
-<li>Users must verify booking details before confirming reservations.</li>
+  
 
-<li>Users must follow local laws during trips and services.</li>
 
-<li>Fraud, harassment, or abuse toward partners is prohibited.</li>
 
-<li>Users must report safety issues through TripBnA support.</li>
 
-</ul>
 
 
 
-<h2>Transport Partner Safety Policy</h2>
 
-<ul>
 
-<li>Drivers must have valid driving licenses.</li>
 
-<li>Vehicles must meet road safety standards.</li>
 
-<li>Drivers must obey traffic laws.</li>
 
-<li>Passengers must be treated respectfully.</li>
 
-<li>Driving under the influence of alcohol or drugs is prohibited.</li>
 
-<li>TripBnA may suspend drivers who violate safety rules.</li>
+    <button onclick="closeModal('safetyModal')">Close</button>
 
-</ul>
+  
+     
+     
+     
 
-
-
-<h2>Accommodation Partner Safety Policy</h2>
-
-<ul>
-
-<li>Hosts must provide accurate property descriptions and photos.</li>
-
-<li>Properties must maintain hygiene and safety standards.</li>
-
-<li>Guest privacy must be respected.</li>
-
-<li>Safety equipment should be available when applicable.</li>
-
-<li>Hosts must comply with tourism regulations.</li>
-
-</ul>
-
-
-
-<h2>Food Vendor Safety Policy</h2>
-
-<ul>
-
-<li>Food must be prepared in hygienic conditions.</li>
-
-<li>Ingredients and allergens must be correctly listed.</li>
-
-<li>Food packaging must ensure safe delivery.</li>
-
-<li>Kitchens must maintain cleanliness and sanitation.</li>
-
-<li>Customer complaints must be handled professionally.</li>
-
-</ul>
-
-
-
-<h2>Trip Organizer Policy</h2>
-
-<ul>
-
-<li>Trips must include clear itineraries and schedules.</li>
-
-<li>Pricing must be transparent.</li>
-
-<li>Participant safety must be prioritized.</li>
-
-<li>Emergency contacts should be provided.</li>
-
-<li>Trip details must not be misleading.</li>
-
-</ul>
-
-
-
-<h2>TripBnA Commission & Payment Policy</h2>
-
-<ul>
-
-<li>TripBnA may charge commissions on bookings made through the platform.</li>
-
-<li>Commission rates may vary depending on the service category.</li>
-
-<li>Payments may be processed through integrated digital payment systems.</li>
-
-<li>Partners receive payouts after service completion.</li>
-
-<li>TripBnA may deduct refunds or dispute adjustments when necessary.</li>
-
-</ul>
-
-
-
-<h2>Dispute Resolution Policy</h2>
-
-<ul>
-
-<li>Users and partners should resolve issues through TripBnA support.</li>
-
-<li>TripBnA may review transaction records when investigating disputes.</li>
-
-<li>Fraudulent claims may result in account suspension.</li>
-
-<li>Platform dispute decisions may be considered final within the system.</li>
-
-</ul>
-
-
-
-<h2>Data Protection & Privacy Policy</h2>
-
-<ul>
-
-<li>TripBnA collects limited personal information necessary to provide services.</li>
-
-<li>User data is stored using secure technologies.</li>
-
-<li>TripBnA does not sell personal data to third parties.</li>
-
-<li>Users may request correction or deletion of their data.</li>
-
-<li>Security systems are used to protect digital transactions.</li>
-
-</ul>
-
-
-
-<h2>Terms of Service</h2>
-
-<p>
-TripBnA provides a digital marketplace connecting users with independent service providers
-such as transport partners, accommodation hosts, food vendors, and trip organizers.
-</p>
-
-<ul>
-
-<li>Users must comply with all applicable laws.</li>
-
-<li>Users must not use the platform for illegal activities.</li>
-
-<li>TripBnA may suspend accounts that violate policies.</li>
-
-<li>Continued use of the platform indicates acceptance of these terms.</li>
-
-</ul>
-
-
-
-<h2>Partner Agreement</h2>
-
-<ul>
-
-<li>Partners must provide accurate service information.</li>
-
-<li>Partners must deliver services safely and professionally.</li>
-
-<li>Partners must comply with industry regulations.</li>
-
-<li>TripBnA may remove partners who repeatedly violate policies.</li>
-
-</ul>
-
-
-
-<h2>TripBnA Platform Responsibilities</h2>
-
-<ul>
-
-<li>Provide reliable digital infrastructure for services.</li>
-
-<li>Maintain systems for safety reporting and dispute resolution.</li>
-
-<li>Monitor activity to prevent fraud.</li>
-
-<li>Verify partners before onboarding when necessary.</li>
-
-<li>Suspend accounts violating platform rules.</li>
-
-</ul>
-
-
-
-<h2>Safety Reporting</h2>
-
-<p>
-Users and partners are encouraged to report unsafe behavior, fraud,
-or policy violations through the TripBnA support system.
-Reports are reviewed to maintain a safe and trusted community.
-</p>
-
-
-
-</div>
 
 <footer>
 
