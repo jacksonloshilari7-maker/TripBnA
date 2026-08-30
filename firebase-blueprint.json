@@ -1,0 +1,131 @@
+{
+  "entities": {
+    "users": {
+      "title": "User",
+      "description": "User account information and profile.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "Firebase Auth UID" },
+        "name": { "type": "string", "description": "Display name of the user" },
+        "email": { "type": "string", "format": "email", "description": "User email address" },
+        "phone": { "type": "string", "description": "User phone number" },
+        "role": { "type": "string", "description": "User role: user, organiser, admin" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "email"]
+    },
+    "trips": {
+      "title": "Trip",
+      "description": "Public and group trip organized by trip organisers.",
+      "type": "object",
+      "properties": {
+        "organizerId": { "type": "string", "description": "UID of the trip organiser" },
+        "organizerName": { "type": "string", "description": "Name of the trip organiser" },
+        "title": { "type": "string", "description": "Trip title" },
+        "place": { "type": "string", "description": "Destination name" },
+        "placeNormalized": { "type": "string", "description": "Normalized lowercase destination for search" },
+        "date": { "type": "string", "description": "Trip date" },
+        "pickup": { "type": "string", "description": "Pickup location" },
+        "price": { "type": "number", "description": "Price in USD/TZS" },
+        "media": { "type": "array", "items": { "type": "string" }, "description": "Media URLs" },
+        "mediaType": { "type": "string", "description": "image or video" },
+        "memberIds": { "type": "array", "items": { "type": "string" }, "description": "UIDs of accepted members and organizer" },
+        "status": { "type": "string", "description": "active, completed, or cancelled" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["organizerId", "place", "date", "memberIds"]
+    },
+    "tripRequests": {
+      "title": "TripRequest",
+      "description": "Join requests sent by Finders to Organisers for specific trips.",
+      "type": "object",
+      "properties": {
+        "tripId": { "type": "string", "description": "Referenced Trip ID" },
+        "organizerId": { "type": "string", "description": "Organizer UID" },
+        "requesterId": { "type": "string", "description": "Requester UID" },
+        "requesterName": { "type": "string", "description": "Requester display name" },
+        "place": { "type": "string", "description": "Trip destination" },
+        "date": { "type": "string", "description": "Trip date" },
+        "visitors": { "type": "number", "description": "Number of participants" },
+        "status": { "type": "string", "description": "pending, accepted, rejected" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "respondedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["tripId", "organizerId", "requesterId", "status"]
+    },
+    "incomingRequests": {
+      "title": "IncomingRequest",
+      "description": "Open travel requests created by Trip Finders when no exact match exists.",
+      "type": "object",
+      "properties": {
+        "requesterId": { "type": "string", "description": "Requester UID" },
+        "requesterName": { "type": "string", "description": "Requester name" },
+        "place": { "type": "string", "description": "Requested destination" },
+        "placeNormalized": { "type": "string", "description": "Normalized lowercase destination" },
+        "date": { "type": "string", "description": "Requested date" },
+        "visitors": { "type": "number", "description": "Number of visitors" },
+        "status": { "type": "string", "description": "open, matched, closed" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["requesterId", "place", "date", "status"]
+    },
+    "messages": {
+      "title": "Message",
+      "description": "Private real-time chat messages inside a trip group.",
+      "type": "object",
+      "properties": {
+        "senderId": { "type": "string", "description": "UID of the message sender" },
+        "senderName": { "type": "string", "description": "Sender display name" },
+        "text": { "type": "string", "description": "Text message content" },
+        "type": { "type": "string", "description": "text, file, voice" },
+        "fileUrl": { "type": "string", "description": "Attachment download URL" },
+        "replyTo": { "type": "string", "description": "Quoted message text" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["senderId", "senderName"]
+    },
+    "posts": {
+      "title": "Post",
+      "description": "Tripline community posts and service updates.",
+      "type": "object",
+      "properties": {
+        "authorId": { "type": "string", "description": "Author UID" },
+        "authorName": { "type": "string", "description": "Author name" },
+        "title": { "type": "string", "description": "Post title" },
+        "desc": { "type": "string", "description": "Post description" },
+        "location": { "type": "string", "description": "Location tag" },
+        "price": { "type": "number", "description": "Price tag if applicable" },
+        "media": { "type": "array", "items": { "type": "string" } },
+        "mediaType": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["authorId", "title"]
+    },
+    "bookings": {
+      "title": "Booking",
+      "description": "Customer bookings and paid tickets for transport, accommodation, food, and organized trips.",
+      "type": "object",
+      "properties": {
+        "bookingRef": { "type": "string", "description": "Unique booking reference code (e.g. TB-89123)" },
+        "userId": { "type": "string", "description": "User UID" },
+        "customerName": { "type": "string", "description": "Customer full name" },
+        "customerEmail": { "type": "string", "description": "Customer email" },
+        "customerPhone": { "type": "string", "description": "Customer phone number" },
+        "serviceTitle": { "type": "string", "description": "Title of booked service/trip" },
+        "category": { "type": "string", "description": "Transport, Accommodation, Food, Organiser" },
+        "place": { "type": "string", "description": "Destination / Route" },
+        "date": { "type": "string", "description": "Travel/check-in date" },
+        "quantity": { "type": "number", "description": "Number of tickets/passengers/guests" },
+        "amountPaid": { "type": "number", "description": "Total amount paid in USD" },
+        "paymentMethod": { "type": "string", "description": "mpesa, tigo, airtel, halopesa, card, paypal, wallet" },
+        "status": { "type": "string", "description": "confirmed, pending, cancelled, completed" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["bookingRef", "userId", "serviceTitle", "amountPaid", "status"]
+    }
+  },
+  "firestore": {
+    "rules": "firestore.rules"
+  }
+}
