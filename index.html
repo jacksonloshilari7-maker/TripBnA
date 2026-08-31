@@ -204,6 +204,151 @@
       font-weight:700;
     }
 
+    /* ---------- Transport Type Buttons ---------- */
+    .transport-type-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+      gap: 12px;
+      margin: 16px 0 20px 0;
+    }
+    .transport-type-btn {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 16px 10px;
+      background: #ffffff;
+      border: 2px solid #e2e8f0;
+      border-radius: 14px;
+      cursor: pointer;
+      transition: all 0.25s ease;
+      text-align: center;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+      outline: none;
+    }
+    .transport-type-btn:hover {
+      border-color: #0b84ff;
+      background: #f0f7ff;
+      transform: translateY(-3px);
+      box-shadow: 0 8px 20px rgba(11,132,255,0.18);
+    }
+    .transport-type-btn:active {
+      transform: translateY(0);
+    }
+    .transport-type-btn.selected {
+      border-color: #0b84ff;
+      background: #e0f2fe;
+      box-shadow: 0 0 0 3px rgba(11,132,255,0.25);
+    }
+
+    /* ---------- Right-to-Left Media Carousel Component ---------- */
+    .media-carousel-wrapper {
+      position: relative;
+      border-radius: 12px;
+      overflow: hidden;
+      background: #0f172a;
+      margin-bottom: 8px;
+    }
+    .media-carousel-track {
+      display: flex;
+      overflow-x: auto;
+      scroll-snap-type: x mandatory;
+      scroll-behavior: smooth;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+    }
+    .media-carousel-track::-webkit-scrollbar {
+      display: none;
+    }
+    .media-carousel-slide {
+      flex: 0 0 100%;
+      width: 100%;
+      height: 320px;
+      scroll-snap-align: start;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #000;
+    }
+    .media-carousel-slide img,
+    .media-carousel-slide video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .media-carousel-nav-btn {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: rgba(0, 0, 0, 0.65);
+      color: #fff;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      font-size: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      z-index: 10;
+      transition: all 0.2s ease;
+    }
+    .media-carousel-nav-btn:hover {
+      background: rgba(0, 0, 0, 0.9);
+      transform: translateY(-50%) scale(1.1);
+    }
+    .media-carousel-nav-btn.prev {
+      left: 10px;
+    }
+    .media-carousel-nav-btn.next {
+      right: 10px;
+    }
+    .media-carousel-badge {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: rgba(0, 0, 0, 0.75);
+      color: #fff;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 700;
+      z-index: 10;
+      backdrop-filter: blur(4px);
+    }
+    .media-thumb-strip {
+      display: flex;
+      gap: 6px;
+      overflow-x: auto;
+      padding: 4px 0;
+      scrollbar-width: none;
+    }
+    .media-thumb-strip::-webkit-scrollbar {
+      display: none;
+    }
+    .media-thumb-item {
+      width: 64px;
+      height: 48px;
+      border-radius: 8px;
+      overflow: hidden;
+      cursor: pointer;
+      flex-shrink: 0;
+      border: 2px solid transparent;
+      transition: all 0.2s ease;
+      position: relative;
+      background: #000;
+    }
+    .media-thumb-item.active {
+      border-color: #0b84ff;
+    }
+    .media-thumb-item img, .media-thumb-item video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
     /* ---------- Lightbox ---------- */
     #imgLightbox {
       position:fixed;
@@ -211,7 +356,7 @@
       display:none;
       justify-content:center;
       align-items:center;
-      background:rgba(0,0,0,0.75);
+      background:rgba(0,0,0,0.85);
       z-index:4000;
       padding:18px;
     }
@@ -223,7 +368,7 @@
       padding:12px;
       position:relative;
     }
-    #imgLightbox img {
+    #imgLightbox img, #imgLightbox video {
       width:100%;
       max-height:80vh;
       object-fit:contain;
@@ -240,6 +385,7 @@
       background:#fff;
       cursor:pointer;
       font-weight:800;
+      z-index:10;
     }
 
     /* ---------- Search Services area ---------- */
@@ -1187,6 +1333,24 @@ body { font-family: Arial, sans-serif; margin:0; padding:20px; background:#f0f2f
           </div>
         </div>
 
+        <!-- Tripline Global Sorting & Search Toolbar -->
+        <div class="card" style="margin-top:14px; margin-bottom:14px; padding:12px 16px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px;">
+          <div style="display:flex; align-items:center; gap:8px; flex:1; min-width:240px;">
+            <span style="font-weight:700; font-size:13px; color:#334155; white-space:nowrap;">Sort Tripline:</span>
+            <select id="triplineSortBy" style="padding:6px 10px; font-size:13px; border:1px solid #cbd5e1; border-radius:6px; background:#fff; flex:1;" onchange="renderPosts()">
+              <option value="newest">📅 Date (Newest First)</option>
+              <option value="oldest">📅 Date (Oldest First)</option>
+              <option value="location">📍 Location (A to Z)</option>
+              <option value="priceLow">💰 Price (Low to High)</option>
+              <option value="priceHigh">💰 Price (High to Low)</option>
+              <option value="title">🔤 Title (A to Z)</option>
+            </select>
+          </div>
+          <div style="display:flex; align-items:center; gap:8px; flex:1; min-width:200px;">
+            <input id="triplineSearchInput" style="padding:6px 10px; font-size:13px; border:1px solid #cbd5e1; border-radius:6px; width:100%; background:#fff;" placeholder="🔍 Filter by city, safari, place, title..." oninput="renderPosts()" />
+          </div>
+        </div>
+
         <div id="postsList"></div>
       </div>
 
@@ -1194,54 +1358,60 @@ body { font-family: Arial, sans-serif; margin:0; padding:20px; background:#f0f2f
       <div class="sidebar">
         <!-- Organiser -->
         <div class="card organiser-form tabContent" id="organiserContent">
-          <h3>Trip Organiser <span class="muted" style="font-weight:600; margin-left:8px;">Notifications:<span id="orgNotif" class="badge" style="margin-left:8px; display:none">0</span></span></h3>
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+            <h3 style="margin:0;">Trip Organiser</h3>
+            <button id="orgNotifBtn" class="btn ghost" onclick="openAllOrgRequestsModal()" style="font-size:12px; padding:4px 10px; display:inline-flex; align-items:center; gap:6px; border:1px solid #e2e8f0; border-radius:8px; cursor:pointer;" title="View all join requests">
+              🔔 Join Requests <span id="orgNotif" class="badge" style="background:#e74c3c; color:#fff; display:none; padding:2px 6px; border-radius:10px; font-size:11px; font-weight:700;">0</span>
+            </button>
+          </div>
           <label>Organiser Name</label>
           <input id="orgName" placeholder="Your name (organiser)" />
           <label>Trip Title</label>
-          <input id="orgTitle" placeholder="e.g. Zanzibar Relax" />
+          <input id="orgTitle" placeholder="e.g. Zanzibar Relax & Safari" />
           <label>Place</label>
-          <input id="orgPlace" placeholder="Place name (exact match needed)" />
+          <input id="orgPlace" placeholder="Place name (e.g. Serengeti, Zanzibar)" />
           <label>Date</label>
           <input id="orgDate" type="date" />
           <label>Pickup point</label>
           <input id="orgPickup" placeholder="Pickup location" />
-          <label>Price</label>
+          <label>Price ($ USD)</label>
           <input id="orgPrice" type="number" placeholder="Price" />
           <label>Pictures / Video</label>
           <input id="orgMedia" type="file" accept="image/*,video/*" multiple />
 
           <div style="display:flex; gap:8px; margin-top:12px;">
-            <button id="createOrganiserBtn" class="btn primary" onclick="createOrganiser()">Create</button>
+            <button id="createOrganiserBtn" class="btn primary" onclick="createOrganiser()">Create Trip</button>
             <button class="btn ghost" onclick="clearOrganiserForm()">Clear</button>
           </div>
 
-          <div style="margin-top:12px;"><strong>Your Organised Trips</strong>
-            <div id="organiserList" class="organiser-list"></div>
+          <div style="margin-top:14px;"><strong>Your Organised Trips</strong>
+            <div id="organiserList" class="organiser-list" style="margin-top:6px;"></div>
           </div>
         </div>
 
         <!-- Finder -->
         <div class="card finder-form tabContent" id="finderContent">
           <h3>Trip Finder</h3>
+          <p class="muted" style="font-size:12px; margin-bottom:8px;">Search by destination and date. When an organised trip matches both, tap <strong>Send Joining Request</strong> to connect with the organiser.</p>
           <label>Your name</label>
           <input id="finderName" placeholder="Your name" />
           <label>Destination (place)</label>
-          <input id="finderPlace" placeholder="Place name" />
+          <input id="finderPlace" placeholder="Place name (e.g. Serengeti, Zanzibar, Ngorongoro)" />
           <label>Date</label>
           <input id="finderDate" type="date" />
-          <label>Visitors</label>
+          <label>Visitors (Group size)</label>
           <input id="finderVisitors" type="number" min="1" value="1" />
           <div style="display:flex; gap:8px; margin-top:8px;">
             <button class="btn primary" onclick="submitFinder()">Search / Submit</button>
             <button class="btn ghost" onclick="clearFinder()">Clear</button>
           </div>
-          <div id="finderMatchResult" style="margin-top:10px"></div>
+          <div id="finderMatchResult" style="margin-top:12px"></div>
         </div>
 
         <!-- Incoming -->
-       <div class="tabContent" id="incomingContent">
-  <div id="incomingList"></div>
-</div>
+        <div class="tabContent" id="incomingContent">
+          <div id="incomingList"></div>
+        </div>
 
         <!-- Cart -->
         <div class="card" style="margin-top:12px;">
@@ -1258,18 +1428,24 @@ body { font-family: Arial, sans-serif; margin:0; padding:20px; background:#f0f2f
   </div>
 </div>
 
-<!-- ITINERARY OVERLAY (Editable) -->
+<!-- ITINERARY OVERLAY (Editable by Organiser Admin) -->
 <div class="overlay" id="itineraryOverlay">
   <div class="overlayHeader">
-    <h2>Trip Itinerary Builder</h2>
+    <div style="display:flex; align-items:center; gap:8px;">
+      <span style="font-size:20px;">✏️</span>
+      <div>
+        <h2 style="margin:0; font-size:18px;">Trip Itinerary Builder</h2>
+        <span class="muted" style="font-size:12px;">Organiser Admin Access (Live Synchronization)</span>
+      </div>
+    </div>
     <button id="closeItineraryBtn">✕ Close</button>
   </div>
   <div class="overlayBody">
     <div id="daysContainer"></div>
-    <button id="addDayBtn" class="btn primary">+ Add Day</button>
+    <button id="addDayBtn" class="btn primary" style="margin-top:8px;">+ Add Day</button>
   </div>
   <div class="overlayFooter">
-    <button id="saveItineraryBtn" class="btn primary">Save Itinerary</button>
+    <button id="saveItineraryBtn" class="btn primary">💾 Save Itinerary</button>
   </div>
 </div>
 
@@ -1283,8 +1459,8 @@ body { font-family: Arial, sans-serif; margin:0; padding:20px; background:#f0f2f
     <div id="cartItems" style="margin-top:12px; display:flex; flex-direction:column; gap:8px;"></div>
     
     <div id="cartCount" class="muted" style="margin-top:10px;text-align:right">
-  0 item(s)
-</div>
+      0 item(s)
+    </div>
 
     <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:12px;">
       <button class="btn primary" onclick="bookCart()">Book All</button>
@@ -1300,58 +1476,60 @@ body { font-family: Arial, sans-serif; margin:0; padding:20px; background:#f0f2f
 <audio id="soundAccept" src="https://www.soundjay.com/button/sounds/button-4.mp3" preload="auto"></audio>
 
 <!-- GROUP OVERLAY -->
-<div id="groupOverlay" style="display:none;background-color: aqua;">
-  <div id="groupHeader">
-    <span style="background-color: yellow;" id="groupTitle">Group</span>
-    <button id="closeGroupBtn">✕</button>
+<div id="groupOverlay" style="display:none;">
+  <div id="groupHeader" style="background:#fff; border-bottom:1px solid #e2e8f0; padding:12px 16px; display:flex; justify-content:space-between; align-items:center;">
+    <div style="display:flex; align-items:center; gap:10px;">
+      <span style="font-size:22px;">🏝️</span>
+      <div>
+        <div id="groupTitle" style="font-weight:800; font-size:16px; color:#0f172a;">Trip Group</div>
+        <div id="groupSubtitle" class="muted" style="font-size:12px;">Live Traveler & Organiser Chat</div>
+      </div>
+    </div>
+    <div style="display:flex; align-items:center; gap:8px;">
+      <button id="viewItineraryBtn" class="btn primary" style="padding:6px 12px; font-size:13px; background:#0b84ff; color:#fff; border-radius:8px; display:flex; align-items:center; gap:4px;">👀 View Itinerary</button>
+      <button id="editItineraryBtn" class="btn primary" style="display:none; padding:6px 12px; font-size:13px; background:#2e8b57; color:#fff; border-radius:8px; align-items:center; gap:4px;">✏️ Edit Itinerary (Admin)</button>
+      <button id="closeGroupBtn" style="background:#f1f5f9; border:none; border-radius:8px; width:34px; height:34px; font-size:16px; cursor:pointer; color:#475569; display:flex; align-items:center; justify-content:center;">✕</button>
+    </div>
   </div>
 
+  <!-- MEMBERS TOGGLE & BAR -->
+  <div id="groupTopBar" style="background:#f8fafc; border-bottom:1px solid #e2e8f0; padding:8px 16px; display:flex; justify-content:space-between; align-items:center;">
+    <button id="toggleMembersBtn" style="padding:6px 12px; font-size:12px; font-weight:700; border-radius:6px; border:1px solid #cbd5e1; background:#fff; cursor:pointer;">👥 Members ▼</button>
+    <span id="groupRoleBadge" class="chip chip-confirmed" style="font-size:11px; padding:3px 8px;">👑 Organiser</span>
+  </div>
 
-<!-- ITINERARY TOGGLE BUTTON -->
-<div id="groupTopBar">
-  <button class="btn primary" id="viewItineraryBtn">View Itinerary (Members)</button>
+  <!-- MEMBERS PANEL (HIDDEN BY DEFAULT) -->
+  <div id="groupMembers" style="background:#fff; border-bottom:1px solid #e2e8f0; padding:0 12px;"></div>
+
+  <!-- CHAT -->
+  <div id="groupChat">
+    <div id="groupMessages"></div>
+    <div id="groupChatInput">
+      <input type="file" id="groupFileInput" hidden />
+      <button id="attachBtn" title="Attach file or photo">📎</button>
+      <input id="groupMessageText" placeholder="Type a message to group…" onkeydown="if(event.key==='Enter') sendGroupMessage()" />
+      <button onclick="sendGroupMessage()" title="Send message" style="background:#0b84ff; color:#fff; font-weight:700; padding:0 16px; border-radius:8px;">➤</button>
+      <button id="micBtn" title="Record voice message">🎤</button>
+    </div>
+    <!-- Reply Preview -->
+    <div id="replyPreview" style="display:none; padding:6px; background:#eee;"></div>
+  </div>
 </div>
 
-
-<!-- VIEW ITINERARY OVERLAY (Read-only) -->
+<!-- VIEW ITINERARY OVERLAY (Read-only for Finders & Members) -->
 <div class="overlay" id="viewOverlay">
   <div class="overlayHeader">
-    <h2>View Trip Itinerary</h2>
+    <div style="display:flex; align-items:center; gap:8px;">
+      <span style="font-size:20px;">🗺️</span>
+      <div>
+        <h2 style="margin:0; font-size:18px;">Trip Itinerary</h2>
+        <span class="muted" style="font-size:12px;">Traveler View (Read-Only • Organiser Managed)</span>
+      </div>
+    </div>
     <button id="closeViewBtn">✕ Close</button>
   </div>
   <div class="overlayBody" id="viewContainer">
     <!-- Collapsible days inserted here -->
-  </div>
-</div
-
-
-
->
-<!-- MEMBERS TOGGLE BUTTON -->
-
-<div id="groupTopBar">
-  <button style="background-color: rgb(85, 255, 0); color: black;" id="toggleMembersBtn">Members ▼</button>
-</div>
-
-<!-- MEMBERS PANEL (HIDDEN BY DEFAULT) -->
-<div style="background-color: aquamarine; border-radius: 35px;" id="groupMembers"></div>
-
-<!-- CHAT -->
-<div id="groupChat">
-    <div id="groupMessages"></div>
-   <div id="groupChatInput">
-  <input type="file" id="groupFileInput" hidden />
-
-  <button id="attachBtn">📎</button>
-
-  <input id="groupMessageText" placeholder="Type a message…" />
-
-  <button onclick="sendGroupMessage()">➤</button>
-  <button id="micBtn">🎤</button>
-</div>
-
-<!-- Reply Preview -->
-<div id="replyPreview" style="display:none; padding:6px; background:#eee;"></div>
   </div>
 </div>
 
@@ -1373,12 +1551,67 @@ body { font-family: Arial, sans-serif; margin:0; padding:20px; background:#f0f2f
 
         <!-- TRANSPORT -->
         <div id="transport" class="card section">
-          <h3>Transport Booking</h3>
-          <div class="row">
-            <input id="tPickup" class="input" type="text" placeholder="Pickup location" />
-            <input id="tDestination" class="input" type="text" placeholder="Destination" />
-            <input id="tDate" class="input small" type="date" />
-            <button class="primary" onclick="searchFromSection('Transport')">Search</button>
+          <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:8px;">
+            <div>
+              <h2 style="margin:0 0 4px 0; font-size:22px; color:#0f172a;">Select Transport Type</h2>
+              <div class="muted" style="font-size:14px;">Select your preferred vehicle or transit mode to view options & book:</div>
+            </div>
+          </div>
+
+          <!-- Transport Type Buttons: Flight, Bus, Trains, Bike, Taxi, Jeep, Yacht -->
+          <div class="transport-type-grid">
+            <button type="button" class="transport-type-btn" onclick="selectTransportType('Flight', '✈️', 120, 'Domestic & Regional Flights')">
+              <div style="font-size:32px; margin-bottom:6px;">✈️</div>
+              <div style="font-weight:700; font-size:15px; color:#0f172a;">Flight</div>
+              <div class="muted" style="font-size:12px; margin-top:2px;">From $120 / seat</div>
+            </button>
+            
+            <button type="button" class="transport-type-btn" onclick="selectTransportType('Bus', '🚌', 15, 'Intercity & Luxury Coaches')">
+              <div style="font-size:32px; margin-bottom:6px;">🚌</div>
+              <div style="font-weight:700; font-size:15px; color:#0f172a;">Bus</div>
+              <div class="muted" style="font-size:12px; margin-top:2px;">From $15 / seat</div>
+            </button>
+            
+            <button type="button" class="transport-type-btn" onclick="selectTransportType('Trains', '🚆', 20, 'SGR & Express Train Services')">
+              <div style="font-size:32px; margin-bottom:6px;">🚆</div>
+              <div style="font-weight:700; font-size:15px; color:#0f172a;">Trains</div>
+              <div class="muted" style="font-size:12px; margin-top:2px;">From $20 / seat</div>
+            </button>
+            
+            <button type="button" class="transport-type-btn" onclick="selectTransportType('Bike', '🏍️', 10, 'Motorbike & Bodaboda Rentals')">
+              <div style="font-size:32px; margin-bottom:6px;">🏍️</div>
+              <div style="font-weight:700; font-size:15px; color:#0f172a;">Bike</div>
+              <div class="muted" style="font-size:12px; margin-top:2px;">From $10 / ride</div>
+            </button>
+            
+            <button type="button" class="transport-type-btn" onclick="selectTransportType('Taxi', '🚕', 25, 'Private City & Airport Cabs')">
+              <div style="font-size:32px; margin-bottom:6px;">🚕</div>
+              <div style="font-weight:700; font-size:15px; color:#0f172a;">Taxi</div>
+              <div class="muted" style="font-size:12px; margin-top:2px;">From $25 / ride</div>
+            </button>
+            
+            <button type="button" class="transport-type-btn" onclick="selectTransportType('Jeep', '🚙', 150, '4x4 Safari & Overland 4WD')">
+              <div style="font-size:32px; margin-bottom:6px;">🚙</div>
+              <div style="font-weight:700; font-size:15px; color:#0f172a;">Jeep</div>
+              <div class="muted" style="font-size:12px; margin-top:2px;">From $150 / day</div>
+            </button>
+            
+            <button type="button" class="transport-type-btn" onclick="selectTransportType('Yacht', '🛥️', 250, 'Private Marine & Island Charters')">
+              <div style="font-size:32px; margin-bottom:6px;">🛥️</div>
+              <div style="font-weight:700; font-size:15px; color:#0f172a;">Yacht</div>
+              <div class="muted" style="font-size:12px; margin-top:2px;">From $250 / trip</div>
+            </button>
+          </div>
+
+          <!-- Quick Route Search -->
+          <div style="margin-top:16px; padding-top:16px; border-top:1px solid #e2e8f0;">
+            <div style="font-weight:700; font-size:14px; margin-bottom:8px; color:#334155;">🔍 Search Specific Routes & Verified Transport Operators:</div>
+            <div class="row">
+              <input id="tPickup" class="input flex" type="text" placeholder="Pickup location (e.g. Dar es Salaam, Airport, Arusha)" />
+              <input id="tDestination" class="input flex" type="text" placeholder="Destination (e.g. Zanzibar, Serengeti, Moshi)" />
+              <input id="tDate" class="input small" type="date" />
+              <button class="primary" type="button" onclick="searchFromSection('Transport')">Search Services</button>
+            </div>
           </div>
 
           <div id="transportTypes" style="display:none; margin-top:12px;">
@@ -1543,8 +1776,8 @@ body { font-family: Arial, sans-serif; margin:0; padding:20px; background:#f0f2f
           <label style="font-weight:700; margin-top:8px;">Price ($)</label>
           <input id="sp_price" class="input" type="number" required>
 
-          <label style="font-weight:700; margin-top:8px;">Upload Images</label>
-          <input id="sp_images" class="input" type="file" accept="image/*" multiple>
+          <label style="font-weight:700; margin-top:8px;">Upload Photos & Videos (Multiple allowed)</label>
+          <input id="sp_images" class="input" type="file" accept="image/*,video/*" multiple>
 
 
           
@@ -1622,7 +1855,7 @@ body { font-family: Arial, sans-serif; margin:0; padding:20px; background:#f0f2f
       </div>
       <div style="background:#fef3c7; padding:10px; border-radius:8px;">
         <div style="font-size:11px; color:#92400e; font-weight:600;">TRIPCOINS</div>
-        <div style="font-size:16px; font-weight:800; color:#78350f;" id="profileStatCoins">350 🪙</div>
+        <div style="font-size:16px; font-weight:800; color:#78350f;" id="profileStatCoins">0 🪙</div>
       </div>
       <div style="background:#f0fdf4; padding:10px; border-radius:8px;">
         <div style="font-size:11px; color:#166534; font-weight:600;">BOOKINGS</div>
@@ -1675,7 +1908,7 @@ body { font-family: Arial, sans-serif; margin:0; padding:20px; background:#f0f2f
   <div id="signupModal" class="modal"><div class="panel card" style="max-width:460px;">
     <button style="float:right" class="ghost" onclick="closeModal('signupModal')">✕</button>
     <h3 style="margin-top:0;">📝 Create Account</h3>
-    <p class="muted">Join TripBnA and earn 350 TripCoins bonus instantly!</p>
+    <p class="muted">Join TripBnA and earn 2 TripCoins (TC) with every successful booking!</p>
     <div style="margin-top:12px;">
       <label style="font-size:12px; font-weight:700;">Full Name</label>
       <input id="signupName" placeholder="Jackson Charles" class="input" style="width:100%; margin-top:4px; margin-bottom:10px;" />
@@ -1758,28 +1991,40 @@ body { font-family: Arial, sans-serif; margin:0; padding:20px; background:#f0f2f
   <!-- 4. TripBnA Coin Modal -->
   <div id="tripcoinModal" class="modal"><div class="panel card" style="max-width:540px;">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
-      <h3 style="margin:0;">🪙 TripBnA Rewards Coin</h3>
+      <h3 style="margin:0;">🪙 TripBnA Rewards Coin (TC)</h3>
       <button class="ghost" style="padding:6px 12px;" onclick="closeModal('tripcoinModal')">✕ Close</button>
     </div>
 
     <div class="coin-hero">
       <div style="font-size:13px; opacity:0.9;">Total Coin Balance</div>
-      <div style="font-size:32px; font-weight:800; margin:6px 0;" id="tripcoinModalBalance">350 🪙</div>
-      <div style="font-size:13px; opacity:0.9;">Estimated Value: <strong id="tripcoinModalUsd">$3.50 USD</strong></div>
+      <div style="font-size:32px; font-weight:800; margin:6px 0;" id="tripcoinModalBalance">0 🪙</div>
+      <div style="font-size:13px; opacity:0.9;">Redeemable USD Value: <strong id="tripcoinModalUsd">$0.00 USD</strong></div>
     </div>
 
-    <div style="background:#fffbeb; border:1px solid #fde68a; border-radius:10px; padding:14px; margin-bottom:14px; font-size:13px; color:#92400e;">
-      <strong>🎁 Spend & Earn 5% Cashback:</strong> Every booking on TripBnA automatically earns 5% in TripCoins. Use your coins for instant travel discounts or convert them to vouchers!
+    <div style="background:#fffbeb; border:1px solid #fde68a; border-radius:10px; padding:12px 14px; margin-bottom:14px; font-size:13px; color:#92400e; line-height:1.5;">
+      <strong>🎁 TripCoin Reward Rules:</strong><br>
+      • <strong>1 Booking = +2 TC (TripCoins)</strong> earned automatically.<br>
+      • <strong>1 USD = 250 TC</strong> (Conversion rate: 250 TC = $1.00 USD).<br>
+      • <strong>Minimum 500 TC</strong> required to redeem for travel vouchers or checkout discounts.
     </div>
 
-    <!-- Coin Actions -->
-    <div style="display:flex; gap:10px; margin-bottom:14px;">
-      <button class="primary flex" onclick="redeemCoinsForVoucher(200, 2)">Redeem 200 🪙 ($2 Voucher)</button>
-      <button class="ghost flex" onclick="redeemCoinsForVoucher(500, 5)">Redeem 500 🪙 ($5 Voucher)</button>
+    <!-- Coin Actions Tiers -->
+    <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:14px;">
+      <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px;">
+        <button class="primary" style="padding:10px 6px; font-size:12px; text-align:center;" onclick="redeemCoinsForVoucher(500, 2)">500 TC<br><strong>($2 Voucher)</strong></button>
+        <button class="primary" style="padding:10px 6px; font-size:12px; text-align:center;" onclick="redeemCoinsForVoucher(1000, 4)">1,000 TC<br><strong>($4 Voucher)</strong></button>
+        <button class="primary" style="padding:10px 6px; font-size:12px; text-align:center;" onclick="redeemCoinsForVoucher(2500, 10)">2,500 TC<br><strong>($10 Voucher)</strong></button>
+      </div>
+      
+      <!-- Custom Coin Redemption -->
+      <div style="display:flex; gap:8px; align-items:center; margin-top:4px;">
+        <input type="number" id="customRedeemCoinsInput" min="500" step="250" placeholder="Custom TC (min 500)" style="padding:8px 10px; font-size:13px; border:1px solid #cbd5e1; border-radius:6px; flex:1;" />
+        <button class="ghost" style="padding:8px 12px; font-size:13px; font-weight:700; white-space:nowrap;" onclick="redeemCustomCoins()">Redeem Custom</button>
+      </div>
     </div>
 
     <!-- Coin History -->
-    <h4 style="margin:0 0 8px 0; font-size:14px;">Coin History</h4>
+    <h4 style="margin:0 0 8px 0; font-size:14px;">Coin Ledger History</h4>
     <div id="coinLedgerContainer" style="max-height:160px; overflow-y:auto; font-size:13px;">
       <div class="muted">No recent coin rewards.</div>
     </div>
@@ -2007,11 +2252,11 @@ body { font-family: Arial, sans-serif; margin:0; padding:20px; background:#f0f2f
         </div>
         <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
           <span class="muted">TripCoins Balance:</span>
-          <strong id="checkoutCoinsAvail">350 🪙 ($3.50)</strong>
+          <strong id="checkoutCoinsAvail">0 🪙 ($0.00)</strong>
         </div>
         <label style="display:flex; align-items:center; gap:8px; font-size:13px; cursor:pointer; margin-top:10px; padding-top:10px; border-top:1px dashed #cbd5e1;">
           <input type="checkbox" id="checkApplyCoins" onchange="toggleCheckoutCoinsDiscount()" />
-          <span>Apply 350 TripCoins discount (-$3.50)</span>
+          <span>Apply TripCoins discount (min 500 TC)</span>
         </label>
       </div>
 
@@ -2551,61 +2796,102 @@ Last Updated: April 2026 | Version 2.0 | TripBnA Platform Policies
 </div>
   </div></div>
 
-<div id="transportBookingOverlay" style="display:none; position:fixed; inset:0; background:#fff; z-index:2000; overflow:auto;">
-  <div style="max-width:900px; margin:0 auto; padding:20px;">
-    <button onclick="closeTransportBooking()" style="float:right;" class="ghost">Close</button>
-    <h2>Transport Booking</h2>
+<div id="transportBookingOverlay" style="display:none; position:fixed; inset:0; background:#f8fafc; z-index:2000; overflow:auto;">
+  <div style="max-width:900px; margin:20px auto; padding:24px; background:#fff; border-radius:12px; box-shadow:0 10px 25px rgba(0,0,0,0.1);">
+    <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #e2e8f0; padding-bottom:14px; margin-bottom:16px;">
+      <div>
+        <h2 style="margin:0; font-size:22px; color:#1e293b;" id="transportModalHeading">🚗 Transport Booking Form</h2>
+        <div class="muted" id="transportModalSubheading" style="font-size:13px; margin-top:2px;">Complete personal and journey details to proceed with your transport booking.</div>
+      </div>
+      <button onclick="closeTransportBooking()" class="ghost" style="padding:6px 14px; font-weight:700;">✕ Close</button>
+    </div>
 
-    <!-- SECTION 1: Passenger Details -->
-    <div class="card">
-      <h3>Passenger Details</h3>
+    <!-- VEHICLE BANNER -->
+    <div class="card" style="background:#eff6ff; border:1px solid #bfdbfe; margin-bottom:16px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+      <div style="display:flex; align-items:center; gap:12px;">
+        <span id="transportTypeIconBadge" style="font-size:36px;">🚗</span>
+        <div>
+          <h3 id="transportTypeNameBadge" style="margin:0; font-size:18px; color:#1e40af;">Transport Vehicle</h3>
+          <div class="muted" id="transportTypeDescBadge" style="font-size:13px; color:#3b82f6;">Verified TripBnA Transport Operator</div>
+        </div>
+      </div>
+      <div style="text-align:right;">
+        <div style="font-size:12px; color:#64748b; font-weight:600;">Rate per Passenger / Day</div>
+        <div style="font-size:20px; font-weight:800; color:#1e40af;">$<span id="servicePrice">0</span></div>
+      </div>
+    </div>
+
+    <!-- SECTION 1: Personal & Passenger Details -->
+    <div class="card" style="margin-bottom:16px;">
+      <h3 style="margin:0 0 10px 0; font-size:16px; color:#0f172a;">👤 1. Passenger Personal Details</h3>
       <div class="row">
-        <input id="pFullName" class="input flex" placeholder="Full Name" required>
+        <input id="pFullName" class="input flex" placeholder="Full Legal Name *" required>
         <select id="pGender" class="input small" required>
-          <option value="">Gender</option>
+          <option value="">Gender *</option>
           <option>Male</option>
           <option>Female</option>
           <option>Other</option>
         </select>
-        <input id="pAge" type="number" class="input small" placeholder="Age" required>
-      </div>
-    </div>
-
-    <!-- SECTION 2: Contact Details -->
-    <div class="card">
-      <h3>Contact Details</h3>
-      <div class="row">
-        <select id="countryCode" class="input small">
-          <option value="+255">🇹🇿 +255</option>
-          <option value="+254">🇰🇪 +254</option>
-          <option value="+256">🇺🇬 +256</option>
-          <option value="+250">🇷🇼 +250</option>
-          <option value="+1">🇺🇸 +1</option>
-        </select>
-        <input id="pPhone" class="input flex" placeholder="Phone Number" required>
+        <input id="pAge" type="number" min="1" max="120" class="input small" placeholder="Age *" required>
       </div>
       <div class="row" style="margin-top:10px;">
-        <input id="pEmail" type="email" class="input flex" placeholder="Email Address" required>
+        <select id="countryCode" class="input small">
+          <option value="+255">🇹🇿 +255 (TZ)</option>
+          <option value="+254">🇰🇪 +254 (KE)</option>
+          <option value="+256">🇺🇬 +256 (UG)</option>
+          <option value="+250">🇷🇼 +250 (RW)</option>
+          <option value="+1">🇺🇸 +1 (US)</option>
+          <option value="+44">🇬🇧 +44 (UK)</option>
+          <option value="+971">🇦🇪 +971 (UAE)</option>
+        </select>
+        <input id="pPhone" class="input flex" placeholder="Phone / WhatsApp Number *" required>
+        <input id="pEmail" type="email" class="input flex" placeholder="Email Address *" required>
       </div>
     </div>
 
-    <!-- SECTION 3: Price Details -->
-    <div class="card">
-      <h3>Price Details</h3>
+    <!-- SECTION 2: Transport & Journey Details -->
+    <div class="card" style="margin-bottom:16px;">
+      <h3 style="margin:0 0 10px 0; font-size:16px; color:#0f172a;">📍 2. Journey & Transport Details</h3>
       <div class="row">
-        <input id="ticketCount" type="number" min="1" value="1" class="input small" onchange="updateTotalPrice()">
-        <div class="muted">Number of Passengers</div>
+        <input id="tBookingPickup" class="input flex" placeholder="Pickup Location (e.g. Airport, Hotel, Terminal) *" required>
+        <input id="tBookingDestination" class="input flex" placeholder="Destination (e.g. Zanzibar, Arusha, Safari) *" required>
       </div>
-      <div style="margin-top:10px; font-weight:700;">
-        Service Price: $<span id="servicePrice">0</span>
+      <div class="row" style="margin-top:10px;">
+        <div style="flex:1;">
+          <label style="font-size:12px; font-weight:700; display:block; margin-bottom:4px; color:#475569;">Pickup Date *</label>
+          <input id="tBookingDate" type="date" class="input" style="width:100%;" required>
+        </div>
+        <div style="flex:1;">
+          <label style="font-size:12px; font-weight:700; display:block; margin-bottom:4px; color:#475569;">Preferred Time</label>
+          <input id="tBookingTime" type="time" class="input" style="width:100%;" value="08:00">
+        </div>
+        <div style="width:130px;">
+          <label style="font-size:12px; font-weight:700; display:block; margin-bottom:4px; color:#475569;">Passengers *</label>
+          <input id="ticketCount" type="number" min="1" max="50" value="1" class="input" style="width:100%;" onchange="updateTotalPrice()" oninput="updateTotalPrice()">
+        </div>
       </div>
-      <div style="font-size:18px; margin-top:6px;">
-        Total Price: <strong>$<span id="totalPrice">0</span></strong>
+      <div style="margin-top:10px;">
+        <input id="tBookingNotes" class="input flex" placeholder="Luggage details or special pickup instructions (optional)" style="width:100%;">
       </div>
     </div>
 
-    <div style="margin-top:20px; text-align:right;">
-      <button class="primary" style="background-color: #00076d; color: white;" onclick="openTransportPayment()">PAY NOW</button>
+    <!-- SECTION 3: Summary & Payment -->
+    <div class="card" style="border:1.5px solid #0b84ff; background:#f0f9ff;">
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+        <div>
+          <div style="font-size:12px; color:#0369a1; font-weight:700; text-transform:uppercase; letter-spacing:0.5px;">TripCoins Reward</div>
+          <div style="font-size:13px; color:#0284c7; margin-top:2px;">✨ Earn <strong>+2 TC</strong> (TripCoins) upon completing this booking!</div>
+        </div>
+        <div style="text-align:right;">
+          <div style="font-size:13px; color:#64748b;">Total Amount Payable:</div>
+          <div style="font-size:24px; font-weight:900; color:#0c4a6e;">$<span id="totalPrice">0.00</span></div>
+        </div>
+      </div>
+
+      <div style="margin-top:16px; padding-top:14px; border-top:1px dashed #7dd3fc; display:flex; justify-content:flex-end; gap:12px; flex-wrap:wrap;">
+        <button type="button" class="btn ghost" onclick="closeTransportBooking()" style="font-weight:700;">Cancel</button>
+        <button type="button" class="primary" style="background-color:#00076d; color:white; font-weight:700; padding:12px 24px; font-size:15px; border-radius:8px;" onclick="openTransportPayment()">PROCEED TO PAYMENT 💳</button>
+      </div>
     </div>
   </div>
 </div>
@@ -2994,8 +3280,14 @@ Last Updated: April 2026 | Version 2.0 | TripBnA Platform Policies
                 console.warn("Could not fetch user profile:", e);
               }
             }
+            if (userData.tripCoins !== undefined && userData.tripCoins !== null) {
+              userTripCoins = Number(userData.tripCoins) || 0;
+              try { localStorage.setItem('tripbna_coins_balance', userTripCoins.toString()); } catch(e) {}
+            }
             window.currentUserProfile = userData;
             updateAuthUI(true, userData);
+            renderCoinUI();
+            renderUserProfile();
             setupFirestoreDataListeners(userData);
           } else {
             window.currentUserProfile = null;
@@ -3244,28 +3536,49 @@ const newService = {
 
       // build result list
       searchResultsDiv.innerHTML = results.map(s => {
-        const img = (s.images && s.images[0]) ? s.images[0] : 'https://via.placeholder.com/120';
-        return `<div class="service-card" data-id="${s.id}" data-type="${s.type}">
-          <img src="${img}" alt="${s.name}">
-          <div class="service-main">
-            <strong>${s.name}</strong>
-           <div class="service-meta">
-            ${s.type} • ${s.place} • $${s.price}
-           </div>
+        const mediaList = Array.isArray(s.images) ? s.images.filter(Boolean) : (s.images ? [s.images] : []);
+        let mediaBlock = '';
+        if (mediaList.length > 1 && typeof renderPostMediaCarousel === 'function') {
+          mediaBlock = `<div style="width:260px; min-width:240px; max-width:280px; flex-shrink:0;">${renderPostMediaCarousel('svc_' + s.id, mediaList)}</div>`;
+        } else {
+          const first = mediaList[0] || 'https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=400&q=80';
+          const isVid = typeof isVideoUrl === 'function' ? isVideoUrl(first) : false;
+          if (isVid) {
+            mediaBlock = `<div style="width:140px; height:100px; border-radius:10px; overflow:hidden; background:#000; position:relative; flex-shrink:0;">
+              <video src="${first}" controls playsinline preload="metadata" style="width:100%; height:100%; object-fit:cover;"></video>
+            </div>`;
+          } else {
+            mediaBlock = `<img src="${first}" alt="${escapeHTML(s.name)}" style="width:140px; height:100px; border-radius:10px; object-fit:cover; flex-shrink:0; cursor:pointer;" onclick="openLightbox('${first}')">`;
+          }
+        }
+
+        return `<div class="service-card" data-id="${s.id}" data-type="${s.type}" style="display:flex; gap:16px; align-items:flex-start; flex-wrap:wrap; padding:16px; border-radius:12px; margin-bottom:16px; background:#fff; border:1px solid #e2e8f0; box-shadow:0 2px 8px rgba(0,0,0,0.04);">
+          ${mediaBlock}
+          <div class="service-main" style="flex:1; min-width:220px;">
+            <strong style="font-size:17px; color:#0f172a;">${escapeHTML(s.name)}</strong>
+            <div class="service-meta" style="margin:4px 0 8px 0; color:#15803d; font-weight:700; font-size:15px;">
+              ${s.type} • ${escapeHTML(s.place)} • $${s.price}
+            </div>
 
 ${s.type === "Accommodation" ? `
-  <div class="muted" style="margin-top:4px;">
-    🛏 Room: <strong>${s.roomType || "N/A"}</strong><br>
-    ⭐ Amenities: ${s.amenities || "Not specified"}
+  <div class="muted" style="margin-top:4px; font-size:13px; line-height:1.5;">
+    🛏 Room: <strong>${escapeHTML(s.roomType || "Deluxe Suite")}</strong><br>
+    ⭐ Amenities: ${escapeHTML(s.amenities || "Wi-Fi, AC, Pool, Breakfast")}
+    ${s.specialOffers ? `<br>🎁 Offer: <span style="color:#0284c7; font-weight:700;">${escapeHTML(s.specialOffers)}</span>` : ''}
   </div>
 ` : ""}
 
-            <div style="margin-top:8px;">${(s.images||[]).slice(0,3).map(i=>`<img src="${i}" style="width:64px;height:44px;border-radius:6px;margin-right:6px;object-fit:cover;">`).join('')}</div>
+${s.type === "Food" ? `
+  <div class="muted" style="margin-top:4px; font-size:13px; line-height:1.5;">
+    🍽️ Category: <strong>${escapeHTML(s.foodType || "Swahili & International Cuisine")}</strong>
+    ${s.specialOffers ? `<br>🎁 Special: <span style="color:#0284c7; font-weight:700;">${escapeHTML(s.specialOffers)}</span>` : ''}
+  </div>
+` : ""}
+
           </div>
-          <div style="display:flex;flex-direction:column; gap:8px;">
-            <button class="book-btn" onclick="bookService(${s.id})">Confirm Now</button>
-            <button class="ghost" onclick="viewDetails(${s.id})">Details</button>
-           
+          <div style="display:flex; flex-direction:column; gap:8px; align-self:center;">
+            <button class="book-btn" onclick="bookService(${s.id})" style="background:#2e8b57; color:#fff; font-weight:700; padding:10px 16px; border-radius:8px; border:none; cursor:pointer;">Confirm Now</button>
+            <button class="ghost" onclick="viewDetails(${s.id})" style="padding:8px 14px;">Details</button>
           </div>
         </div>`;
       }).join('');
@@ -3287,14 +3600,43 @@ ${s.type === "Accommodation" ? `
        ========================================================================= */
 
     let userWalletBalance = 150.00;
-    let userTripCoins = 350;
+    let userTripCoins = 0;
     let userBookings = [];
     let userWalletLedger = [
       { id: 'tx_1', type: 'Credit', desc: 'Welcome Bonus Credit', amount: 150.00, date: 'Oct 2025' }
     ];
-    let userCoinLedger = [
-      { id: 'cx_1', type: 'Reward', desc: 'Sign-up Welcome Reward', coins: 350, date: 'Oct 2025' }
-    ];
+    let userCoinLedger = [];
+
+    // Helper: Award TripCoins (Rule: 1 Booking = 2 TC)
+    function awardTripCoinsForBooking(desc = 'Booking Reward', ref = '') {
+      const coinsEarned = 2;
+      userTripCoins += coinsEarned;
+      try {
+        localStorage.setItem('tripbna_coins_balance', userTripCoins.toString());
+      } catch(e) {}
+
+      userCoinLedger.unshift({
+        id: 'cx_' + Date.now(),
+        type: 'Earned',
+        desc: `${desc} ${ref ? '#' + ref : ''} (+2 TC)`,
+        coins: coinsEarned,
+        date: new Date().toLocaleDateString()
+      });
+
+      if (window.currentUser && window.db && window.updateDoc && window.doc) {
+        try {
+          window.updateDoc(window.doc(window.db, "users", window.currentUser.uid), {
+            tripCoins: userTripCoins,
+            updatedAt: window.serverTimestamp ? window.serverTimestamp() : new Date().toISOString()
+          }).catch(() => {});
+        } catch(e) {}
+      }
+
+      renderCoinUI();
+      renderUserProfile();
+      return coinsEarned;
+    }
+    window.awardTripCoinsForBooking = awardTripCoinsForBooking;
 
     let activeBookingPayload = null;
     let selectedCheckoutMethod = 'mobile';
@@ -3320,16 +3662,25 @@ ${s.type === "Accommodation" ? `
       
       applyCoinDiscountChecked = false;
       const coinCheck = document.getElementById('checkApplyCoins');
-      if (coinCheck) coinCheck.checked = false;
+      if (coinCheck) {
+        coinCheck.checked = false;
+        coinCheck.disabled = userTripCoins < 500;
+      }
 
       updateCheckoutTotalsDisplay();
 
-      // Update wallet and coins availability
+      // Update wallet and coins availability (250 TC = $1.00 USD, min 500 TC to redeem)
       const walletAvail = document.getElementById('checkoutWalletAvail');
       if (walletAvail) walletAvail.textContent = `$${userWalletBalance.toFixed(2)}`;
       
       const coinsAvail = document.getElementById('checkoutCoinsAvail');
-      if (coinsAvail) coinsAvail.textContent = `${userTripCoins} 🪙 ($${(userTripCoins/100).toFixed(2)})`;
+      if (coinsAvail) {
+        if (userTripCoins >= 500) {
+          coinsAvail.innerHTML = `${userTripCoins} 🪙 <strong style="color:#15803d;">($${(userTripCoins/250).toFixed(2)})</strong>`;
+        } else {
+          coinsAvail.innerHTML = `${userTripCoins} 🪙 <span style="color:#e11d48; font-size:11px;">(Min 500 TC needed to redeem)</span>`;
+        }
+      }
 
       const statusEl = document.getElementById('paymentStatus');
       if (statusEl) statusEl.textContent = '';
@@ -3407,14 +3758,15 @@ ${s.type === "Accommodation" ? `
       if (!activeBookingPayload) return;
       let total = Number(activeBookingPayload.totalPrice || 0);
       let coinDiscount = 0;
-      if (applyCoinDiscountChecked && userTripCoins > 0) {
-        coinDiscount = Math.min(total, userTripCoins / 100);
+      // 1 USD = 250 TC, min 500 TC to redeem
+      if (applyCoinDiscountChecked && userTripCoins >= 500) {
+        coinDiscount = Math.min(total, userTripCoins / 250);
       }
       const finalPayable = Math.max(0, total - coinDiscount);
       const displayEl = document.getElementById('checkoutTotalDisplay');
       if (displayEl) {
         if (coinDiscount > 0) {
-          displayEl.innerHTML = `$${finalPayable.toFixed(2)} <span style="font-size:12px; color:#15803d; font-weight:normal;">(-$${coinDiscount.toFixed(2)} Coins)</span>`;
+          displayEl.innerHTML = `$${finalPayable.toFixed(2)} <span style="font-size:12px; color:#15803d; font-weight:normal;">(-$${coinDiscount.toFixed(2)} Coins Discount)</span>`;
         } else {
           displayEl.textContent = `$${finalPayable.toFixed(2)}`;
         }
@@ -3490,7 +3842,7 @@ ${s.type === "Accommodation" ? `
     function processWalletPayment() {
       if (!activeBookingPayload) return;
       let total = Number(activeBookingPayload.totalPrice || 0);
-      let coinDiscount = applyCoinDiscountChecked ? Math.min(total, userTripCoins / 100) : 0;
+      let coinDiscount = (applyCoinDiscountChecked && userTripCoins >= 500) ? Math.min(total, userTripCoins / 250) : 0;
       let finalPayable = Math.max(0, total - coinDiscount);
 
       if (userWalletBalance < finalPayable) {
@@ -3509,19 +3861,20 @@ ${s.type === "Accommodation" ? `
     }
     window.processPayPalDirect = processPayPalDirect;
 
-    // Finalize booking, persist to Firestore, update wallet & coins, show E-Ticket
+    // Finalize booking, persist to Firestore, update wallet & coins (1 booking = 2 TC, 250 TC = $1), show E-Ticket
     async function finalizeBookingSuccess(paymentMethodTitle, txRef) {
       if (!activeBookingPayload) return;
 
       const refCode = generateBookingRef(activeBookingPayload.type);
       let total = Number(activeBookingPayload.totalPrice || 0);
-      let coinDiscount = applyCoinDiscountChecked ? Math.min(total, userTripCoins / 100) : 0;
+      let coinDiscount = (applyCoinDiscountChecked && userTripCoins >= 500) ? Math.min(total, userTripCoins / 250) : 0;
       let amountPaid = Math.max(0, total - coinDiscount);
 
-      // Reward 5% cashback coins
-      let coinsEarned = Math.max(1, Math.round(amountPaid * 5));
-      if (applyCoinDiscountChecked) {
-        userTripCoins = Math.max(0, userTripCoins - Math.round(coinDiscount * 100));
+      // Rule: 1 Booking = 2 TC (TripCoins)
+      let coinsEarned = 2;
+      if (applyCoinDiscountChecked && coinDiscount > 0) {
+        let coinsDeducted = Math.round(coinDiscount * 250);
+        userTripCoins = Math.max(0, userTripCoins - coinsDeducted);
       }
       userTripCoins += coinsEarned;
 
@@ -3533,7 +3886,10 @@ ${s.type === "Accommodation" ? `
         customerEmail: activeBookingPayload.passengerDetails?.email || (window.currentUser ? window.currentUser.email : 'guest@tripbna.com'),
         customerPhone: activeBookingPayload.passengerDetails?.phone || '',
         serviceType: activeBookingPayload.type || 'Service',
+        category: activeBookingPayload.type || 'Service',
         serviceTitle: activeBookingPayload.serviceTitle || 'TripBnA Experience',
+        serviceId: activeBookingPayload.serviceId || '',
+        providerId: activeBookingPayload.providerId || '',
         destination: activeBookingPayload.destination || 'Tanzania',
         date: activeBookingPayload.date || new Date().toLocaleDateString(),
         quantity: activeBookingPayload.quantity || 1,
@@ -3545,6 +3901,14 @@ ${s.type === "Accommodation" ? `
         status: 'confirmed',
         coinsEarned: coinsEarned,
         txRef: txRef,
+        metadata: activeBookingPayload.metadata || {},
+        checkIn: activeBookingPayload.metadata?.checkIn || '',
+        checkOut: activeBookingPayload.metadata?.checkOut || '',
+        nights: activeBookingPayload.metadata?.nights || 1,
+        guests: activeBookingPayload.passengerDetails?.guests || activeBookingPayload.quantity || 1,
+        items: activeBookingPayload.items || null,
+        deliveryType: activeBookingPayload.deliveryType || null,
+        deliveryAddress: activeBookingPayload.deliveryAddress || null,
         createdAt: window.serverTimestamp ? window.serverTimestamp() : new Date().toISOString()
       };
 
@@ -3580,7 +3944,7 @@ ${s.type === "Accommodation" ? `
       userCoinLedger.unshift({
         id: 'cx_' + Date.now(),
         type: 'Earned',
-        desc: `5% Cashback on #${refCode}`,
+        desc: `Booking Reward #${refCode} (+2 TC)`,
         coins: coinsEarned,
         date: new Date().toLocaleDateString()
       });
@@ -3606,24 +3970,179 @@ ${s.type === "Accommodation" ? `
       renderCoinUI();
       renderUserProfile();
 
-      showToast(`🎉 Booking Confirmed! Earned +${coinsEarned} TripCoins.`);
+      showToast(`🎉 Booking Confirmed! Earned +${coinsEarned} TC (TripCoins).`);
     }
 
-    // Open E-Ticket Modal
+    // Open Dynamic Service-Specific E-Ticket Modal
     function openETicketModal(booking) {
       if (!booking) return;
-      document.getElementById('ticketStatusChip').textContent = (booking.status || 'CONFIRMED').toUpperCase();
-      document.getElementById('ticketServiceTitle').textContent = booking.serviceTitle || 'TripBnA Booking';
-      document.getElementById('ticketRefCode').textContent = booking.bookingRef || 'TB-89412-TZ';
-      document.getElementById('ticketPassengerName').textContent = booking.customerName || 'Jackson Charles';
-      document.getElementById('ticketDateTime').textContent = booking.date || new Date().toLocaleDateString();
-      document.getElementById('ticketPlace').textContent = booking.destination || 'Tanzania';
-      document.getElementById('ticketQuantity').textContent = `${booking.quantity || 1} Passenger(s)`;
-      document.getElementById('ticketAmountPaid').textContent = `$${Number(booking.amountPaid || booking.totalPrice || 0).toFixed(2)} (${booking.paymentMethod || 'Paid'})`;
-      
-      const barcode = document.getElementById('ticketBarcode');
-      if (barcode) {
-        barcode.textContent = `||| ${booking.bookingRef || 'TB-89412'} |||| ${Math.floor(1000+Math.random()*9000)} |||`;
+
+      const printArea = document.getElementById('eticketPrintArea');
+      if (!printArea) return;
+
+      const isAccommodation = booking.serviceType === 'Accommodation' || booking.category === 'Accommodation' || !!booking.checkIn;
+      const isFood = booking.serviceType === 'Food' || booking.category === 'Food' || !!booking.items;
+      const totalAmount = Number(booking.amountPaid || booking.totalPrice || 0).toFixed(2);
+      const statusText = (booking.status || 'CONFIRMED').toUpperCase();
+      const refCode = booking.bookingRef || 'TB-89412-TZ';
+
+      if (isAccommodation) {
+        printArea.innerHTML = `
+          <div class="eticket-header">
+            <div>
+              <div style="font-weight:800; font-size:18px; color:#2e8b57;">🏨 TripBnA Accommodation Voucher</div>
+              <div class="muted" style="font-size:12px;">Hotel & Resort Reservation Confirmation</div>
+            </div>
+            <div>
+              <span class="chip chip-confirmed">${statusText}</span>
+            </div>
+          </div>
+
+          <div style="margin:12px 0 10px 0;">
+            <div style="font-size:11px; color:#64748b; font-weight:700;">ACCOMMODATION / HOTEL</div>
+            <div style="font-size:18px; font-weight:800; color:#0f172a;">${escapeHTML(booking.serviceTitle || 'Hotel Stay')}</div>
+          </div>
+
+          <div class="eticket-grid">
+            <div>
+              <div style="font-size:11px; color:#64748b; font-weight:700;">BOOKING REF</div>
+              <div style="font-weight:800; color:#0b84ff;">${escapeHTML(refCode)}</div>
+            </div>
+            <div>
+              <div style="font-size:11px; color:#64748b; font-weight:700;">PRIMARY GUEST</div>
+              <div style="font-weight:700;">${escapeHTML(booking.customerName || 'Guest')}</div>
+            </div>
+            <div>
+              <div style="font-size:11px; color:#64748b; font-weight:700;">CHECK-IN DATE</div>
+              <div style="font-weight:700; color:#15803d;">${escapeHTML(booking.checkIn || booking.date || 'Check-in')}</div>
+            </div>
+            <div>
+              <div style="font-size:11px; color:#64748b; font-weight:700;">CHECK-OUT DATE</div>
+              <div style="font-weight:700; color:#dc2626;">${escapeHTML(booking.checkOut || 'N/A')}</div>
+            </div>
+            <div>
+              <div style="font-size:11px; color:#64748b; font-weight:700;">STAY DURATION</div>
+              <div style="font-weight:700;">${booking.nights || 1} Night(s) • ${booking.guests || 1} Guest(s)</div>
+            </div>
+            <div>
+              <div style="font-size:11px; color:#64748b; font-weight:700;">TOTAL AMOUNT</div>
+              <div style="font-weight:800; color:#15803d;">$${totalAmount} (${escapeHTML(booking.paymentMethod || 'Direct')})</div>
+            </div>
+          </div>
+
+          <div style="margin-top:10px; padding:8px 12px; background:#f1f5f9; border-radius:6px; font-size:12px; color:#475569;">
+            📍 <strong>Location:</strong> ${escapeHTML(booking.destination || 'Tanzania')} • Present this voucher at front desk upon arrival for instant check-in.
+          </div>
+
+          <div class="eticket-barcode" id="ticketBarcode">
+            ||| ${escapeHTML(refCode)} |||| ${Math.floor(1000+Math.random()*9000)} |||
+          </div>
+          <div style="text-align:center; font-size:11px; color:#64748b; margin-top:4px;">Official Hotel Check-In Voucher</div>
+        `;
+      } else if (isFood) {
+        const itemsListStr = booking.items ? booking.items.map(i => `${i.quantity}x ${i.name} ($${(i.price*i.quantity).toFixed(2)})`).join(', ') : 'Fresh Culinary Order';
+        printArea.innerHTML = `
+          <div class="eticket-header">
+            <div>
+              <div style="font-weight:800; font-size:18px; color:#b45309;">🍲 TripBnA Restaurant Order Receipt</div>
+              <div class="muted" style="font-size:12px;">Official Food Order & Delivery Voucher</div>
+            </div>
+            <div>
+              <span class="chip chip-confirmed">${statusText}</span>
+            </div>
+          </div>
+
+          <div style="margin:12px 0 10px 0;">
+            <div style="font-size:11px; color:#64748b; font-weight:700;">RESTAURANT / KITCHEN</div>
+            <div style="font-size:18px; font-weight:800; color:#0f172a;">${escapeHTML(booking.serviceTitle || 'Restaurant')}</div>
+          </div>
+
+          <div class="eticket-grid">
+            <div>
+              <div style="font-size:11px; color:#64748b; font-weight:700;">ORDER REF</div>
+              <div style="font-weight:800; color:#0b84ff;">${escapeHTML(refCode)}</div>
+            </div>
+            <div>
+              <div style="font-size:11px; color:#64748b; font-weight:700;">CUSTOMER</div>
+              <div style="font-weight:700;">${escapeHTML(booking.customerName || 'Customer')}</div>
+            </div>
+            <div>
+              <div style="font-size:11px; color:#64748b; font-weight:700;">DELIVERY TYPE</div>
+              <div style="font-weight:700; color:#0b84ff;">${escapeHTML(booking.deliveryType || 'Delivery')}</div>
+            </div>
+            <div>
+              <div style="font-size:11px; color:#64748b; font-weight:700;">CONTACT PHONE</div>
+              <div style="font-weight:700;">${escapeHTML(booking.customerPhone || 'On File')}</div>
+            </div>
+            <div style="grid-column: span 2;">
+              <div style="font-size:11px; color:#64748b; font-weight:700;">DISHES ORDERED</div>
+              <div style="font-weight:700; color:#0f172a; font-size:13px;">${escapeHTML(itemsListStr)}</div>
+            </div>
+            <div>
+              <div style="font-size:11px; color:#64748b; font-weight:700;">TOTAL PAID</div>
+              <div style="font-weight:800; color:#15803d;">$${totalAmount} (${escapeHTML(booking.paymentMethod || 'Paid')})</div>
+            </div>
+            <div>
+              <div style="font-size:11px; color:#64748b; font-weight:700;">DELIVERY DESTINATION</div>
+              <div style="font-weight:700;">${escapeHTML(booking.deliveryAddress || booking.destination || 'Direct Table / Room')}</div>
+            </div>
+          </div>
+
+          <div class="eticket-barcode" id="ticketBarcode">
+            ||| ${escapeHTML(refCode)} |||| ${Math.floor(1000+Math.random()*9000)} |||
+          </div>
+          <div style="text-align:center; font-size:11px; color:#64748b; margin-top:4px;">Show receipt to restaurant server or delivery rider</div>
+        `;
+      } else {
+        // Transport / Safari / General
+        printArea.innerHTML = `
+          <div class="eticket-header">
+            <div>
+              <div style="font-weight:800; font-size:18px; color:#2e8b57;">🎫 TripBnA Official Travel Ticket</div>
+              <div class="muted" style="font-size:12px;">Transport, Safari & Tour Confirmation</div>
+            </div>
+            <div>
+              <span class="chip chip-confirmed">${statusText}</span>
+            </div>
+          </div>
+
+          <div style="margin:12px 0 10px 0;">
+            <div style="font-size:11px; color:#64748b; font-weight:700;">ROUTE / SAFARI</div>
+            <div style="font-size:18px; font-weight:800; color:#0f172a;">${escapeHTML(booking.serviceTitle || 'Safari Tour')}</div>
+          </div>
+
+          <div class="eticket-grid">
+            <div>
+              <div style="font-size:11px; color:#64748b; font-weight:700;">TICKET REF</div>
+              <div style="font-weight:800; color:#0b84ff;">${escapeHTML(refCode)}</div>
+            </div>
+            <div>
+              <div style="font-size:11px; color:#64748b; font-weight:700;">PASSENGER</div>
+              <div style="font-weight:700;">${escapeHTML(booking.customerName || 'Passenger')}</div>
+            </div>
+            <div>
+              <div style="font-size:11px; color:#64748b; font-weight:700;">DEPARTURE DATE</div>
+              <div style="font-weight:700;">${escapeHTML(booking.date || 'Scheduled')}</div>
+            </div>
+            <div>
+              <div style="font-size:11px; color:#64748b; font-weight:700;">DESTINATION</div>
+              <div style="font-weight:700;">${escapeHTML(booking.destination || 'Tanzania')}</div>
+            </div>
+            <div>
+              <div style="font-size:11px; color:#64748b; font-weight:700;">SEATS / PASSENGERS</div>
+              <div style="font-weight:700;">${booking.quantity || 1} Passenger(s)</div>
+            </div>
+            <div>
+              <div style="font-size:11px; color:#64748b; font-weight:700;">TOTAL FARE</div>
+              <div style="font-weight:800; color:#15803d;">$${totalAmount} (${escapeHTML(booking.paymentMethod || 'Paid')})</div>
+            </div>
+          </div>
+
+          <div class="eticket-barcode" id="ticketBarcode">
+            ||| ${escapeHTML(refCode)} |||| ${Math.floor(1000+Math.random()*9000)} |||
+          </div>
+          <div style="text-align:center; font-size:11px; color:#64748b; margin-top:4px;">Scan at boarding gate or show to driver</div>
+        `;
       }
 
       document.getElementById('eTicketModal').style.display = 'flex';
@@ -3635,7 +4154,7 @@ ${s.type === "Accommodation" ? `
     }
     window.printETicket = printETicket;
 
-    // Render Booking Management History
+    // Render Booking Management History with Service-Specific Detail
     async function renderBookingHistory(filter = 'all') {
       currentBookingFilter = filter;
       const tabs = ['all','confirmed','completed','cancelled'];
@@ -3681,22 +4200,41 @@ ${s.type === "Accommodation" ? `
 
       container.innerHTML = filtered.map(b => {
         const statusChipClass = b.status === 'confirmed' ? 'chip-confirmed' : (b.status === 'completed' ? 'chip-completed' : 'chip-cancelled');
+        const isAccommodation = b.serviceType === 'Accommodation' || b.category === 'Accommodation' || !!b.checkIn;
+        const isFood = b.serviceType === 'Food' || b.category === 'Food' || !!b.items;
+        
+        let icon = '🎫';
+        let metaDetail = '';
+
+        if (isAccommodation) {
+          icon = '🏨';
+          metaDetail = `Stay: <strong>${escapeHTML(b.checkIn || b.date || '')}</strong> to <strong>${escapeHTML(b.checkOut || 'N/A')}</strong> (${b.nights||1} night${(b.nights||1)>1?'s':''}) • ${b.guests||b.quantity||1} Guest(s)`;
+        } else if (isFood) {
+          icon = '🍲';
+          const itemsCount = b.items ? b.items.reduce((s,i)=>s+i.quantity,0) : 1;
+          metaDetail = `Type: <strong>${escapeHTML(b.deliveryType || 'Delivery')}</strong> • ${itemsCount} dish(es) • Address: ${escapeHTML(b.deliveryAddress || b.destination || 'Restaurant')}`;
+        } else {
+          icon = '🚖';
+          metaDetail = `Route: <strong>${escapeHTML(b.destination || 'Tanzania')}</strong> • Date: <strong>${escapeHTML(b.date || '')}</strong> • ${b.quantity || 1} Passenger(s)`;
+        }
+
         return `
           <div class="card" style="margin:0; padding:14px; border:1px solid #e2e8f0; border-radius:10px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
-            <div>
+            <div style="flex:1; min-width:240px;">
               <div style="display:flex; align-items:center; gap:8px; margin-bottom:4px;">
+                <span style="font-size:18px;">${icon}</span>
                 <strong style="font-size:15px; color:#0f172a;">${escapeHTML(b.serviceTitle)}</strong>
                 <span class="chip ${statusChipClass}">${(b.status || 'confirmed').toUpperCase()}</span>
               </div>
-              <div class="muted" style="font-size:12px;">
-                Ref: <strong style="color:#0b84ff;">${escapeHTML(b.bookingRef || 'TB-00000')}</strong> • ${escapeHTML(b.destination || 'Tanzania')} • ${escapeHTML(b.date || '')}
+              <div class="muted" style="font-size:12px; margin-bottom:2px;">
+                Ref: <strong style="color:#0b84ff;">${escapeHTML(b.bookingRef || 'TB-00000')}</strong> • ${metaDetail}
               </div>
-              <div style="font-size:13px; font-weight:700; margin-top:4px; color:#15803d;">
-                Paid: $${Number(b.amountPaid || b.totalPrice || 0).toFixed(2)} (${escapeHTML(b.paymentMethod || 'Paid')})
+              <div style="font-size:13px; font-weight:700; color:#15803d;">
+                Amount: $${Number(b.amountPaid || b.totalPrice || 0).toFixed(2)} (${escapeHTML(b.paymentMethod || 'Paid')})
               </div>
             </div>
             <div style="display:flex; gap:8px;">
-              <button class="primary" style="padding:6px 12px; font-size:12px;" onclick='openETicketModal(${JSON.stringify(b).replace(/'/g, "&#39;")})'>🎫 View Ticket</button>
+              <button class="primary" style="padding:6px 12px; font-size:12px;" onclick='openETicketModal(${JSON.stringify(b).replace(/'/g, "&#39;")})'>🎫 View Voucher</button>
               ${b.status === 'confirmed' ? `<button class="ghost" style="padding:6px 12px; font-size:12px; color:#dc2626;" onclick="cancelBooking('${b.id}', '${b.bookingRef}', ${b.amountPaid || b.totalPrice})">Cancel</button>` : ''}
             </div>
           </div>
@@ -3849,19 +4387,24 @@ ${s.type === "Accommodation" ? `
     }
     window.applyWalletCoupon = applyWalletCoupon;
 
-    // Coins redemption
+    // Coins redemption (Rule: min 500 TC to redeem, 250 TC = $1.00 USD)
     function redeemCoinsForVoucher(coinsReq, usdVal) {
-      if (userTripCoins < coinsReq) {
-        alert(`You need at least ${coinsReq} TripCoins to redeem this $${usdVal} voucher.`);
+      if (coinsReq < 500) {
+        alert('You need at least 500 TripCoins (TC) to redeem any voucher.');
         return;
       }
+      if (userTripCoins < coinsReq) {
+        alert(`Insufficient TripCoins. You currently have ${userTripCoins} TC, but this voucher requires ${coinsReq} TC.`);
+        return;
+      }
+      const actualUsd = usdVal || (coinsReq / 250);
       userTripCoins -= coinsReq;
-      userWalletBalance += usdVal;
+      userWalletBalance += actualUsd;
 
       userCoinLedger.unshift({
         id: 'cx_' + Date.now(),
         type: 'Redeemed',
-        desc: `Converted ${coinsReq} coins to $${usdVal} voucher`,
+        desc: `Redeemed ${coinsReq} TC for $${actualUsd.toFixed(2)} Wallet Credit`,
         coins: -coinsReq,
         date: new Date().toLocaleDateString()
       });
@@ -3869,17 +4412,34 @@ ${s.type === "Accommodation" ? `
       userWalletLedger.unshift({
         id: 'tx_' + Date.now(),
         type: 'Voucher',
-        desc: `TripCoins Voucher Conversion (+$${usdVal})`,
-        amount: usdVal,
+        desc: `TripCoin Voucher Credit (+$${actualUsd.toFixed(2)})`,
+        amount: actualUsd,
         date: new Date().toLocaleDateString()
       });
 
       renderCoinUI();
       renderWalletUI();
       renderUserProfile();
-      showToast(`🎁 Redeemed ${coinsReq} TripCoins for $${usdVal} Wallet credit!`);
+      showToast(`🎁 Redeemed ${coinsReq} TC for $${actualUsd.toFixed(2)} Wallet credit!`);
     }
     window.redeemCoinsForVoucher = redeemCoinsForVoucher;
+
+    function redeemCustomCoins() {
+      const input = document.getElementById('customRedeemCoinsInput');
+      const val = parseInt(input?.value || '0', 10);
+      if (isNaN(val) || val < 500) {
+        alert('Minimum custom redemption is 500 TripCoins (250 TC = $1.00 USD).');
+        return;
+      }
+      if (val > userTripCoins) {
+        alert(`You only have ${userTripCoins} TC available.`);
+        return;
+      }
+      const usdVal = val / 250;
+      redeemCoinsForVoucher(val, usdVal);
+      if (input) input.value = '';
+    }
+    window.redeemCustomCoins = redeemCustomCoins;
 
     // Render Wallet UI
     function renderWalletUI() {
@@ -3907,13 +4467,13 @@ ${s.type === "Accommodation" ? `
     }
     window.renderWalletUI = renderWalletUI;
 
-    // Render Coin UI
+    // Render Coin UI with accurate economy rules (250 TC = $1.00 USD)
     function renderCoinUI() {
       const balEl = document.getElementById('tripcoinModalBalance');
       if (balEl) balEl.textContent = `${userTripCoins} 🪙`;
 
       const usdEl = document.getElementById('tripcoinModalUsd');
-      if (usdEl) usdEl.textContent = `$${(userTripCoins/100).toFixed(2)} USD`;
+      if (usdEl) usdEl.textContent = `$${(userTripCoins/250).toFixed(2)} USD`;
 
       const ledgerEl = document.getElementById('coinLedgerContainer');
       if (ledgerEl) {
@@ -4038,7 +4598,11 @@ ${s.type === "Accommodation" ? `
         if (savedBal) userWalletBalance = parseFloat(savedBal) || 150.00;
 
         const savedCoins = localStorage.getItem('tripbna_coins_balance');
-        if (savedCoins) userTripCoins = parseInt(savedCoins) || 350;
+        if (savedCoins !== null) {
+          userTripCoins = parseInt(savedCoins) || 0;
+        } else {
+          userTripCoins = 0;
+        }
 
         const savedBookings = localStorage.getItem('tripbna_user_bookings');
         if (savedBookings) userBookings = JSON.parse(savedBookings) || [];
@@ -4212,157 +4776,613 @@ ${s.type === "Accommodation" ? `
 
 
   let selectedTransportService = null;
-
-  // Hook ONLY transport Confirm Now
-  const originalBookService = window.bookService;
-  window.bookService = function(id) {
-    const svc = services.find(s => s.id === id);
-    if (svc && svc.type === "Transport") {
-      openTransportBooking(svc);
-    } else {
-      originalBookService(id);
-    }
+  let selectedTransportTypeData = {
+    type: 'Taxi',
+    icon: '🚕',
+    price: 25,
+    name: 'Taxi Cab',
+    desc: 'Private City & Airport Cabs'
   };
+
+  function selectTransportType(type, icon, basePrice, desc) {
+    selectedTransportTypeData = { type, icon, price: basePrice, name: `${icon} ${type}`, desc };
+    
+    // Highlight clicked button
+    document.querySelectorAll('.transport-type-btn').forEach(b => b.classList.remove('selected'));
+    const clickedBtn = Array.from(document.querySelectorAll('.transport-type-btn')).find(b => b.textContent.includes(type));
+    if (clickedBtn) clickedBtn.classList.add('selected');
+
+    // Pre-fill and open transport booking overlay
+    openTransportBookingForType(selectedTransportTypeData);
+  }
+  window.selectTransportType = selectTransportType;
+
+  function openTransportBookingForType(transportData) {
+    if (!window.currentUser) {
+      showToast("Please log in before booking transport.");
+      openModal('loginModal');
+      return;
+    }
+
+    selectedTransportService = {
+      id: 'transport_' + (transportData.type || 'Custom').toLowerCase(),
+      type: 'Transport',
+      name: transportData.name || 'Transport Service',
+      price: transportData.price || 25,
+      place: 'Tanzania',
+      vehicleType: transportData.type
+    };
+
+    // Set headings and badge
+    const headingEl = document.getElementById('transportModalHeading');
+    if (headingEl) headingEl.textContent = `${transportData.icon || '🚗'} ${transportData.type} Booking Form`;
+    
+    const iconBadge = document.getElementById('transportTypeIconBadge');
+    if (iconBadge) iconBadge.textContent = transportData.icon || '🚗';
+
+    const nameBadge = document.getElementById('transportTypeNameBadge');
+    if (nameBadge) nameBadge.textContent = `${transportData.type} Service`;
+
+    const descBadge = document.getElementById('transportTypeDescBadge');
+    if (descBadge) descBadge.textContent = transportData.desc || 'Verified TripBnA Transport Operator';
+
+    const sPriceEl = document.getElementById('servicePrice');
+    if (sPriceEl) sPriceEl.textContent = transportData.price;
+
+    // Pre-fill user personal info
+    const user = window.currentUserProfile || window.currentUser;
+    const pName = document.getElementById('pFullName');
+    if (pName && !pName.value) pName.value = user?.name || user?.displayName || (user?.email ? user.email.split('@')[0] : '');
+
+    const pPhone = document.getElementById('pPhone');
+    if (pPhone && !pPhone.value) pPhone.value = user?.phone || '';
+
+    const pEmail = document.getElementById('pEmail');
+    if (pEmail && !pEmail.value) pEmail.value = user?.email || '';
+
+    // Pre-fill route from search inputs or sensible defaults
+    const tPickupSearch = document.getElementById('tPickup')?.value;
+    const tDestSearch = document.getElementById('tDestination')?.value;
+    const tDateSearch = document.getElementById('tDate')?.value;
+
+    const tPickup = document.getElementById('tBookingPickup');
+    if (tPickup && (!tPickup.value || tPickupSearch)) {
+      tPickup.value = tPickupSearch || 'Dar es Salaam City / Airport';
+    }
+
+    const tDest = document.getElementById('tBookingDestination');
+    if (tDest && (!tDest.value || tDestSearch)) {
+      tDest.value = tDestSearch || 'Zanzibar Island / Hotel';
+    }
+
+    const tDate = document.getElementById('tBookingDate');
+    if (tDate) {
+      tDate.value = tDateSearch || tDate.value || new Date().toISOString().split('T')[0];
+    }
+
+    const tCount = document.getElementById('ticketCount');
+    if (tCount && (!tCount.value || Number(tCount.value) < 1)) tCount.value = 1;
+
+    updateTotalPrice();
+
+    const overlay = document.getElementById('transportBookingOverlay');
+    if (overlay) overlay.style.display = 'block';
+  }
+  window.openTransportBookingForType = openTransportBookingForType;
 
   function openTransportBooking(service) {
+    if (!window.currentUser) {
+      showToast("Please log in before booking transport.");
+      openModal('loginModal');
+      return;
+    }
     selectedTransportService = service;
-    document.getElementById('servicePrice').textContent = service.price;
-    document.getElementById('ticketCount').value = 1;
-    updateTotalPrice();
-    document.getElementById('transportBookingOverlay').style.display = 'block';
+    const icon = (service.name||'').includes('Flight') ? '✈️' : ((service.name||'').includes('Bus') ? '🚌' : ((service.name||'').includes('Train') ? '🚆' : ((service.name||'').includes('Boat')||(service.name||'').includes('Yacht') ? '🛥️' : '🚗')));
+    openTransportBookingForType({
+      type: service.vehicleType || service.name || 'Vehicle',
+      icon: icon,
+      price: service.price || 25,
+      name: service.name,
+      desc: service.place ? `Verified transport in ${service.place}` : 'TripBnA Verified Transport Operator'
+    });
   }
+  window.openTransportBooking = openTransportBooking;
 
   function closeTransportBooking() {
-    document.getElementById('transportBookingOverlay').style.display = 'none';
+    const overlay = document.getElementById('transportBookingOverlay');
+    if (overlay) overlay.style.display = 'none';
   }
+  window.closeTransportBooking = closeTransportBooking;
 
   function updateTotalPrice() {
-    const qty = Number(document.getElementById('ticketCount').value || 1);
-    const price = Number(selectedTransportService.price || 0);
-    document.getElementById('totalPrice').textContent = price * qty;
+    const qty = Math.max(1, Number(document.getElementById('ticketCount')?.value || 1));
+    const unitPrice = Number(selectedTransportService?.price || selectedTransportTypeData?.price || 0);
+    const total = unitPrice * qty;
+    const priceEl = document.getElementById('totalPrice');
+    if (priceEl) priceEl.textContent = formatPrice(total);
   }
+  window.updateTotalPrice = updateTotalPrice;
 
   function openTransportPayment() {
-    // simple validation
-    const requiredFields = ['pFullName','pGender','pAge','pPhone','pEmail'];
-    for (let id of requiredFields) {
-      if (!document.getElementById(id).value) {
-        alert('Please fill all required fields');
-        return;
+    const pFullName = document.getElementById('pFullName')?.value.trim();
+    const pGender = document.getElementById('pGender')?.value;
+    const pAge = document.getElementById('pAge')?.value;
+    const pPhone = document.getElementById('pPhone')?.value.trim();
+    const pEmail = document.getElementById('pEmail')?.value.trim();
+    const pickup = document.getElementById('tBookingPickup')?.value.trim();
+    const dest = document.getElementById('tBookingDestination')?.value.trim();
+    const date = document.getElementById('tBookingDate')?.value;
+
+    let valid = true;
+    const fields = [
+      { id: 'pFullName', val: pFullName },
+      { id: 'pGender', val: pGender },
+      { id: 'pAge', val: pAge },
+      { id: 'pPhone', val: pPhone },
+      { id: 'pEmail', val: pEmail },
+      { id: 'tBookingPickup', val: pickup },
+      { id: 'tBookingDestination', val: dest },
+      { id: 'tBookingDate', val: date }
+    ];
+
+    fields.forEach(f => {
+      const el = document.getElementById(f.id);
+      if (!f.val) {
+        valid = false;
+        if (el) el.style.border = "2px solid #ef4444";
+      } else {
+        if (el) el.style.border = "";
       }
+    });
+
+    if (!valid) {
+      showToast('⚠️ Please fill all required personal and journey fields');
+      return;
     }
-    document.getElementById('transportPaymentOverlay').style.display = 'block';
+
+    const overlay = document.getElementById("transportPaymentOverlay");
+    if (overlay) overlay.style.display = "block";
   }
+  window.openTransportPayment = openTransportPayment;
 
   function closeTransportPayment() {
-    document.getElementById('transportPaymentOverlay').style.display = 'none';
+    const overlay = document.getElementById('transportPaymentOverlay');
+    if (overlay) overlay.style.display = 'none';
   }
+  window.closeTransportPayment = closeTransportPayment;
 
-
-
-
-  // Instant passenger price calculation (real-time)
-  document.addEventListener('input', function (e) {
-    if (e.target && e.target.id === 'ticketCount') {
-      updateTotalPrice();
+  async function selectTransportPaymentMethod(methodName) {
+    if (!window.currentUser) {
+      showToast("Please log in to complete booking.");
+      openModal('loginModal');
+      return;
     }
-  });
 
-  // Safety: also recalc when overlay opens
-  const originalOpenTransportBooking = window.openTransportBooking;
-  window.openTransportBooking = function(service) {
-    originalOpenTransportBooking(service);
-    setTimeout(updateTotalPrice, 0);
-  };
+    const pFullName = document.getElementById('pFullName')?.value.trim() || getCurrentUserName();
+    const pGender = document.getElementById('pGender')?.value || 'N/A';
+    const pAge = document.getElementById('pAge')?.value || '';
+    const countryCode = document.getElementById('countryCode')?.value || '+255';
+    const pPhone = countryCode + ' ' + (document.getElementById('pPhone')?.value.trim() || '');
+    const pEmail = document.getElementById('pEmail')?.value.trim() || window.currentUser?.email || '';
+    const pickup = document.getElementById('tBookingPickup')?.value.trim() || 'Dar es Salaam';
+    const dest = document.getElementById('tBookingDestination')?.value.trim() || 'Zanzibar';
+    const date = document.getElementById('tBookingDate')?.value || new Date().toISOString().split('T')[0];
+    const time = document.getElementById('tBookingTime')?.value || '08:00';
+    const passengers = Number(document.getElementById('ticketCount')?.value || 1);
+    const notes = document.getElementById('tBookingNotes')?.value.trim() || '';
+    
+    const unitPrice = Number(selectedTransportService?.price || selectedTransportTypeData?.price || 25);
+    const total = unitPrice * passengers;
+    const refCode = 'TBNA-TR-' + Math.floor(100000 + Math.random() * 900000);
+
+    const bookingData = {
+      referenceNumber: refCode,
+      bookingRef: refCode,
+      userId: window.currentUser.uid,
+      customerName: pFullName,
+      customerEmail: pEmail,
+      customerPhone: pPhone,
+      passengerDetails: { name: pFullName, gender: pGender, age: pAge, phone: pPhone, email: pEmail },
+      serviceType: 'Transport',
+      category: 'Transport',
+      serviceTitle: selectedTransportService?.name || `${selectedTransportTypeData?.type || 'Transport'} Booking`,
+      serviceId: selectedTransportService?.id || 'transport_custom',
+      providerId: selectedTransportService?.providerId || 'provider-transport',
+      destination: `${pickup} → ${dest}`,
+      place: `${pickup} → ${dest}`,
+      date: date,
+      departureTime: time,
+      quantity: passengers,
+      totalQuantity: passengers,
+      unitPrice: unitPrice,
+      totalPrice: total,
+      amountPaid: total,
+      notes: notes,
+      specialInstructions: notes,
+      paymentMethod: methodName,
+      paymentStatus: 'paid',
+      status: 'Confirmed',
+      tripCoinsEarned: 2,
+      createdAt: window.serverTimestamp ? window.serverTimestamp() : new Date().toISOString()
+    };
+
+    // Save directly to Firestore collection 'bookings'
+    if (window.db && window.addDoc && window.collection) {
+      try {
+        const docRef = await window.addDoc(window.collection(window.db, "bookings"), bookingData);
+        bookingData.id = docRef.id;
+      } catch (e) {
+        console.error("Firestore transport booking save error:", e);
+      }
+    }
+
+    if (!bookingData.id) bookingData.id = 'transport_' + Date.now();
+
+    // Reward TripCoins
+    try {
+      if (typeof window.awardTripCoinsForBooking === 'function') {
+        window.awardTripCoinsForBooking();
+      } else {
+        const currentCoins = parseInt(localStorage.getItem('tripCoins_balance') || '0', 10) + 2;
+        localStorage.setItem('tripCoins_balance', currentCoins);
+      }
+    } catch(e) {}
+
+    // Add to local state
+    if (typeof userBookings !== 'undefined') {
+      userBookings.unshift(bookingData);
+      try {
+        localStorage.setItem('tripbna_user_bookings', JSON.stringify(userBookings));
+      } catch(e) {}
+    }
+
+    closeTransportPayment();
+    closeTransportBooking();
+
+    // Open E-Ticket Voucher modal
+    if (typeof openETicketModal === 'function') {
+      openETicketModal(bookingData);
+    }
+    if (typeof renderBookingHistory === 'function') {
+      renderBookingHistory(currentBookingFilter);
+    }
+    if (typeof renderUserProfile === 'function') {
+      renderUserProfile();
+    }
+    if (typeof loadProviderBookings === 'function') {
+      loadProviderBookings();
+    }
+
+    showToast(`🎉 Transport booked! Voucher generated & +2 TripCoins awarded.`);
+  }
+  window.selectTransportPaymentMethod = selectTransportPaymentMethod;
 
 
 
   const translations = {
-    sw: {
-      TRANSPORT: "Usafiri",
-      ACCOMMODATION: "Malazi",
-      FOOD: "Chakula",
-      "Transport Booking": "Uhifadhi wa Usafiri",
-      "Passenger Details": "Taarifa za Msafiri",
-      "Contact Details": "Taarifa za Mawasiliano",
-      "Price Details": "Maelezo ya Bei",
-      "Pay Now": "Lipa Sasa"
-     
-    },
-
     en: {
-      TRANSPORT: "Transport",
-      ACCOMMODATION: "Accommodation",
-      FOOD: "Food",
+      "Transport": "Transport",
+      "Accommodation": "Accommodation",
+      "Food": "Food",
+      "Tripline": "Tripline",
+      "Trip Organiser": "Trip Organiser",
+      "Trip Finder": "Trip Finder",
       "Transport Booking": "Transport Booking",
       "Passenger Details": "Passenger Details",
       "Contact Details": "Contact Details",
       "Price Details": "Price Details",
-      "Pay Now": "Pay Now"
+      "Pay Now": "Pay Now",
+      "Search": "Search",
+      "Search / Submit": "Search / Submit",
+      "Book Now": "Book Now",
+      "Confirm Now": "Confirm Now",
+      "Book Experience": "Book Experience",
+      "Add to Cart": "Add to Cart",
+      "Open Cart": "Open Cart",
+      "Clear Cart": "Clear Cart",
+      "Clear": "Clear",
+      "Create": "Create",
+      "Save Itinerary": "Save Itinerary",
+      "View Itinerary": "View Itinerary",
+      "Your name": "Your name",
+      "Place": "Place",
+      "Destination": "Destination",
+      "Date": "Date",
+      "Pickup point": "Pickup point",
+      "Price": "Price",
+      "Visitors": "Visitors",
+      "My Bookings & Tickets": "My Bookings & Tickets",
+      "TripCoin Rewards": "TripCoin Rewards",
+      "Digital Wallet": "Digital Wallet",
+      "Provider Dashboard": "Provider Dashboard",
+      "Logout": "Logout",
+      "Login": "Login",
+      "Sign Up": "Sign Up",
+      "Dark Mode": "Dark Mode",
+      "Flight": "Flight",
+      "Bus": "Bus",
+      "Train": "Train",
+      "Bike": "Bike",
+      "Taxi": "Taxi",
+      "Jeep": "Jeep",
+      "Yacht": "Yacht",
+      "Door / Hotel Delivery": "Door / Hotel Delivery",
+      "Pickup at Restaurant": "Pickup at Restaurant",
+      "Check-in": "Check-in",
+      "Check-out": "Check-out",
+      "Guests": "Guests",
+      "Language Settings": "Language Settings",
+      "Language will apply to the whole app": "Language will apply to the whole app"
     },
-
+    sw: {
+      "Transport": "Usafiri",
+      "Accommodation": "Malazi",
+      "Food": "Chakula",
+      "Tripline": "Safari Zilizochapishwa",
+      "Trip Organiser": "Mratibu wa Safari",
+      "Trip Finder": "Mtafutaji wa Safari",
+      "Transport Booking": "Uhifadhi wa Usafiri",
+      "Passenger Details": "Taarifa za Msafiri",
+      "Contact Details": "Taarifa za Mawasiliano",
+      "Price Details": "Maelezo ya Bei",
+      "Pay Now": "Lipa Sasa",
+      "Search": "Tafuta",
+      "Search / Submit": "Tafuta / Wasilisha",
+      "Book Now": "Hifadhi Sasa",
+      "Confirm Now": "Thibitisha Sasa",
+      "Book Experience": "Hifadhi Safari Hii",
+      "Add to Cart": "Ongeza Kwenye Kikapu",
+      "Open Cart": "Fungua Kikapu",
+      "Clear Cart": "Futa Kikapu",
+      "Clear": "Futa",
+      "Create": "Tengeneza",
+      "Save Itinerary": "Hifadhi Ratiba",
+      "View Itinerary": "Tazama Ratiba",
+      "Your name": "Jina Lako",
+      "Place": "Mahali",
+      "Destination": "Uendako",
+      "Date": "Tarehe",
+      "Pickup point": "Kituo cha Kuchukuliwa",
+      "Price": "Bei",
+      "Visitors": "Wageni",
+      "My Bookings & Tickets": "Tiketi na Uhifadhi Wangu",
+      "TripCoin Rewards": "Zawadi za TripCoin",
+      "Digital Wallet": "Pochi ya Kidijitali",
+      "Provider Dashboard": "Dashibodi ya Mtoa Huduma",
+      "Logout": "Toka",
+      "Login": "Ingia",
+      "Sign Up": "Jisajili",
+      "Dark Mode": "Hali ya Usiku",
+      "Flight": "Ndege",
+      "Bus": "Basi",
+      "Train": "Treni",
+      "Bike": "Baiskeli",
+      "Taxi": "Teksi",
+      "Jeep": "Jeep",
+      "Yacht": "Yacht / Mashua",
+      "Door / Hotel Delivery": "Kuletea Chumbani / Hotelini",
+      "Pickup at Restaurant": "Kuchukua Mkahawani",
+      "Check-in": "Kuingia",
+      "Check-out": "Kuondoka",
+      "Guests": "Wageni",
+      "Language Settings": "Mipangilio ya Lugha",
+      "Language will apply to the whole app": "Lugha itatumika kwenye mfumo mzima"
+    },
     fr: {
-      TRANSPORT: "Transport",
-      ACCOMMODATION: "Hébergement",
-      FOOD: "Nourriture",
+      "Transport": "Transport",
+      "Accommodation": "Hébergement",
+      "Food": "Restauration",
+      "Tripline": "Fil de Voyages",
+      "Trip Organiser": "Organisateur de Voyage",
+      "Trip Finder": "Trouver un Voyage",
       "Transport Booking": "Réservation de Transport",
       "Passenger Details": "Détails du Passager",
       "Contact Details": "Coordonnées",
       "Price Details": "Détails du Prix",
-      "Pay Now": "Payer Maintenant"
+      "Pay Now": "Payer Maintenant",
+      "Search": "Rechercher",
+      "Search / Submit": "Rechercher / Soumettre",
+      "Book Now": "Réserver",
+      "Confirm Now": "Confirmer Maintenant",
+      "Book Experience": "Réserver l'Expérience",
+      "Add to Cart": "Ajouter au Panier",
+      "Open Cart": "Ouvrir le Panier",
+      "Clear Cart": "Vider le Panier",
+      "Clear": "Effacer",
+      "Create": "Créer",
+      "Save Itinerary": "Enregistrer l'Itinéraire",
+      "View Itinerary": "Voir l'Itinéraire",
+      "Your name": "Votre Nom",
+      "Place": "Lieu",
+      "Destination": "Destination",
+      "Date": "Date",
+      "Pickup point": "Point de Prise en Charge",
+      "Price": "Prix",
+      "Visitors": "Visiteurs",
+      "My Bookings & Tickets": "Mes Réservations & Billets",
+      "TripCoin Rewards": "Récompenses TripCoin",
+      "Digital Wallet": "Portefeuille Virtuel",
+      "Provider Dashboard": "Tableau de Bord Prestataire",
+      "Logout": "Déconnexion",
+      "Login": "Connexion",
+      "Sign Up": "S'inscrire",
+      "Dark Mode": "Mode Sombre",
+      "Flight": "Vol",
+      "Bus": "Bus",
+      "Train": "Train",
+      "Bike": "Vélo",
+      "Taxi": "Taxi",
+      "Jeep": "Jeep",
+      "Yacht": "Yacht",
+      "Door / Hotel Delivery": "Livraison à l'Hôtel",
+      "Pickup at Restaurant": "À Emporter",
+      "Check-in": "Arrivée",
+      "Check-out": "Départ",
+      "Guests": "Voyageurs",
+      "Language Settings": "Paramètres de Langue",
+      "Language will apply to the whole app": "La langue s'appliquera à toute l'application"
     },
-
     de: {
-      TRANSPORT: "Transport",
-      ACCOMMODATION: "Unterkunft",
-      FOOD: "Essen",
+      "Transport": "Transport",
+      "Accommodation": "Unterkunft",
+      "Food": "Gastronomie",
+      "Tripline": "Reise-Feed",
+      "Trip Organiser": "Reiseveranstalter",
+      "Trip Finder": "Reisesuche",
       "Transport Booking": "Transportbuchung",
-      "Passenger Details": "Passagierdetails",
+      "Passenger Details": "Passagierdaten",
       "Contact Details": "Kontaktdaten",
       "Price Details": "Preisdetails",
-      "Pay Now": "Jetzt Bezahlen"
+      "Pay Now": "Jetzt Bezahlen",
+      "Search": "Suchen",
+      "Search / Submit": "Suchen / Absenden",
+      "Book Now": "Jetzt Buchen",
+      "Confirm Now": "Jetzt Bestätigen",
+      "Book Experience": "Erlebnis Buchen",
+      "Add to Cart": "In den Warenkorb",
+      "Open Cart": "Warenkorb Öffnen",
+      "Clear Cart": "Warenkorb Leeren",
+      "Clear": "Löschen",
+      "Create": "Erstellen",
+      "Save Itinerary": "Reiseroute Speichern",
+      "View Itinerary": "Reiseroute Anzeigen",
+      "Your name": "Ihr Name",
+      "Place": "Ort",
+      "Destination": "Reiseziel",
+      "Date": "Datum",
+      "Pickup point": "Abholort",
+      "Price": "Preis",
+      "Visitors": "Gäste",
+      "My Bookings & Tickets": "Meine Buchungen & Tickets",
+      "TripCoin Rewards": "TripCoin Prämien",
+      "Digital Wallet": "Digitale Geldbörse",
+      "Provider Dashboard": "Anbieter-Dashboard",
+      "Logout": "Abmelden",
+      "Login": "Anmelden",
+      "Sign Up": "Registrieren",
+      "Dark Mode": "Dunkelmodus",
+      "Flight": "Flug",
+      "Bus": "Bus",
+      "Train": "Zug",
+      "Bike": "Fahrrad",
+      "Taxi": "Taxi",
+      "Jeep": "Jeep",
+      "Yacht": "Yacht",
+      "Door / Hotel Delivery": "Lieferung ins Hotel",
+      "Pickup at Restaurant": "Selbstabholung",
+      "Check-in": "Einchecken",
+      "Check-out": "Auschecken",
+      "Guests": "Gäste",
+      "Language Settings": "Spracheinstellungen",
+      "Language will apply to the whole app": "Die Sprache gilt für die gesamte App"
     },
-
     ar: {
-      TRANSPORT: "النقل",
-      ACCOMMODATION: "الإقامة",
-      FOOD: "الطعام",
-      "Transport Booking": "حجز النقل",
+      "Transport": "النقل والمواصلات",
+      "Accommodation": "الإقامة والفنادق",
+      "Food": "المطاعم والوجبات",
+      "Tripline": "رحلات تريب لاين",
+      "Trip Organiser": "منظم الرحلات",
+      "Trip Finder": "الباحث عن رحلة",
+      "Transport Booking": "حجز وسيلة النقل",
       "Passenger Details": "بيانات المسافر",
-      "Contact Details": "معلومات الاتصال",
+      "Contact Details": "بيانات الاتصال",
       "Price Details": "تفاصيل السعر",
-      "Pay Now": "ادفع الآن"
+      "Pay Now": "ادفع الآن",
+      "Search": "بحث",
+      "Search / Submit": "بحث / إرسال الطلب",
+      "Book Now": "احجز الآن",
+      "Confirm Now": "تأكيد الحجز فوراً",
+      "Book Experience": "حجز التجربة",
+      "Add to Cart": "أضف إلى السلة",
+      "Open Cart": "فتح السلة",
+      "Clear Cart": "تفريغ السلة",
+      "Clear": "مسح",
+      "Create": "إنشاء",
+      "Save Itinerary": "حفظ جدول الرحلة",
+      "View Itinerary": "عرض جدول الرحلة",
+      "Your name": "اسمك الكامل",
+      "Place": "المكان",
+      "Destination": "الوجهة",
+      "Date": "التاريخ",
+      "Pickup point": "مكان الانطلاق",
+      "Price": "السعر",
+      "Visitors": "عدد المسافرين",
+      "My Bookings & Tickets": "حجوزاتي والتذاكر",
+      "TripCoin Rewards": "مكافآت تريب كوين",
+      "Digital Wallet": "المحفظة الإلكترونية",
+      "Provider Dashboard": "لوحة تحكم مزود الخدمة",
+      "Logout": "تسجيل الخروج",
+      "Login": "تسجيل الدخول",
+      "Sign Up": "إنشاء حساب جديد",
+      "Dark Mode": "الوضع الليلي",
+      "Flight": "طيران",
+      "Bus": "حافلة",
+      "Train": "قطار",
+      "Bike": "دراجة",
+      "Taxi": "تاكسي",
+      "Jeep": "جيب سفاري",
+      "Yacht": "يخت بحري",
+      "Door / Hotel Delivery": "توصيل للغرفة / الفندق",
+      "Pickup at Restaurant": "استلام من المطعم",
+      "Check-in": "تاريخ الدخول",
+      "Check-out": "تاريخ المغادرة",
+      "Guests": "عدد النزلاء",
+      "Language Settings": "إعدادات اللغة",
+      "Language will apply to the whole app": "سيتم تطبيق اللغة على كامل التطبيق"
     }
   };
 
-
-
-
   function applyLanguage() {
-    const lang = document.getElementById("languageSelect").value;
+    const lang = document.getElementById("languageSelect")?.value || "en";
     localStorage.setItem("appLanguage", lang);
     translatePage(lang);
+    showToast(`🌐 Language updated.`);
   }
+  window.applyLanguage = applyLanguage;
 
   function translatePage(lang) {
-    const dict = translations[lang];
-    if (!dict) return;
+    const targetDict = translations[lang] || translations.en;
+    const enDict = translations.en;
 
-    document.querySelectorAll("button, h1, h2, h3, h4, label, a, span, div").forEach(el => {
-      const text = el.textContent.trim();
-      if (dict[text]) {
-        el.textContent = dict[text];
+    // Scan buttons, labels, headings, spans, links
+    document.querySelectorAll("button, h1, h2, h3, h4, h5, label, a, span, th, p").forEach(el => {
+      // Avoid destroying child DOM trees
+      if (el.children.length > 0) return;
+
+      if (!el.hasAttribute('data-i18n-orig')) {
+        el.setAttribute('data-i18n-orig', el.textContent.trim());
+      }
+
+      const origText = el.getAttribute('data-i18n-orig');
+      if (origText && targetDict[origText]) {
+        el.textContent = targetDict[origText];
+      } else if (origText && lang === 'en') {
+        el.textContent = origText;
       }
     });
 
-    // Arabic RTL support (basic)
-    document.body.dir = lang === "ar" ? "rtl" : "ltr";
-  }
+    // Translate placeholders
+    document.querySelectorAll("input[placeholder], textarea[placeholder]").forEach(input => {
+      if (!input.hasAttribute('data-i18n-orig-ph')) {
+        input.setAttribute('data-i18n-orig-ph', input.getAttribute('placeholder'));
+      }
+      const origPh = input.getAttribute('data-i18n-orig-ph');
+      if (origPh && targetDict[origPh]) {
+        input.setAttribute('placeholder', targetDict[origPh]);
+      } else if (origPh && lang === 'en') {
+        input.setAttribute('placeholder', origPh);
+      }
+    });
 
-  
+    // RTL Support
+    document.body.dir = (lang === "ar") ? "rtl" : "ltr";
+  }
+  window.translatePage = translatePage;
+
   document.addEventListener("DOMContentLoaded", () => {
-    const savedLang = localStorage.getItem("appLanguage") || "sw";
-    document.getElementById("languageSelect").value = savedLang;
+    const savedLang = localStorage.getItem("appLanguage") || "en";
+    const sel = document.getElementById("languageSelect");
+    if (sel) sel.value = savedLang;
     translatePage(savedLang);
   });
 
@@ -4638,6 +5658,7 @@ async function confirmAccommodationNow() {
     paymentMethod: 'Pay on Arrival / Direct',
     paymentStatus: 'pending',
     status: 'confirmed',
+    coinsEarned: 2,
     createdAt: window.serverTimestamp ? window.serverTimestamp() : new Date().toISOString()
   };
 
@@ -4656,6 +5677,9 @@ async function confirmAccommodationNow() {
 
   if (!bookingData.id) bookingData.id = 'acc_' + Date.now();
 
+  // Award TripCoins (+2 TC)
+  awardTripCoinsForBooking('Accommodation Reservation', refCode);
+
   // Update local state
   userBookings.unshift(bookingData);
   try {
@@ -4671,7 +5695,7 @@ async function confirmAccommodationNow() {
   renderUserProfile();
   loadProviderBookings();
 
-  showToast(`🎉 Accommodation Reserved! Booking Ref: ${refCode}`);
+  showToast(`🎉 Accommodation Reserved! +2 TripCoins earned! Booking Ref: ${refCode}`);
 }
 window.confirmAccommodationNow = confirmAccommodationNow;
 
@@ -5079,6 +6103,7 @@ async function confirmFoodOrderNow() {
     paymentMethod: deliveryType === 'Delivery' ? 'Pay on Delivery' : 'Pay at Restaurant',
     paymentStatus: 'pending',
     status: 'pending',
+    coinsEarned: 2,
     createdAt: window.serverTimestamp ? window.serverTimestamp() : new Date().toISOString()
   };
 
@@ -5096,6 +6121,9 @@ async function confirmFoodOrderNow() {
   }
 
   if (!orderData.id) orderData.id = 'food_' + Date.now();
+
+  // Award TripCoins (+2 TC)
+  awardTripCoinsForBooking('Food Order', refCode);
 
   // Clear cart and update local state
   cart = [];
@@ -5117,7 +6145,7 @@ async function confirmFoodOrderNow() {
   renderUserProfile();
   loadProviderBookings();
 
-  showToast(`🎉 Food Order Confirmed! Order Ref: ${refCode}`);
+  showToast(`🎉 Food Order Confirmed! +2 TripCoins earned! Order Ref: ${refCode}`);
 }
 window.confirmFoodOrderNow = confirmFoodOrderNow;
 
@@ -5695,11 +6723,128 @@ if (viewMenuBtnEl) {
             </div>
           `;
         }
-        return `<video src="${actualUrl}" controls playsinline preload="metadata" class="${className}" style="${style || 'width:100%;height:100%;object-fit:cover;background:#000;'}"></video>`;
+        return `<video src="${actualUrl}" controls playsinline preload="metadata" class="${className}" style="${style || 'width:100%;height:100%;object-fit:cover;background:#000;'}" onclick="this.paused?this.play():this.pause()"></video>`;
       }
 
       return `<img src="${actualUrl}" class="${className}" style="${style || 'width:100%;height:100%;object-fit:cover;'}" alt="Trip Media" onerror="this.src='https://images.unsplash.com/photo-1549924231-f129b911e442?auto=format&fit=crop&w=600&q=80'" loading="lazy" />`;
     }
+
+    /* -------------------------
+       Tripline Multi-Media Carousel (Right to Left & Click Video to Play)
+       ------------------------- */
+    function renderPostMediaCarousel(postId, mediaList) {
+      const items = Array.isArray(mediaList) ? mediaList.filter(Boolean) : (mediaList ? [mediaList] : []);
+      if (!items.length) {
+        return `<div style="height:220px; background:#0f172a; display:flex; align-items:center; justify-content:center; color:#94a3b8; border-radius:12px; font-weight:600;">📷 No Media Attached</div>`;
+      }
+
+      if (items.length === 1) {
+        const m = items[0];
+        const mUrl = (typeof m === 'object' && m.url) ? m.url : m;
+        const isVid = isVideoUrl(mUrl) || (typeof m === 'object' && m.type?.startsWith('video'));
+        if (isVid) {
+          return `
+            <div style="height:320px; border-radius:12px; overflow:hidden; background:#000; position:relative;">
+              <video src="${mUrl}" controls playsinline preload="metadata" style="width:100%; height:100%; object-fit:contain; background:#000; cursor:pointer;" onclick="this.paused?this.play():this.pause()"></video>
+              <div style="position:absolute; top:10px; left:10px; background:rgba(0,0,0,0.6); color:#fff; font-size:11px; padding:3px 8px; border-radius:6px; font-weight:700; pointer-events:none;">🎥 Video</div>
+            </div>
+          `;
+        }
+        return `
+          <div style="height:320px; border-radius:12px; overflow:hidden; background:#0f172a; cursor:pointer;" onclick="openLightbox('${mUrl}')">
+            <img src="${mUrl}" style="width:100%; height:100%; object-fit:cover;" alt="Trip Post" loading="lazy" />
+          </div>
+        `;
+      }
+
+      // Multiple items sliding right to left
+      const slidesHtml = items.map((m, idx) => {
+        const mUrl = (typeof m === 'object' && m.url) ? m.url : m;
+        const isVid = isVideoUrl(mUrl) || (typeof m === 'object' && m.type?.startsWith('video'));
+        if (isVid) {
+          return `
+            <div class="media-carousel-slide" style="position:relative;">
+              <video src="${mUrl}" controls playsinline preload="metadata" style="width:100%; height:100%; object-fit:contain; background:#000; cursor:pointer;" onclick="this.paused?this.play():this.pause()"></video>
+              <div style="position:absolute; top:12px; left:12px; background:rgba(0,0,0,0.65); color:#fff; padding:4px 8px; border-radius:6px; font-size:11px; font-weight:700; pointer-events:none;">🎥 Video • Tap to Play</div>
+            </div>
+          `;
+        }
+        return `
+          <div class="media-carousel-slide" onclick="openLightbox('${mUrl}')" style="cursor:pointer;">
+            <img src="${mUrl}" style="width:100%; height:100%; object-fit:cover;" alt="Trip Media ${idx+1}" loading="lazy" />
+          </div>
+        `;
+      }).join('');
+
+      const thumbsHtml = items.map((m, idx) => {
+        const mUrl = (typeof m === 'object' && m.url) ? m.url : m;
+        const isVid = isVideoUrl(mUrl) || (typeof m === 'object' && m.type?.startsWith('video'));
+        return `
+          <div class="media-thumb-item ${idx === 0 ? 'active' : ''}" id="thumb_${postId}_${idx}" onclick="scrollPostToSlide('${postId}', ${idx})">
+            ${isVid ? `
+              <video src="${mUrl}" muted preload="metadata" style="width:100%; height:100%; object-fit:cover;"></video>
+              <div style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center; background:rgba(0,0,0,0.35); color:#fff; font-size:12px; font-weight:bold;">▶</div>
+            ` : `
+              <img src="${mUrl}" style="width:100%; height:100%; object-fit:cover;" loading="lazy" />
+            `}
+          </div>
+        `;
+      }).join('');
+
+      return `
+        <div class="media-carousel-wrapper" id="carousel_wrap_${postId}">
+          <div class="media-carousel-badge" id="badge_${postId}">1 / ${items.length} 📸🎥</div>
+          <button class="media-carousel-nav-btn prev" type="button" onclick="slidePostCarousel('${postId}', -1)" aria-label="Previous Slide">‹</button>
+          <button class="media-carousel-nav-btn next" type="button" onclick="slidePostCarousel('${postId}', 1)" aria-label="Next Slide">›</button>
+          <div class="media-carousel-track" id="carousel_track_${postId}" onscroll="updateCarouselBadge('${postId}', ${items.length})">
+            ${slidesHtml}
+          </div>
+        </div>
+        <div class="media-thumb-strip" id="thumb_strip_${postId}">
+          ${thumbsHtml}
+        </div>
+      `;
+    }
+    window.renderPostMediaCarousel = renderPostMediaCarousel;
+
+    function slidePostCarousel(postId, dir) {
+      const track = document.getElementById(`carousel_track_${postId}`);
+      if (!track) return;
+      const slideWidth = track.clientWidth || 300;
+      const maxScroll = track.scrollWidth - track.clientWidth;
+      let nextScroll = track.scrollLeft + (dir * slideWidth);
+      if (nextScroll > maxScroll + 5) nextScroll = 0;
+      if (nextScroll < -5) nextScroll = maxScroll;
+      track.scrollTo({ left: nextScroll, behavior: 'smooth' });
+    }
+    window.slidePostCarousel = slidePostCarousel;
+
+    function scrollPostToSlide(postId, slideIndex) {
+      const track = document.getElementById(`carousel_track_${postId}`);
+      if (!track) return;
+      const slideWidth = track.clientWidth || 300;
+      track.scrollTo({ left: slideIndex * slideWidth, behavior: 'smooth' });
+    }
+    window.scrollPostToSlide = scrollPostToSlide;
+
+    function updateCarouselBadge(postId, total) {
+      const track = document.getElementById(`carousel_track_${postId}`);
+      if (!track) return;
+      const slideWidth = track.clientWidth || 1;
+      const currentIndex = Math.min(total, Math.max(1, Math.round(track.scrollLeft / slideWidth) + 1));
+      const badge = document.getElementById(`badge_${postId}`);
+      if (badge) {
+        badge.textContent = `${currentIndex} / ${total} 📸🎥`;
+      }
+      // Update active thumbnail
+      for (let i = 0; i < total; i++) {
+        const thumb = document.getElementById(`thumb_${postId}_${i}`);
+        if (thumb) {
+          thumb.classList.toggle('active', i === (currentIndex - 1));
+        }
+      }
+    }
+    window.updateCarouselBadge = updateCarouselBadge;
 
     /* -------------------------
        Posts (Tripline)
@@ -5710,33 +6855,40 @@ if (viewMenuBtnEl) {
       if (!el) return;
       if(!posts.length){ el.innerHTML = '<div class="card muted" style="padding:24px;text-align:center;">No posts yet. Publish your beautiful safari and travel moments above!</div>'; return; }
       
-      const sorted = [...posts].sort((a,b) => {
+      const searchInput = document.getElementById('triplineSearchInput');
+      const query = (searchInput?.value || '').trim().toLowerCase();
+
+      const filtered = posts.filter(p => {
+        if (!query) return true;
+        const t = (p.title || '').toLowerCase();
+        const l = (p.location || '').toLowerCase();
+        const d = (p.desc || '').toLowerCase();
+        const a = (p.authorName || '').toLowerCase();
+        return t.includes(query) || l.includes(query) || d.includes(query) || a.includes(query);
+      });
+
+      if (!filtered.length) {
+        el.innerHTML = '<div class="card muted" style="padding:24px;text-align:center;">No posts found matching your search. Try another location or keyword.</div>';
+        return;
+      }
+
+      const sortBy = document.getElementById('triplineSortBy')?.value || 'newest';
+      const sorted = [...filtered].sort((a,b) => {
         const timeA = a.createdAt?.toMillis ? a.createdAt.toMillis() : (a.created || (typeof a.createdAt === 'string' ? new Date(a.createdAt).getTime() : 0));
         const timeB = b.createdAt?.toMillis ? b.createdAt.toMillis() : (b.created || (typeof b.createdAt === 'string' ? new Date(b.createdAt).getTime() : 0));
+
+        if (sortBy === 'newest') return timeB - timeA;
+        if (sortBy === 'oldest') return timeA - timeB;
+        if (sortBy === 'location') return (a.location || '').localeCompare(b.location || '');
+        if (sortBy === 'priceLow') return (Number(a.price) || 0) - (Number(b.price) || 0);
+        if (sortBy === 'priceHigh') return (Number(b.price) || 0) - (Number(a.price) || 0);
+        if (sortBy === 'title') return (a.title || '').localeCompare(b.title || '');
         return timeB - timeA;
       });
 
       el.innerHTML = sorted.map(p => {
-        const allMedia = Array.isArray(p.media) ? p.media : (p.media ? [p.media] : []);
-        const primaryMedia = allMedia.length ? allMedia[0] : '';
-        const mediaHtml = renderMediaItem(primaryMedia);
-        
-        const extraMedia = allMedia.slice(1);
-        const visibleExtra = extraMedia.slice(0, 3);
-        const hiddenExtra = extraMedia.slice(3);
-
-        const galleryHtml = visibleExtra.map(m => {
-          const mUrl = typeof m === 'string' ? m : (m.url || '');
-          return renderMediaItem(mUrl, '', 'width:76px;height:54px;border-radius:8px;margin-right:6px;display:inline-block;overflow:hidden;', true);
-        }).join('');
-
-        const hiddenGalleryHtml = hiddenExtra.map(m => {
-          const mUrl = typeof m === 'string' ? m : (m.url || '');
-          return renderMediaItem(mUrl, '', 'width:76px;height:54px;border-radius:8px;margin-right:6px;margin-top:4px;display:inline-block;overflow:hidden;', true);
-        }).join('');
-
-        const viewMoreBtn = hiddenExtra.length > 0 ? `<button class="btn ghost" onclick="toggleMediaViewIndex111('${p.id}')" style="padding:4px 8px;font-size:12px;margin-top:4px;">+${hiddenExtra.length} more</button>` : '';
-        const showLessBtn = hiddenExtra.length > 0 ? `<button class="btn ghost" onclick="toggleMediaViewIndex111('${p.id}')" id="showLessBtn_${p.id}" style="padding:4px 8px;font-size:12px;margin-top:4px;display:none;">Show less</button>` : '';
+        const allMedia = Array.isArray(p.media) ? p.media.filter(Boolean) : (p.media ? [p.media] : []);
+        const carouselHtml = renderPostMediaCarousel(p.id, allMedia);
         
         let dateStr = 'Recent';
         if (p.createdAt?.toDate) {
@@ -5748,26 +6900,24 @@ if (viewMenuBtnEl) {
         }
 
         return `
-          <div class="post card" data-id="${p.id}">
-            <div class="post-media">${mediaHtml}</div>
+          <div class="post card" data-id="${p.id}" style="margin-bottom:20px; overflow:hidden; border-radius:14px; box-shadow:0 4px 16px rgba(0,0,0,0.06);">
+            <div class="post-media" style="margin:-16px -16px 14px -16px;">
+              ${carouselHtml}
+            </div>
             <div class="post-body">
-              <div class="post-title">${escapeHTML(p.title||'Untitled Experience')} <span class="muted" style="font-weight:700;color:var(--accent-2);">$${p.price||0}</span></div>
-              <div class="post-meta">📍 ${escapeHTML(p.location||'Tanzania')} • 👤 ${escapeHTML(p.authorName||'Traveler')} • 📅 ${dateStr}</div>
-              <div style="font-size:14px;line-height:1.5;color:#334155;">${escapeHTML(p.desc||'')}</div>
-              
-              ${extraMedia.length > 0 ? `
-                <div style="margin-top:10px" id="mediaGallery_${p.id}">
-                  <div class="media-preview" id="visibleMedia_${p.id}">${galleryHtml}</div>
-                  <div class="hidden-media" id="hiddenMedia_${p.id}" style="display:none;">${hiddenGalleryHtml}</div>
-                  ${viewMoreBtn}
-                  ${showLessBtn}
-                </div>
-              ` : ''}
+              <div class="post-title" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+                <span style="font-size:18px; font-weight:800; color:#0f172a;">${escapeHTML(p.title||'Untitled Experience')}</span>
+                ${p.price ? `<span class="badge" style="background:#15803d; color:#fff; font-size:14px; font-weight:800; padding:4px 10px; border-radius:8px;">$${p.price}</span>` : ''}
+              </div>
+              <div class="post-meta" style="margin:6px 0 10px 0; color:#64748b; font-size:13px; font-weight:600;">
+                📍 ${escapeHTML(p.location||'Tanzania')} • 👤 ${escapeHTML(p.authorName||'Traveler')} • 📅 ${dateStr}
+              </div>
+              <div style="font-size:14px; line-height:1.6; color:#334155; margin-bottom:14px;">${escapeHTML(p.desc||'')}</div>
 
-              <div class="post-actions">
-                <button class="btn primary" onclick="bookFromPost('${p.id}')">Book Now</button>
-                <button class="btn ghost" onclick="sharePost('${p.id}')">Share</button>
-                <button class="btn ghost" onclick="addPostToCart('${p.id}')">Add to Cart</button>
+              <div class="post-actions" style="display:flex; gap:8px; flex-wrap:wrap; border-top:1px solid #f1f5f9; padding-top:12px;">
+                <button class="btn primary" onclick="bookFromPost('${p.id}')" style="background:#2e8b57; color:#fff; font-weight:700;">Book Experience</button>
+                <button class="btn ghost" onclick="sharePost('${p.id}')">📤 Share</button>
+                <button class="btn ghost" onclick="addPostToCart('${p.id}')">🛒 Add to Cart</button>
               </div>
             </div>
           </div>
@@ -6368,6 +7518,19 @@ if (viewMenuBtnEl) {
     }
 
     async function respondToRequest(orgId, requestId, requesterId, accepted){
+      // Update local memory first for instant UI response
+      if (window.myOrganiserRequests) {
+        const rObj = window.myOrganiserRequests.find(r => r.id === requestId);
+        if (rObj) rObj.status = accepted ? 'accepted' : 'rejected';
+      }
+      if (accepted && requesterId && window.allTrips) {
+        const trip = window.allTrips.find(t => t.id === orgId);
+        if (trip) {
+          if (!trip.memberIds) trip.memberIds = [];
+          if (!trip.memberIds.includes(requesterId)) trip.memberIds.push(requesterId);
+        }
+      }
+
       if (window.db && window.updateDoc && window.doc) {
         try {
           // 1. Update request status
@@ -6376,11 +7539,26 @@ if (viewMenuBtnEl) {
             respondedAt: window.serverTimestamp ? window.serverTimestamp() : new Date().toISOString()
           });
 
-          // 2. If accepted, add requester to trip memberIds array
+          // 2. If accepted, add requester to trip memberIds array and post welcoming chat message
           if (accepted && requesterId) {
             await window.updateDoc(window.doc(window.db, "trips", orgId), {
-              memberIds: window.arrayUnion(requesterId)
+              memberIds: window.arrayUnion ? window.arrayUnion(requesterId) : [requesterId]
             });
+
+            if (window.addDoc && window.collection) {
+              try {
+                await window.addDoc(window.collection(window.db, "tripMessages"), {
+                  tripId: orgId,
+                  senderId: 'system',
+                  senderName: 'TripBnA System',
+                  text: '🎉 A new traveler has been approved and joined the group! Welcome!',
+                  type: 'system',
+                  createdAt: window.serverTimestamp ? window.serverTimestamp() : new Date().toISOString()
+                });
+              } catch(msgErr) {
+                console.warn("Welcome msg error:", msgErr);
+              }
+            }
           }
 
           showToast(accepted ? '✅ Member accepted into group!' : 'Request declined');
@@ -6401,6 +7579,8 @@ if (viewMenuBtnEl) {
           if(accepted){
             req.accepted = true;
             req.acceptedAt = Date.now();
+            if (!org.memberIds) org.memberIds = [];
+            if (requesterId && !org.memberIds.includes(requesterId)) org.memberIds.push(requesterId);
           } else {
             org.requests = org.requests.filter(r=>r.id !== requestId);
           }
@@ -6412,22 +7592,108 @@ if (viewMenuBtnEl) {
     }
 
     /* -------------------------
-       Finder submit & matching
+       Organiser All Requests Modal
        ------------------------- */
+    async function openAllOrgRequestsModal() {
+      if (!window.currentUser) {
+        openModal('loginModal');
+        showToast('Please log in as a trip organiser to view join requests.');
+        return;
+      }
+
+      const modal = document.getElementById('orgRequestsModal');
+      const listEl = document.getElementById('orgRequestsList');
+      const titleEl = document.getElementById('orgRequestsModalTitle');
+      
+      if (!modal || !listEl) return;
+      modal.style.display = 'flex';
+      listEl.innerHTML = '<div class="muted" style="text-align:center;padding:20px;">Loading requests...</div>';
+      if (titleEl) titleEl.textContent = '🔔 All Incoming Trip Join Requests';
+
+      let requests = [];
+      if (window.myOrganiserRequests && window.myOrganiserRequests.length) {
+        requests = window.myOrganiserRequests;
+      } else if (window.db && window.collection && window.getDocs && window.query && window.where) {
+        try {
+          const q = window.query(window.collection(window.db, "tripRequests"), window.where("organizerId", "==", window.currentUser.uid));
+          const snap = await window.getDocs(q);
+          snap.forEach(d => requests.push({ id: d.id, ...d.data() }));
+        } catch(e) {
+          console.error("Fetch all requests error:", e);
+        }
+      }
+
+      if (!requests.length) {
+        listEl.innerHTML = '<div class="muted" style="text-align:center;padding:24px;">No join requests received yet. When travelers find your trips and tap "Send Join Request", they will appear here!</div>';
+        return;
+      }
+
+      // Sort pending first
+      requests.sort((a,b) => {
+        if ((a.status === 'pending') && (b.status !== 'pending')) return -1;
+        if ((a.status !== 'pending') && (b.status === 'pending')) return 1;
+        return 0;
+      });
+
+      listEl.innerHTML = requests.map(r => {
+        const isPending = r.status === 'pending' || (!r.status && !r.accepted);
+        const isAccepted = r.status === 'accepted' || r.accepted;
+        const isRejected = r.status === 'rejected';
+
+        let badge = '<span style="background:#f39c12;color:white;padding:2px 8px;border-radius:12px;font-size:11px;">Pending</span>';
+        if (isAccepted) badge = '<span style="background:#27ae60;color:white;padding:2px 8px;border-radius:12px;font-size:11px;">Accepted</span>';
+        if (isRejected) badge = '<span style="background:#e74c3c;color:white;padding:2px 8px;border-radius:12px;font-size:11px;">Declined</span>';
+
+        return `
+          <div class="card" style="display:flex;justify-content:space-between;align-items:center;padding:12px;border:1px solid #e9ecef;border-radius:8px;background:#fff;margin-bottom:8px;">
+            <div>
+              <div style="font-weight:700;font-size:15px;display:flex;align-items:center;gap:8px;">
+                👤 ${escapeHTML(r.requesterName || r.finderName || 'Traveler')}
+                ${badge}
+              </div>
+              <div style="font-size:13px;color:#1e40af;font-weight:600;margin-top:2px;">
+                Trip: ${escapeHTML(r.tripTitle || r.place || 'Organised Trip')}
+              </div>
+              <div class="muted" style="font-size:12px;margin-top:2px;">
+                📍 ${escapeHTML(r.place)} • 📅 ${r.date} • 👥 ${r.visitors || 1} visitor(s)
+              </div>
+            </div>
+            <div style="display:flex;gap:8px;">
+              ${isPending ? `
+                <button class="btn primary" onclick="respondToRequest('${r.tripId}', '${r.id}', '${r.requesterId || ''}', true)" style="background:#27ae60;color:white;padding:6px 12px;font-size:12px;border-radius:6px;">✓ Accept</button>
+                <button class="btn ghost" onclick="respondToRequest('${r.tripId}', '${r.id}', '${r.requesterId || ''}', false)" style="color:#e74c3c;padding:6px 12px;font-size:12px;border-radius:6px;">✕ Decline</button>
+              ` : `
+                <span class="muted" style="font-size:12px;padding:6px;">${isAccepted ? 'Added to group' : 'Declined'}</span>
+              `}
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+    window.openAllOrgRequestsModal = openAllOrgRequestsModal;
     async function submitFinder(){
       const finderName = document.getElementById('finderName').value.trim() || getCurrentUserName();
       const place = document.getElementById('finderPlace').value.trim();
       const date = document.getElementById('finderDate').value;
       const visitors = parseInt(document.getElementById('finderVisitors').value) || 1;
-      if(!place) return showToast('Please enter a destination place');
+      
+      if (!place && !date) {
+        return showToast('Please enter a destination and select a travel date.');
+      }
+      if (!place) {
+        return showToast('Please enter a destination place to match trips.');
+      }
+      if (!date) {
+        return showToast('Please select a travel date to match trips.');
+      }
 
       const orgs = (window.allTrips && window.allTrips.length) ? window.allTrips : lsLoad(LS_KEYS.ORGANISERS);
       const placeQuery = place.trim().toLowerCase();
       
-      // Flexible matching on destination place or title, and optional date filter
+      // Match strictly when destination name and travel date both match
       const matches = orgs.filter(o => {
         const placeMatch = (o.placeNormalized || (o.place||'').toLowerCase()).includes(placeQuery) || (o.title||'').toLowerCase().includes(placeQuery);
-        const dateMatch = !date || o.date === date;
+        const dateMatch = o.date === date;
         return placeMatch && dateMatch;
       });
 
@@ -6439,23 +7705,33 @@ if (viewMenuBtnEl) {
           const isMember = currentUid && (isOwner || (m.memberIds && m.memberIds.includes(currentUid)));
           const hasPending = currentUid && window.myFinderRequests && window.myFinderRequests.some(r => r.tripId === m.id && r.status === 'pending');
 
-          let actionBtn = `<button class="btn primary" onclick="sendJoinRequest('${m.id}','${encodeURIComponent(finderName)}','${encodeURIComponent(m.place)}','${m.date}',${visitors})">➕ Send Join Request</button>`;
+          let actionBtn = `<button class="btn primary" onclick="sendJoinRequest('${m.id}','${encodeURIComponent(finderName)}','${encodeURIComponent(m.place)}','${m.date}',${visitors})" style="padding:8px 16px; font-weight:700; background:#0b84ff; color:#fff; border-radius:8px; display:inline-flex; align-items:center; gap:6px;">➕ Send Joining Request</button>`;
           if (isOwner) {
             actionBtn = `<span class="chip chip-confirmed" style="font-size:12px;padding:5px 10px;">👑 Your Organised Trip</span>`;
           } else if (isMember) {
-            actionBtn = `<button class="btn primary" onclick="openGroup('${m.id}')" style="background:#2e8b57;color:white;">💬 Open Group Chat</button>`;
+            actionBtn = `<button class="btn primary" onclick="openGroup('${m.id}')" style="background:#2e8b57;color:white;padding:8px 16px;border-radius:8px;">💬 Open Group Chat</button>`;
           } else if (hasPending) {
-            actionBtn = `<span class="chip chip-pending" style="font-size:12px;padding:5px 10px;">⏳ Request Pending</span>`;
+            actionBtn = `<span class="chip chip-pending" style="font-size:12px;padding:6px 12px;font-weight:600;">⏳ Request Pending Organiser Approval</span>`;
           }
 
-          return `<div style="padding:14px;border-radius:10px;border:1px solid #e2e8f0;margin-bottom:10px;background:white;box-shadow:0 2px 6px rgba(0,0,0,0.04);">
-            <div style="font-weight:800;font-size:16px;color:#0f172a;">${escapeHTML(m.title)}</div>
-            <div class="muted" style="font-size:13px;margin:4px 0;">📍 ${escapeHTML(m.place)} • 📅 ${m.date} • 💰 $${m.price||0} • Organiser: ${escapeHTML(m.organizerName||m.owner||'Guide')}</div>
-            <div style="margin-top:10px">${actionBtn}</div>
+          return `<div style="padding:16px;border-radius:12px;border:1.5px solid #0b84ff;margin-bottom:12px;background:#f0f7ff;box-shadow:0 3px 10px rgba(11,132,255,0.08);">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+              <div>
+                <span class="badge" style="background:#0b84ff;color:#fff;font-size:11px;padding:2px 8px;border-radius:10px;">🎯 Matched Destination & Date</span>
+                <div style="font-weight:800;font-size:16px;color:#0f172a;margin-top:6px;">${escapeHTML(m.title)}</div>
+              </div>
+              <div style="font-size:16px;font-weight:800;color:#0b84ff;">$${m.price||0}</div>
+            </div>
+            <div class="muted" style="font-size:13px;margin:6px 0 10px;">
+              📍 <strong>Destination:</strong> ${escapeHTML(m.place)} • 📅 <strong>Date:</strong> ${m.date} • 👑 <strong>Organiser:</strong> ${escapeHTML(m.organizerName||m.owner||'Guide')}
+            </div>
+            <div style="display:flex;align-items:center;gap:10px;margin-top:8px;">
+              ${actionBtn}
+            </div>
           </div>`;
         }).join('');
         document.getElementById('finderMatchResult').innerHTML = out;
-        showToast(`Found ${matches.length} matching organised trip(s)!`);
+        showToast(`🎯 Found ${matches.length} trip(s) matching "${place}" on ${date}!`);
       } else {
         // Save to Firestore incomingRequests
         if (window.db && window.addDoc && window.collection) {
@@ -6465,7 +7741,7 @@ if (viewMenuBtnEl) {
               requesterName: finderName,
               place: place,
               placeNormalized: place.trim().toLowerCase(),
-              date: date || new Date().toISOString().split('T')[0],
+              date: date,
               visitors: visitors,
               status: 'open',
               createdAt: window.serverTimestamp ? window.serverTimestamp() : new Date().toISOString()
@@ -6475,11 +7751,11 @@ if (viewMenuBtnEl) {
           }
         } else {
           const incoming = lsLoad(LS_KEYS.INCOMING);
-          const item = { id:'inc_'+Date.now(), finderName, place, date: date || '', visitors, created:Date.now(), matched:false, response:null };
+          const item = { id:'inc_'+Date.now(), finderName, place, date: date, visitors, created:Date.now(), matched:false, response:null };
           incoming.push(item); lsSave(LS_KEYS.INCOMING, incoming);
           renderIncoming();
         }
-        document.getElementById('finderMatchResult').innerHTML = '<div class="muted" style="padding:14px;background:#f8fafc;border-radius:10px;border:1px solid #e2e8f0;text-align:center;">No current trip matches this destination yet. Your request has been automatically placed in <strong>Incoming Trips</strong> so local organisers can create a trip for you!</div>';
+        document.getElementById('finderMatchResult').innerHTML = `<div class="muted" style="padding:14px;background:#f8fafc;border-radius:10px;border:1px solid #e2e8f0;text-align:center;">No current trip matches <strong>"${escapeHTML(place)}"</strong> on <strong>${escapeHTML(date)}</strong>. Your request has been automatically placed in <strong>Incoming Trips</strong> so local organisers can create a trip for you!</div>`;
         showToast('Stored in Incoming Trips');
       }
     }
@@ -6792,24 +8068,35 @@ if (viewMenuBtnEl) {
     async function openGroup(orgId){
       if (!window.currentUser) {
         openModal('loginModal');
-        alert('Please log in to access the trip group.');
+        showToast('Please log in to access the trip group.');
         return;
       }
 
       const trip = (window.allTrips || []).find(t => t.id === orgId) || (lsLoad(LS_KEYS.ORGANISERS)).find(t => t.id === orgId);
-      if (!trip) return alert('Trip not found');
+      if (!trip) return showToast('Trip not found');
 
       const isOwner = trip.organizerId === window.currentUser.uid || trip.ownerId === window.currentUser.uid;
       const isMember = isOwner || (trip.memberIds && trip.memberIds.includes(window.currentUser.uid));
 
       if (!isMember) {
-        alert('Access denied: Only accepted trip members can access this private group.');
+        showToast('Access denied: Only accepted trip members can access this private group.');
         return;
       }
 
       activeGroupOrgId = orgId;
       document.getElementById('groupOverlay').style.display = 'flex';
       document.getElementById('groupTitle').textContent = (trip.title || 'Trip') + ' Group';
+      
+      const roleBadge = document.getElementById('groupRoleBadge');
+      const editBtn = document.getElementById('editItineraryBtn');
+      if (roleBadge) {
+        roleBadge.className = isOwner ? 'chip chip-confirmed' : 'chip chip-active';
+        roleBadge.textContent = isOwner ? '👑 Organiser (Admin)' : '👤 Verified Traveler';
+      }
+      if (editBtn) {
+        editBtn.style.display = isOwner ? 'inline-flex' : 'none';
+        editBtn.onclick = () => openItineraryForOrg(orgId);
+      }
 
       renderGroupMembers(trip);
       subscribeToLiveGroupMessages(orgId);
@@ -6837,26 +8124,29 @@ if (viewMenuBtnEl) {
       const orgName = trip?.organizerName || trip?.owner || 'Organiser';
 
       let html = `
-        <div class="group-member" style="background:#e8f5e9;border-left:3px solid #2e8b57;padding:8px;border-radius:6px;margin-bottom:6px;">
+        <div class="group-member" style="background:#e8f5e9;border-left:3px solid #2e8b57;padding:8px 12px;border-radius:6px;margin:8px 0;">
           <strong>👑 ${escapeHTML(orgName)}</strong>
-          <div class="muted" style="font-size:11px;">Trip Organiser</div>
+          <div class="muted" style="font-size:11px;">Trip Organiser (Admin)</div>
         </div>
       `;
 
       if (memberIds.length > 1) {
-        html += `<div style="font-size:12px;font-weight:700;margin:8px 0 4px;color:#666;">Accepted Members (${memberIds.length - 1})</div>`;
+        html += `<div style="font-size:12px;font-weight:700;margin:8px 0 4px;color:#475569;">Accepted Members (${memberIds.length - 1})</div>`;
         memberIds.forEach((mid, idx) => {
           if (mid !== trip.organizerId && mid !== trip.ownerId) {
             html += `
-              <div class="group-member" style="padding:6px 8px;border-bottom:1px solid #eee;">
-                <strong>👤 Member #${idx}</strong>
-                <div class="muted" style="font-size:11px;">Verified Traveler</div>
+              <div class="group-member" style="padding:6px 8px;border-bottom:1px solid #f1f5f9;display:flex;align-items:center;justify-content:space-between;">
+                <div>
+                  <strong>👤 Traveler Member</strong>
+                  <div class="muted" style="font-size:11px;">Verified Traveler</div>
+                </div>
+                <span class="chip chip-confirmed" style="font-size:10px;">Joined</span>
               </div>
             `;
           }
         });
       } else {
-        html += '<div class="muted" style="font-size:12px;margin-top:6px;">No additional members accepted yet.</div>';
+        html += '<div class="muted" style="font-size:12px;margin:6px 0 10px;">No other members accepted yet. New travelers will appear here once approved!</div>';
       }
 
       membersContainer.innerHTML = html;
@@ -6959,7 +8249,7 @@ if (viewMenuBtnEl) {
     if (toggleBtn && membersPanel) {
       toggleBtn.addEventListener('click', () => {
         membersPanel.classList.toggle('open');
-        toggleBtn.textContent = membersPanel.classList.contains('open') ? 'Members ▲' : 'Members ▼';
+        toggleBtn.textContent = membersPanel.classList.contains('open') ? '👥 Members ▲' : '👥 Members ▼';
       });
     }
 
@@ -7053,7 +8343,7 @@ if (viewMenuBtnEl) {
 
     if (saveBtn) {
       saveBtn.addEventListener('click', async ()=>{
-        if(!activeItineraryOrgId) return alert('Please open itinerary from a specific organiser trip.');
+        if(!activeItineraryOrgId) return showToast('Please open itinerary from a specific organiser trip.');
         
         if (window.db && window.setDoc && window.doc) {
           try {
@@ -7067,12 +8357,25 @@ if (viewMenuBtnEl) {
         }
 
         localStorage.setItem('trip_itinerary_' + activeItineraryOrgId, JSON.stringify(itineraryData));
-        alert('Itinerary saved successfully!');
+        showToast('✅ Itinerary saved and published to travelers!');
         itineraryOverlay.style.display='none';
       });
     }
 
     async function openItineraryForOrg(orgId){
+      const trip = (window.allTrips || []).find(t => t.id === orgId) || (lsLoad(LS_KEYS.ORGANISERS)).find(t => t.id === orgId);
+      const currentUid = getCurrentUserUid();
+      const isOwner = currentUid && trip && (trip.organizerId === currentUid || trip.ownerId === currentUid);
+
+      if (!isOwner) {
+        // Traveler/Finder Mode: Open read-only view
+        activeGroupOrgId = orgId;
+        viewOverlay.style.display = 'flex';
+        await renderView();
+        showToast('👀 Traveler View: Only the Trip Organiser (Admin) can edit this itinerary.');
+        return;
+      }
+
       activeItineraryOrgId = orgId;
       itineraryData = [];
 
