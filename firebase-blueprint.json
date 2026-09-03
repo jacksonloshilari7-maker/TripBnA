@@ -9,6 +9,8 @@
         "name": { "type": "string", "description": "Display name of the user" },
         "email": { "type": "string", "format": "email", "description": "User email address" },
         "phone": { "type": "string", "description": "User phone number" },
+        "bio": { "type": "string", "description": "User biography and travel profile" },
+        "occupation": { "type": "string", "description": "User occupation: localguide, driver, tourguide, touroperator, restaurantowner, accommodationowner, etc." },
         "role": { "type": "string", "description": "User role: user, organiser, admin" },
         "createdAt": { "type": "string", "format": "date-time" },
         "updatedAt": { "type": "string", "format": "date-time" }
@@ -123,6 +125,31 @@
         "createdAt": { "type": "string", "format": "date-time" }
       },
       "required": ["bookingRef", "userId", "serviceTitle", "amountPaid", "status"]
+    },
+    "services": {
+      "title": "Service",
+      "description": "Accommodation, Food, and Transport catalog with pictures and playable videos.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "description": "Name of service, lodge, restaurant or vehicle" },
+        "type": { "type": "string", "description": "Accommodation, Food, Transport" },
+        "place": { "type": "string", "description": "Location or destination (e.g. Zanzibar, Serengeti, Arusha)" },
+        "placeNormalized": { "type": "string", "description": "Normalized lowercase destination" },
+        "price": { "type": "number", "description": "Price in USD" },
+        "images": { "type": "array", "items": { "type": "string" }, "description": "Picture URLs" },
+        "videos": { "type": "array", "items": { "type": "string" }, "description": "Playable video URLs" },
+        "description": { "type": "string" },
+        "roomType": { "type": "string" },
+        "foodType": { "type": "string" },
+        "amenities": { "type": "string" },
+        "specialOffers": { "type": "string" },
+        "providerId": { "type": "string", "description": "UID of the service provider" },
+        "providerName": { "type": "string", "description": "Name of the service provider" },
+        "providerEmail": { "type": "string", "description": "Email of the service provider" },
+        "menuData": { "type": "object", "description": "Food menu categories and items with approval statuses" },
+        "status": { "type": "string", "description": "Approved or Pending" }
+      },
+      "required": ["name", "type", "place", "price"]
     }
   },
   "firestore": {

@@ -107,6 +107,34 @@ service cloud.firestore {
       );
       allow delete: if isAuthenticated() && resource.data.userId == request.auth.uid;
     }
+
+    function isAdmin() {
+      return isAuthenticated() && (
+        request.auth.token.email == 'jacksonloshilari7@gmail.com' ||
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid))
+      );
+    }
+
+    function isServiceProvider(serviceData) {
+      return isAuthenticated() && (
+        request.auth.uid == serviceData.providerId ||
+        request.auth.uid == serviceData.ownerId
+      );
+    }
+
+    // 9. Accommodations, Food & Services Catalog (with pictures & playable videos)
+    match /services/{serviceId} {
+      // Visible to public/regular users only if approved by admin; providers can see their own; admins see all
+      allow read: if resource.data.status == 'Approved' || isServiceProvider(resource.data) || isAdmin();
+      allow create: if isAuthenticated() && (
+        request.resource.data.providerId == request.auth.uid ||
+        request.resource.data.ownerId == request.auth.uid ||
+        isAdmin()
+      );
+      allow update: if isServiceProvider(resource.data) || isAdmin();
+      allow delete: if isServiceProvider(resource.data) || isAdmin();
+    }
   }
 }
+
 

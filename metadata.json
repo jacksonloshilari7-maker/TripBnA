@@ -1,6 +1,6 @@
 {
   "name": "TripBnA",
   "description": "TripBnA makes travel easy with transport, accommodation, food and trip planning in Tanzania and East Africa.",
-  "requestFramePermissions": [],
+  "requestFramePermissions": ["microphone"],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }
