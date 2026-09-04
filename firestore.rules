@@ -20,8 +20,16 @@ service cloud.firestore {
     // 1. Users collection
     match /users/{userId} {
       allow read: if isAuthenticated();
-      allow create, update: if isOwner(userId);
-      allow delete: if false;
+      // Users can create and update their own document, but CANNOT escalate to admin role unless already admin
+      allow create: if isOwner(userId) && (!('role' in request.resource.data) || request.resource.data.role != 'admin' || isAdmin());
+      allow update: if (isOwner(userId) && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['role']) || resource.data.role == request.resource.data.role || isAdmin())) || isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // Admins registry
+    match /admins/{adminId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
     }
 
     // 2. Trips collection
@@ -96,16 +104,21 @@ service cloud.firestore {
 
     // 8. User Bookings & E-Tickets
     match /bookings/{bookingId} {
+      // Customers see their own bookings; Providers see bookings assigned to them; Admin sees all bookings
       allow read: if isAuthenticated() && (
         resource.data.userId == request.auth.uid ||
-        resource.data.providerId == request.auth.uid
+        resource.data.providerId == request.auth.uid ||
+        isAdmin()
       );
+      // Customers can create their bookings
       allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
+      // Admin can update any booking status; Provider or Customer can update their respective bookings
       allow update: if isAuthenticated() && (
-        resource.data.userId == request.auth.uid ||
-        resource.data.providerId == request.auth.uid
+        isAdmin() ||
+        resource.data.providerId == request.auth.uid ||
+        resource.data.userId == request.auth.uid
       );
-      allow delete: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      allow delete: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin());
     }
 
     function isAdmin() {
@@ -126,13 +139,30 @@ service cloud.firestore {
     match /services/{serviceId} {
       // Visible to public/regular users only if approved by admin; providers can see their own; admins see all
       allow read: if resource.data.status == 'Approved' || isServiceProvider(resource.data) || isAdmin();
+
+      // Providers can create their own accommodation or food services, but status MUST be 'Pending' (unless Admin)
       allow create: if isAuthenticated() && (
-        request.resource.data.providerId == request.auth.uid ||
-        request.resource.data.ownerId == request.auth.uid ||
-        isAdmin()
+        isAdmin() ||
+        (
+          (request.resource.data.providerId == request.auth.uid || request.resource.data.ownerId == request.auth.uid) &&
+          request.resource.data.status == 'Pending'
+        )
       );
-      allow update: if isServiceProvider(resource.data) || isAdmin();
-      allow delete: if isServiceProvider(resource.data) || isAdmin();
+
+      // Admin can approve, reject, publish, or suspend services.
+      // Providers can update their own services, BUT cannot set status to 'Approved', 'Rejected', or 'Suspended'.
+      // Provider updates automatically set or keep status as 'Pending' or 'Pending Review'.
+      allow update: if isAuthenticated() && (
+        isAdmin() ||
+        (
+          isServiceProvider(resource.data) &&
+          (request.resource.data.status == 'Pending' || request.resource.data.status == 'Pending Review') &&
+          (!('providerId' in request.resource.data) || request.resource.data.providerId == resource.data.providerId)
+        )
+      );
+
+      // Only provider owner or Admin can delete
+      allow delete: if isAuthenticated() && (isServiceProvider(resource.data) || isAdmin());
     }
   }
 }

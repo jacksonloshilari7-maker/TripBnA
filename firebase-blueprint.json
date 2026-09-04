@@ -104,34 +104,51 @@
       },
       "required": ["authorId", "title"]
     },
-    "bookings": {
-      "title": "Booking",
-      "description": "Customer bookings and paid tickets for transport, accommodation, food, and organized trips.",
+    "admins": {
+      "title": "Admin",
+      "description": "Authorized platform administrators registry.",
       "type": "object",
       "properties": {
-        "bookingRef": { "type": "string", "description": "Unique booking reference code (e.g. TB-89123)" },
-        "userId": { "type": "string", "description": "User UID" },
+        "uid": { "type": "string", "description": "Admin UID" },
+        "email": { "type": "string", "description": "Admin Email address" },
+        "grantedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "email"]
+    },
+    "bookings": {
+      "title": "Booking",
+      "description": "Customer bookings and paid tickets for accommodation, food, transport, and organized trips.",
+      "type": "object",
+      "properties": {
+        "bookingRef": { "type": "string", "description": "Unique booking reference code (e.g. TBNA-ACC-89123 or TBNA-FD-45211)" },
+        "userId": { "type": "string", "description": "Customer User UID" },
         "customerName": { "type": "string", "description": "Customer full name" },
         "customerEmail": { "type": "string", "description": "Customer email" },
         "customerPhone": { "type": "string", "description": "Customer phone number" },
         "serviceTitle": { "type": "string", "description": "Title of booked service/trip" },
-        "category": { "type": "string", "description": "Transport, Accommodation, Food, Organiser" },
-        "place": { "type": "string", "description": "Destination / Route" },
-        "date": { "type": "string", "description": "Travel/check-in date" },
-        "quantity": { "type": "number", "description": "Number of tickets/passengers/guests" },
-        "amountPaid": { "type": "number", "description": "Total amount paid in USD" },
-        "paymentMethod": { "type": "string", "description": "mpesa, tigo, airtel, halopesa, card, paypal, wallet" },
-        "status": { "type": "string", "description": "confirmed, pending, cancelled, completed" },
+        "serviceId": { "type": "string", "description": "Service ID" },
+        "providerId": { "type": "string", "description": "Service Provider UID" },
+        "providerName": { "type": "string", "description": "Service Provider display name" },
+        "category": { "type": "string", "description": "Accommodation, Food, Transport, Organiser" },
+        "place": { "type": "string", "description": "Destination / Location" },
+        "date": { "type": "string", "description": "Check-in to Check-out or dining date/time" },
+        "quantity": { "type": "number", "description": "Number of guests / dishes" },
+        "totalPrice": { "type": "number", "description": "Total price in USD" },
+        "amountPaid": { "type": "number", "description": "Amount paid upfront in USD" },
+        "specialRequests": { "type": "string", "description": "Special requirements, dietary notes, or room requests" },
+        "paymentMethod": { "type": "string", "description": "Pay via WhatsApp, mpesa, tigo, card, paypal, wallet" },
+        "adminWhatsApp": { "type": "string", "description": "Admin WhatsApp number (+255 635 125 212)" },
+        "status": { "type": "string", "description": "Booking/Order Request Sent, Confirmed, Completed, Cancelled" },
         "createdAt": { "type": "string", "format": "date-time" }
       },
-      "required": ["bookingRef", "userId", "serviceTitle", "amountPaid", "status"]
+      "required": ["bookingRef", "userId", "serviceTitle", "status"]
     },
     "services": {
       "title": "Service",
-      "description": "Accommodation, Food, and Transport catalog with pictures and playable videos.",
+      "description": "Accommodation and Food catalog with pictures and playable videos.",
       "type": "object",
       "properties": {
-        "name": { "type": "string", "description": "Name of service, lodge, restaurant or vehicle" },
+        "name": { "type": "string", "description": "Name of service, lodge, or restaurant" },
         "type": { "type": "string", "description": "Accommodation, Food, Transport" },
         "place": { "type": "string", "description": "Location or destination (e.g. Zanzibar, Serengeti, Arusha)" },
         "placeNormalized": { "type": "string", "description": "Normalized lowercase destination" },
@@ -146,10 +163,17 @@
         "providerId": { "type": "string", "description": "UID of the service provider" },
         "providerName": { "type": "string", "description": "Name of the service provider" },
         "providerEmail": { "type": "string", "description": "Email of the service provider" },
-        "menuData": { "type": "object", "description": "Food menu categories and items with approval statuses" },
-        "status": { "type": "string", "description": "Approved or Pending" }
+        "providerPhone": { "type": "string", "description": "Phone of the service provider" },
+        "status": { "type": "string", "description": "Pending, Pending Review, Approved, Rejected, Suspended" },
+        "rejectionReason": { "type": "string", "description": "Reason provided by Admin if rejected" },
+        "suspendedReason": { "type": "string", "description": "Reason provided by Admin if suspended" },
+        "reviewedAt": { "type": "string", "format": "date-time" },
+        "reviewedBy": { "type": "string", "description": "Admin email who reviewed the service" },
+        "approvedAt": { "type": "string", "format": "date-time" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
       },
-      "required": ["name", "type", "place", "price"]
+      "required": ["name", "type", "place", "price", "status", "providerId"]
     }
   },
   "firestore": {

@@ -23,42 +23,83 @@
        background:#f2f6f8; color:#222; 
      color:inherit; text-decoration:none; }
 
-    /* ---------- Top nav (three buttons) ---------- */
+    /* ---------- Top nav ---------- */
     .topbar {
-      position:sticky;
-      top:0;
-      z-index:1100;
-      background:linear-gradient(180deg,#fff,#f8fbfc);
-      border-bottom:1px solid #e6eef2;
-      display:flex;
-      justify-content:center;
-      padding:10px;
-      box-shadow:0 2px 8px rgba(0,0,0,0.03);
+      position: sticky;
+      top: 0;
+      z-index: 1100;
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-bottom: 1px solid #e2e8f0;
+      display: flex;
+      justify-content: center;
+      padding: 10px 14px;
+      box-shadow: 0 4px 18px rgba(0,0,0,0.03);
     }
     .topbar .btn-row {
-      width:100%;
-      max-width:1100px;
-      display:flex;
-      gap:12px;
-      align-items:center;
+      width: 100%;
+      max-width: 1100px;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      overflow-x: auto;
+      scrollbar-width: none;
+      -webkit-overflow-scrolling: touch;
+      padding: 2px;
+    }
+    .topbar .btn-row::-webkit-scrollbar {
+      display: none;
     }
     .topbar .btn {
-      flex:1;
-      padding:12px 16px;
-      border-radius:8px;
-      border:1px solid #cfe7dd;
-      background:#2e8b57;
-      color:#fff;
-      font-weight:700;
-      text-align:center;
-      cursor:pointer;
-      user-select:none;
+      flex: 1;
+      min-width: 115px;
+      padding: 11px 16px;
+      border-radius: 10px;
+      border: 1.5px solid #cbd5e1;
+      background: #ffffff;
+      color: #334155;
+      font-weight: 800;
+      font-size: 13px;
+      letter-spacing: 0.3px;
+      text-align: center;
+      cursor: pointer;
+      user-select: none;
+      transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      white-space: nowrap;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.02);
     }
-    .topbar .btn:active { transform:translateY(1px); }
-    .topbar .btn.secondary {
-      background:#fff;
-      color:#2e8b57;
-      border:1px solid #2e8b57;
+    .topbar .btn:hover {
+      background: #f8fafc;
+      color: #0f172a;
+      border-color: #94a3b8;
+      transform: translateY(-1px);
+    }
+    .topbar .btn:active {
+      transform: translateY(0);
+    }
+    .topbar .btn.active {
+      background: linear-gradient(135deg, #15803d 0%, #166534 100%) !important;
+      color: #ffffff !important;
+      border-color: #15803d !important;
+      box-shadow: 0 4px 14px rgba(22, 101, 52, 0.28) !important;
+      transform: translateY(-1px);
+    }
+    @media (max-width: 640px) {
+      .topbar {
+        padding: 8px 10px;
+      }
+      .topbar .btn {
+        min-width: 96px;
+        padding: 8px 10px;
+        font-size: 11px;
+        gap: 3px;
+        border-radius: 8px;
+      }
     }
 
     /* ---------- Layout ---------- */
@@ -211,6 +252,12 @@
       gap: 12px;
       margin: 16px 0 20px 0;
     }
+    @media (max-width: 580px) {
+      .transport-type-grid {
+        grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+        gap: 8px;
+      }
+    }
     .transport-type-btn {
       display: flex;
       flex-direction: column;
@@ -218,27 +265,151 @@
       justify-content: center;
       padding: 16px 10px;
       background: #ffffff;
-      border: 2px solid #e2e8f0;
+      border: 1.5px solid #e2e8f0;
       border-radius: 14px;
       cursor: pointer;
-      transition: all 0.25s ease;
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
       text-align: center;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.03);
       outline: none;
+      position: relative;
+      overflow: hidden;
     }
     .transport-type-btn:hover {
-      border-color: #0b84ff;
-      background: #f0f7ff;
+      border-color: #10b981;
+      background: #f0fdf4;
       transform: translateY(-3px);
-      box-shadow: 0 8px 20px rgba(11,132,255,0.18);
+      box-shadow: 0 10px 22px rgba(16, 185, 129, 0.16);
     }
     .transport-type-btn:active {
       transform: translateY(0);
     }
     .transport-type-btn.selected {
-      border-color: #0b84ff;
-      background: #e0f2fe;
-      box-shadow: 0 0 0 3px rgba(11,132,255,0.25);
+      border-color: #15803d;
+      background: #f0fdf4;
+      box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.25), 0 8px 18px rgba(21, 128, 61, 0.15);
+      transform: translateY(-2px);
+    }
+    .transport-type-btn.selected::after {
+      content: '✓ Selected';
+      position: absolute;
+      top: 6px;
+      right: 6px;
+      background: #15803d;
+      color: #ffffff;
+      font-size: 9px;
+      font-weight: 800;
+      padding: 1px 5px;
+      border-radius: 4px;
+    }
+    .transport-icon-bubble {
+      font-size: 32px;
+      margin-bottom: 6px;
+      transition: transform 0.2s ease;
+    }
+    .transport-type-btn:hover .transport-icon-bubble {
+      transform: scale(1.15);
+    }
+    .transport-type-title {
+      font-weight: 800;
+      font-size: 14px;
+      color: #0f172a;
+    }
+    .transport-type-price-tag {
+      font-size: 11px;
+      font-weight: 700;
+      color: #166534;
+      background: #dcfce7;
+      padding: 2px 8px;
+      border-radius: 999px;
+      margin-top: 6px;
+      display: inline-block;
+    }
+
+    /* Continuous Right-to-Left Media Reel for Itinerary & Experiences */
+    @keyframes moveRightToLeftMarquee {
+      0% {
+        transform: translateX(0);
+      }
+      100% {
+        transform: translateX(-50%);
+      }
+    }
+    .itinerary-reel-container {
+      position: relative;
+      width: 100%;
+      overflow: hidden;
+      border-radius: 14px;
+      background: linear-gradient(180deg, #090d16 0%, #0f172a 100%);
+      border: 1px solid #1e293b;
+      padding: 12px 0 16px 0;
+      margin: 14px 0 18px 0;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.35);
+    }
+    .itinerary-reel-track {
+      display: flex;
+      gap: 16px;
+      width: max-content;
+      animation: moveRightToLeftMarquee 32s linear infinite;
+      padding-left: 16px;
+    }
+    .itinerary-reel-track:hover {
+      animation-play-state: paused;
+    }
+    .itinerary-media-card {
+      flex: 0 0 280px;
+      width: 280px;
+      height: 195px;
+      border-radius: 12px;
+      overflow: hidden;
+      position: relative;
+      background: #1e293b;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      box-shadow: 0 6px 16px rgba(0,0,0,0.3);
+      transition: transform 0.25s ease, box-shadow 0.25s ease;
+    }
+    .itinerary-media-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 28px rgba(0,0,0,0.45);
+      border-color: rgba(56, 189, 248, 0.5);
+    }
+    .itinerary-media-card img,
+    .itinerary-media-card video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+    .itinerary-media-tag {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      background: rgba(15, 23, 42, 0.85);
+      color: #38bdf8;
+      font-size: 10px;
+      font-weight: 800;
+      padding: 3px 8px;
+      border-radius: 6px;
+      backdrop-filter: blur(6px);
+      z-index: 5;
+      letter-spacing: 0.3px;
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .itinerary-media-caption {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: linear-gradient(to top, rgba(15, 23, 42, 0.95) 0%, rgba(15, 23, 42, 0.6) 65%, transparent 100%);
+      color: #f8fafc;
+      font-size: 12px;
+      font-weight: 700;
+      padding: 24px 10px 8px 10px;
+      z-index: 5;
+      line-height: 1.3;
     }
 
     /* ---------- Right-to-Left Media Carousel Component ---------- */
@@ -1926,16 +2097,75 @@ body { font-family: Arial, sans-serif; margin:0; padding:20px; background:#f0f2f
 @media(max-width:600px){
   .overlayHeader, .overlayBody, .overlayFooter{ width:95%; }
 }
+
+/* TripBnA Master Admin Styles */
+.admin-tab-scroll::-webkit-scrollbar { height: 4px; }
+.admin-tab-scroll::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+.admin-tab-btn {
+  background: transparent;
+  color: #94a3b8;
+  border: none;
+  border-bottom: 2px solid transparent;
+  padding: 12px 16px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+.admin-tab-btn:hover {
+  color: #f8fafc;
+  background: rgba(255,255,255,0.03);
+}
+.admin-tab-btn.active {
+  color: #38bdf8;
+  border-bottom-color: #38bdf8;
+  background: rgba(56,189,248,0.08);
+}
+.admin-pill {
+  font-size: 10px;
+  font-weight: 800;
+  padding: 2px 7px;
+  border-radius: 999px;
+  display: inline-block;
+}
+.pill-amber { background: #78350f; color: #fbbf24; border: 1px solid #b45309; }
+.pill-green { background: #14532d; color: #4ade80; border: 1px solid #15803d; }
+.pill-red { background: #7f1d1d; color: #f87171; border: 1px solid #b91c1c; }
+.pill-orange { background: #7c2d12; color: #fb923c; border: 1px solid #c2410c; }
+.pill-blue { background: #1e3a8a; color: #93c5fd; border: 1px solid #2563eb; }
+.pill-purple { background: #581c87; color: #d8b4fe; border: 1px solid #7e22ce; }
+.pill-cyan { background: #164e63; color: #67e8f9; border: 1px solid #0891b2; }
+
+.admin-metric-card {
+  background: #0f172a;
+  border: 1px solid #1e293b;
+  border-radius: 12px;
+  padding: 16px;
+  transition: all 0.2s ease;
+}
+.admin-metric-card:hover {
+  border-color: #38bdf8;
+  transform: translateY(-2px);
+}
+@media (max-width: 768px) {
+  .admin-grid-2col { grid-template-columns: 1fr !important; }
+}
   </style>
 </head>
 <body>
 
-  <!-- TOP NAV: Three buttons in one row at top -->
+  <!-- TOP NAV: Buttons in one row at top -->
   <div class="topbar" role="navigation">
     <div class="btn-row">
-      <button id="navTransport" class="btn" onclick="openSection('transport')">TRANSPORT</button>
-      <button id="navAccommodation" class="btn" onclick="openSection('accommodation')">ACCOMMODATION</button>
-      <button id="navFood" class="btn" onclick="openSection('food')">FOOD</button>
+      <button id="navTransport" class="btn active" onclick="openSection('transport')">🚗 TRANSPORT</button>
+      <button id="navAccommodation" class="btn" onclick="openSection('accommodation')">🏨 ACCOMMODATION</button>
+      <button id="navFood" class="btn" onclick="openSection('food')">🍽️ FOOD</button>
+      <button id="navSearch" class="btn btn-search-nav" onclick="openSearch()">🔍 SEARCH</button>
+      <button id="navAdminDashboard" class="btn btn-admin-nav" style="display:none;" onclick="openAdminDashboard()">🛡️ ADMIN <span id="topAdminPendingBadge" style="background:#f59e0b; color:#000; font-size:10px; padding:2px 6px; border-radius:10px; margin-left:4px; font-weight:800; display:none;">0</span></button>
     </div>
   </div>
 
@@ -2427,47 +2657,72 @@ body { font-family: Arial, sans-serif; margin:0; padding:20px; background:#f0f2f
 
           <!-- Transport Type Buttons: Flight, Bus, Trains, Bike, Taxi, Jeep, Yacht -->
           <div class="transport-type-grid">
-            <button type="button" class="transport-type-btn" onclick="selectTransportType('Flight', '✈️', 120, 'Domestic & Regional Flights')">
-              <div style="font-size:32px; margin-bottom:6px;">✈️</div>
-              <div style="font-weight:700; font-size:15px; color:#0f172a;">Flight</div>
-              <div class="muted" style="font-size:12px; margin-top:2px;">From $120 / seat</div>
+            <button type="button" class="transport-type-btn" id="btnTransport_Flight" onclick="selectTransportType('Flight', '✈️', 120, 'Domestic & Regional Flights')">
+              <div class="transport-icon-bubble">✈️</div>
+              <div class="transport-type-title">Flight</div>
+              <div class="transport-type-price-tag">From $120 / seat</div>
             </button>
             
-            <button type="button" class="transport-type-btn" onclick="selectTransportType('Bus', '🚌', 15, 'Intercity & Luxury Coaches')">
-              <div style="font-size:32px; margin-bottom:6px;">🚌</div>
-              <div style="font-weight:700; font-size:15px; color:#0f172a;">Bus</div>
-              <div class="muted" style="font-size:12px; margin-top:2px;">From $15 / seat</div>
+            <button type="button" class="transport-type-btn" id="btnTransport_Bus" onclick="selectTransportType('Bus', '🚌', 15, 'Intercity & Luxury Coaches')">
+              <div class="transport-icon-bubble">🚌</div>
+              <div class="transport-type-title">Bus</div>
+              <div class="transport-type-price-tag">From $15 / seat</div>
             </button>
             
-            <button type="button" class="transport-type-btn" onclick="selectTransportType('Trains', '🚆', 20, 'SGR & Express Train Services')">
-              <div style="font-size:32px; margin-bottom:6px;">🚆</div>
-              <div style="font-weight:700; font-size:15px; color:#0f172a;">Trains</div>
-              <div class="muted" style="font-size:12px; margin-top:2px;">From $20 / seat</div>
+            <button type="button" class="transport-type-btn" id="btnTransport_Trains" onclick="selectTransportType('Trains', '🚆', 20, 'SGR & Express Train Services')">
+              <div class="transport-icon-bubble">🚆</div>
+              <div class="transport-type-title">Trains</div>
+              <div class="transport-type-price-tag">From $20 / seat</div>
             </button>
             
-            <button type="button" class="transport-type-btn" onclick="selectTransportType('Bike', '🏍️', 10, 'Motorbike & Bodaboda Rentals')">
-              <div style="font-size:32px; margin-bottom:6px;">🏍️</div>
-              <div style="font-weight:700; font-size:15px; color:#0f172a;">Bike</div>
-              <div class="muted" style="font-size:12px; margin-top:2px;">From $10 / ride</div>
+            <button type="button" class="transport-type-btn" id="btnTransport_Bike" onclick="selectTransportType('Bike', '🏍️', 10, 'Motorbike & Bodaboda Rentals')">
+              <div class="transport-icon-bubble">🏍️</div>
+              <div class="transport-type-title">Bike</div>
+              <div class="transport-type-price-tag">From $10 / ride</div>
             </button>
             
-            <button type="button" class="transport-type-btn" onclick="selectTransportType('Taxi', '🚕', 25, 'Private City & Airport Cabs')">
-              <div style="font-size:32px; margin-bottom:6px;">🚕</div>
-              <div style="font-weight:700; font-size:15px; color:#0f172a;">Taxi</div>
-              <div class="muted" style="font-size:12px; margin-top:2px;">From $25 / ride</div>
+            <button type="button" class="transport-type-btn" id="btnTransport_Taxi" onclick="selectTransportType('Taxi', '🚕', 25, 'Private City & Airport Cabs')">
+              <div class="transport-icon-bubble">🚕</div>
+              <div class="transport-type-title">Taxi</div>
+              <div class="transport-type-price-tag">From $25 / ride</div>
             </button>
             
-            <button type="button" class="transport-type-btn" onclick="selectTransportType('Jeep', '🚙', 150, '4x4 Safari & Overland 4WD')">
-              <div style="font-size:32px; margin-bottom:6px;">🚙</div>
-              <div style="font-weight:700; font-size:15px; color:#0f172a;">Jeep</div>
-              <div class="muted" style="font-size:12px; margin-top:2px;">From $150 / day</div>
+            <button type="button" class="transport-type-btn" id="btnTransport_Jeep" onclick="selectTransportType('Jeep', '🚙', 150, '4x4 Safari & Overland 4WD')">
+              <div class="transport-icon-bubble">🚙</div>
+              <div class="transport-type-title">Jeep 4x4</div>
+              <div class="transport-type-price-tag">From $150 / day</div>
             </button>
             
-            <button type="button" class="transport-type-btn" onclick="selectTransportType('Yacht', '🛥️', 250, 'Private Marine & Island Charters')">
-              <div style="font-size:32px; margin-bottom:6px;">🛥️</div>
-              <div style="font-weight:700; font-size:15px; color:#0f172a;">Yacht</div>
-              <div class="muted" style="font-size:12px; margin-top:2px;">From $250 / trip</div>
+            <button type="button" class="transport-type-btn" id="btnTransport_Yacht" onclick="selectTransportType('Yacht', '🛥️', 250, 'Private Marine & Island Charters')">
+              <div class="transport-icon-bubble">🛥️</div>
+              <div class="transport-type-title">Yacht & Boat</div>
+              <div class="transport-type-price-tag">From $250 / trip</div>
             </button>
+          </div>
+
+          <!-- Dynamic Active Transport Preview Card -->
+          <div id="transportSelectionCard" style="display:none; background:#f0fdf4; border:1.5px solid #86efac; border-radius:12px; padding:16px; margin:14px 0; box-shadow:0 4px 14px rgba(22,101,52,0.06);">
+            <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:10px;">
+              <div style="display:flex; align-items:center; gap:12px;">
+                <div id="selTransportIcon" style="font-size:36px; background:#fff; width:52px; height:52px; border-radius:12px; display:flex; align-items:center; justify-content:center; box-shadow:0 2px 8px rgba(0,0,0,0.06); border:1px solid #dcfce7;">✈️</div>
+                <div>
+                  <div style="display:flex; align-items:center; gap:8px;">
+                    <h3 id="selTransportTitle" style="margin:0; font-size:16px; font-weight:800; color:#14532d;">Flight Service Selected</h3>
+                    <span id="selTransportPricePill" style="background:#15803d; color:#fff; font-size:11px; font-weight:800; padding:2px 8px; border-radius:999px;">From $120/seat</span>
+                  </div>
+                  <div id="selTransportDesc" style="font-size:13px; color:#166534; margin-top:2px;">Domestic & Regional Flights across Tanzania and Zanzibar</div>
+                </div>
+              </div>
+              <button type="button" id="btnBookSelectedTransport" onclick="proceedSelectedTransportBooking()" style="background:#15803d; color:#ffffff; font-weight:800; font-size:13px; padding:10px 18px; border:none; border-radius:8px; cursor:pointer; display:inline-flex; align-items:center; gap:6px; box-shadow:0 2px 10px rgba(21,128,61,0.25);">
+                ⚡ Book / Reserve This Mode
+              </button>
+            </div>
+            <div id="selTransportPopularRoutes" style="margin-top:12px; padding-top:10px; border-top:1px dashed #bbf7d0; font-size:12px; color:#15803d; display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+              <strong>Popular Routes:</strong>
+              <span class="chip" style="background:#fff; border:1px solid #86efac; color:#166534; font-size:11px;">Dar es Salaam ⇄ Zanzibar</span>
+              <span class="chip" style="background:#fff; border:1px solid #86efac; color:#166534; font-size:11px;">Arusha ⇄ Serengeti Airstrip</span>
+              <span class="chip" style="background:#fff; border:1px solid #86efac; color:#166534; font-size:11px;">Kilimanjaro (JRO) Transfers</span>
+            </div>
           </div>
 
           <!-- Quick Route Search -->
@@ -2477,7 +2732,7 @@ body { font-family: Arial, sans-serif; margin:0; padding:20px; background:#f0f2f
               <input id="tPickup" class="input flex" type="text" placeholder="Pickup location (e.g. Dar es Salaam, Airport, Arusha)" />
               <input id="tDestination" class="input flex" type="text" placeholder="Destination (e.g. Zanzibar, Serengeti, Moshi)" />
               <input id="tDate" class="input small" type="date" />
-              <button class="primary" type="button" onclick="searchFromSection('Transport')">Search Services</button>
+              <button class="primary" type="button" id="btnSearchTransport" style="font-weight:800; padding:10px 18px; display:inline-flex; align-items:center; gap:6px; font-size:13px;" onclick="searchFromSection('Transport')">🔍 Search Transport</button>
             </div>
           </div>
 
@@ -2527,7 +2782,7 @@ body { font-family: Arial, sans-serif; margin:0; padding:20px; background:#f0f2f
                 <input id="aGuests" class="hub-input" type="number" min="1" max="20" value="1" />
               </div>
               <div class="hub-field-group">
-                <button class="primary hub-search-btn" type="button" onclick="filterAccommodationLive()">Find Stays</button>
+                <button class="primary hub-search-btn" type="button" id="btnSearchAccommodation" style="font-weight:800; display:inline-flex; align-items:center; justify-content:center; gap:6px;" onclick="filterAccommodationLive()">🔍 Search Accommodation</button>
               </div>
             </div>
 
@@ -2594,7 +2849,7 @@ body { font-family: Arial, sans-serif; margin:0; padding:20px; background:#f0f2f
                 </select>
               </div>
               <div class="hub-field-group">
-                <button class="primary hub-search-btn" type="button" onclick="filterFoodLive()">Find Dining</button>
+                <button class="primary hub-search-btn" type="button" id="btnSearchFood" style="font-weight:800; display:inline-flex; align-items:center; justify-content:center; gap:6px;" onclick="filterFoodLive()">🔍 Search Food</button>
               </div>
             </div>
 
@@ -2696,8 +2951,17 @@ body { font-family: Arial, sans-serif; margin:0; padding:20px; background:#f0f2f
       <a href="#" onclick="openDashboard(); return false;">📊 Provider Dashboard</a>
       <a href="#" onclick="openModal('logoutModal'); return false;" id="sidebarLogoutLink">🚪 Logout</a>
 
+      <!-- Dedicated Private Admin Dashboard Link (Restricted to Jackson Loshilari & Appointed Co-Admins Only) -->
+      <a href="#" onclick="openAdminDashboard(); return false;" id="sidebarAdminLink" style="display:none; color:#ffffff; background:linear-gradient(135deg, #0f172a 0%, #1e293b 100%); border:1.5px solid #334155; border-radius:10px; padding:11px 14px; font-weight:800; font-size:13px; margin:12px 0 6px 0; align-items:center; justify-content:space-between; box-shadow:0 4px 14px rgba(15,23,42,0.25); text-decoration:none;">
+        <span style="display:flex; align-items:center; gap:8px;">
+          <span style="font-size:16px;">🛡️</span>
+          <span>TripBnA Admin Dashboard</span>
+        </span>
+        <span id="sidebarAdminBadge" style="background:#f59e0b; color:#000; font-size:11px; padding:2px 8px; border-radius:999px; font-weight:900; display:none;">0</span>
+      </a>
+
       <!-- Compact Language Settings (Reduced Height) -->
-      <div class="card" style="margin-top:10px; margin-bottom:8px; padding:8px 10px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px;">
+      <div class="card" style="margin-top:4px; margin-bottom:8px; padding:8px 10px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px;">
         <div style="font-weight:700; font-size:11px; color:#475569; margin-bottom:5px; display:flex; justify-content:space-between; align-items:center;">
           <span>🌐 Language</span>
           <span style="font-size:10px; color:#94a3b8; font-weight:normal;">Global</span>
@@ -3213,14 +3477,63 @@ body { font-family: Arial, sans-serif; margin:0; padding:20px; background:#f0f2f
 
     <!-- Method Tabs -->
     <div class="checkout-tabs">
-      <button class="checkout-tab active" id="tabMethodMobile" onclick="switchCheckoutMethod('mobile')">📱 Mobile Money</button>
-      <button class="checkout-tab" id="tabMethodCard" onclick="switchCheckoutMethod('card')">💳 Bank Card</button>
-      <button class="checkout-tab" id="tabMethodWallet" onclick="switchCheckoutMethod('wallet')">🪙 Wallet & Coins</button>
-      <button class="checkout-tab" id="tabMethodPaypal" onclick="switchCheckoutMethod('paypal')">🅿️ PayPal</button>
+      <button class="checkout-tab active" id="tabMethodWhatsapp" onclick="switchCheckoutMethod('whatsapp')"><span style="color:#22c55e;">💬</span> Pay via WhatsApp <span style="background:#22c55e; color:#fff; font-size:10px; font-weight:800; padding:1px 6px; border-radius:4px; margin-left:4px;">ACTIVE</span></button>
+      <button class="checkout-tab" id="tabMethodMobile" onclick="switchCheckoutMethod('mobile')">📱 Mobile Money <span style="background:#e2e8f0; color:#64748b; font-size:10px; padding:1px 5px; border-radius:4px; margin-left:2px;">Soon</span></button>
+      <button class="checkout-tab" id="tabMethodCard" onclick="switchCheckoutMethod('card')">💳 Card <span style="background:#e2e8f0; color:#64748b; font-size:10px; padding:1px 5px; border-radius:4px; margin-left:2px;">Soon</span></button>
+      <button class="checkout-tab" id="tabMethodWallet" onclick="switchCheckoutMethod('wallet')">🪙 Wallet <span style="background:#e2e8f0; color:#64748b; font-size:10px; padding:1px 5px; border-radius:4px; margin-left:2px;">Soon</span></button>
+      <button class="checkout-tab" id="tabMethodPaypal" onclick="switchCheckoutMethod('paypal')">🅿️ PayPal <span style="background:#e2e8f0; color:#64748b; font-size:10px; padding:1px 5px; border-radius:4px; margin-left:2px;">Soon</span></button>
+    </div>
+
+    <!-- Panel 0: WhatsApp Direct Pay (Active Concierge) -->
+    <div id="panelCheckoutWhatsapp" style="display:block;">
+      <div style="background:#f0fdf4; border:1.5px solid #86efac; border-radius:10px; padding:12px; margin-bottom:12px;">
+        <div style="display:flex; align-items:center; gap:10px; margin-bottom:6px;">
+          <div style="width:34px; height:34px; border-radius:50%; background:#25D366; display:flex; align-items:center; justify-content:center; color:#fff; font-size:18px;">💬</div>
+          <div>
+            <div style="font-weight:700; font-size:13px; color:#166534;">Official TripBnA Admin WhatsApp</div>
+            <div style="font-size:12px; color:#15803d; font-weight:700;">+255 635 125 212 • Jackson Loshilari</div>
+          </div>
+        </div>
+        <p style="font-size:12px; color:#334155; margin:0; line-height:1.4;">
+          Your request is recorded with status <strong>Booking/Order Request Sent</strong>. It opens directly to our WhatsApp Concierge. We verify room/dining availability with the provider and assist you personally!
+        </p>
+      </div>
+
+      <div style="margin-bottom:8px;">
+        <label style="font-size:12px; font-weight:700;">Customer Name</label>
+        <input id="checkoutWhatsappName" class="input" style="width:100%; margin-top:4px;" placeholder="Full Name" />
+      </div>
+
+      <div style="margin-bottom:8px;">
+        <label style="font-size:12px; font-weight:700;">WhatsApp / Phone Number</label>
+        <div class="row" style="margin-top:4px;">
+          <select id="checkoutWhatsappCountry" class="input small" style="width:105px;">
+            <option value="+255">🇹🇿 +255</option>
+            <option value="+254">🇰🇪 +254</option>
+            <option value="+256">🇺🇬 +256</option>
+            <option value="+250">🇷🇼 +250</option>
+            <option value="+1">🇺🇸 +1</option>
+            <option value="+44">🇬🇧 +44</option>
+          </select>
+          <input id="checkoutWhatsappPhone" class="input flex" placeholder="754 000 000" />
+        </div>
+      </div>
+
+      <div style="margin-bottom:12px;">
+        <label style="font-size:12px; font-weight:700;">Special Requests / Dining or Room Preferences (Optional)</label>
+        <textarea id="checkoutWhatsappNotes" class="input" rows="2" style="width:100%; margin-top:4px;" placeholder="e.g. Quiet upper floor, vegetarian dishes, airport transfer..."></textarea>
+      </div>
+
+      <button class="primary" style="width:100%; padding:14px; font-size:15px; font-weight:800; background:#25D366; color:#ffffff; border:none; border-radius:8px; display:flex; align-items:center; justify-content:center; gap:8px;" onclick="processWhatsAppPayment()">
+        <span>💬</span> Send via WhatsApp (+255 635 125 212)
+      </button>
     </div>
 
     <!-- Panel 1: Mobile Money -->
-    <div id="panelCheckoutMobile">
+    <div id="panelCheckoutMobile" style="display:none;">
+      <div style="background:#fffbeb; border:1px solid #fde68a; border-radius:8px; padding:10px 12px; margin-bottom:12px; font-size:12px; color:#92400e; display:flex; align-items:center; gap:8px;">
+        <span>⏳</span> <div><strong>Coming Soon:</strong> Automated mobile money gateway is currently being finalized. Please use <strong>Pay via WhatsApp</strong> for instant assistance.</div>
+      </div>
       <div style="display:grid; grid-template-columns:repeat(4, 1fr); gap:8px; margin-bottom:12px;">
         <label class="payment-method-card selected" style="padding:8px; text-align:center; display:block;" id="labelMpesa" onclick="selectMobileProvider('M-Pesa')">
           <input type="radio" name="mobileProvider" value="M-Pesa" checked style="display:none;">
@@ -3262,6 +3575,9 @@ body { font-family: Arial, sans-serif; margin:0; padding:20px; background:#f0f2f
 
     <!-- Panel 2: Card Checkout -->
     <div id="panelCheckoutCard" style="display:none;">
+      <div style="background:#fffbeb; border:1px solid #fde68a; border-radius:8px; padding:10px 12px; margin-bottom:12px; font-size:12px; color:#92400e; display:flex; align-items:center; gap:8px;">
+        <span>⏳</span> <div><strong>Coming Soon:</strong> Credit/Debit card checkout is currently being integrated. Please choose <strong>Pay via WhatsApp</strong> for prompt service.</div>
+      </div>
       <label style="font-size:12px; font-weight:700;">Card Number</label>
       <input id="cardCheckoutNumber" class="input" style="width:100%; margin-top:4px; margin-bottom:10px;" placeholder="4000 1234 5678 9010" maxlength="19" oninput="formatCardNumber(this)" />
 
@@ -3284,6 +3600,9 @@ body { font-family: Arial, sans-serif; margin:0; padding:20px; background:#f0f2f
 
     <!-- Panel 3: Wallet & Coins -->
     <div id="panelCheckoutWallet" style="display:none;">
+      <div style="background:#fffbeb; border:1px solid #fde68a; border-radius:8px; padding:10px 12px; margin-bottom:12px; font-size:12px; color:#92400e; display:flex; align-items:center; gap:8px;">
+        <span>⏳</span> <div><strong>Coming Soon:</strong> Automated wallet debit is coming in the next update. Please use <strong>Pay via WhatsApp</strong>.</div>
+      </div>
       <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:14px; margin-bottom:14px;">
         <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
           <span class="muted">TripBnA Wallet:</span>
@@ -3304,6 +3623,9 @@ body { font-family: Arial, sans-serif; margin:0; padding:20px; background:#f0f2f
 
     <!-- Panel 4: PayPal -->
     <div id="panelCheckoutPaypal" style="display:none;">
+      <div style="background:#fffbeb; border:1px solid #fde68a; border-radius:8px; padding:10px 12px; margin-bottom:12px; font-size:12px; color:#92400e; display:flex; align-items:center; gap:8px;">
+        <span>⏳</span> <div><strong>Coming Soon:</strong> PayPal international gateway is coming soon. Please use <strong>Pay via WhatsApp</strong>.</div>
+      </div>
       <div id="paypalContainer" style="margin-top:10px;"></div>
       <button class="primary" style="width:100%; padding:14px; font-size:15px; background:#003087;" onclick="processPayPalDirect()">Pay with PayPal</button>
     </div>
@@ -3835,6 +4157,551 @@ Last Updated: April 2026 | Version 2.0 | TripBnA Platform Policies
 </div>
   </div></div>
 
+  <!-- =========================================================================
+       TRIPBNA PRIVATE ADMIN DASHBOARD OVERLAY (ACCOMMODATION & FOOD SERVICES)
+       Authorized for: jacksonloshilari7@gmail.com
+       ========================================================================= -->
+  <div id="adminDashboardOverlay" style="display:none; position:fixed; inset:0; background:#0b1120; z-index:3500; overflow:hidden; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif; color:#f8fafc;">
+    <!-- Admin Top Shell -->
+    <div style="background:#0f172a; border-bottom:1px solid #1e293b; padding:12px 20px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+      <div style="display:flex; align-items:center; gap:14px;">
+        <div style="width:42px; height:42px; border-radius:10px; background:linear-gradient(135deg, #1e3a8a, #0b84ff); display:flex; align-items:center; justify-content:center; font-size:22px; box-shadow:0 4px 12px rgba(11,132,255,0.3);">🛡️</div>
+        <div>
+          <div style="display:flex; align-items:center; gap:8px;">
+            <h2 style="margin:0; font-size:18px; font-weight:800; letter-spacing:-0.3px; color:#ffffff;">TripBnA Admin Dashboard</h2>
+            <span style="background:#1e293b; color:#38bdf8; border:1px solid #0284c7; font-size:10px; font-weight:800; padding:2px 8px; border-radius:999px; text-transform:uppercase;">Master Console</span>
+          </div>
+          <div style="font-size:12px; color:#94a3b8; margin-top:2px;">Accommodation & Food Services Governance • WhatsApp Concierge Routing</div>
+        </div>
+      </div>
+
+      <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+        <div style="display:flex; align-items:center; gap:6px; background:#1e293b; padding:6px 12px; border-radius:8px; border:1px solid #334155;">
+          <span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:#22c55e; box-shadow:0 0 8px #22c55e;"></span>
+          <span style="font-size:12px; color:#cbd5e1;" id="adminCurrentAccountDisplay">jacksonloshilari7@gmail.com</span>
+        </div>
+        <a href="https://wa.me/255635125212" target="_blank" style="text-decoration:none; background:#25D366; color:#ffffff; font-size:12px; font-weight:700; padding:8px 14px; border-radius:8px; display:inline-flex; align-items:center; gap:6px; box-shadow:0 2px 8px rgba(37,211,102,0.3);">
+          <span>💬</span> Admin WhatsApp (+255 635 125 212)
+        </a>
+        <button type="button" onclick="closeAdminDashboard()" style="background:#334155; color:#f8fafc; border:none; padding:8px 16px; border-radius:8px; font-size:13px; font-weight:700; cursor:pointer; display:inline-flex; align-items:center; gap:6px;">
+          ✕ Exit Admin
+        </button>
+      </div>
+    </div>
+
+    <!-- Admin Navigation Tabs (10 Sections) -->
+    <div style="background:#090d16; border-bottom:1px solid #1e293b; padding:0 16px; overflow-x:auto; white-space:nowrap; display:flex; gap:4px;" class="admin-tab-scroll">
+      <button type="button" class="admin-tab-btn active" id="btnAdminTab_dashboard" onclick="switchAdminTab('dashboard')">
+        <span>📊</span> Dashboard
+      </button>
+      <button type="button" class="admin-tab-btn" id="btnAdminTab_pending" onclick="switchAdminTab('pending')">
+        <span>⏳</span> Pending Approvals <span class="admin-pill pill-amber" id="adminBadge_pending">0</span>
+      </button>
+      <button type="button" class="admin-tab-btn" id="btnAdminTab_approved" onclick="switchAdminTab('approved')">
+        <span>✅</span> Approved Services <span class="admin-pill pill-green" id="adminBadge_approved">0</span>
+      </button>
+      <button type="button" class="admin-tab-btn" id="btnAdminTab_rejected" onclick="switchAdminTab('rejected')">
+        <span>❌</span> Rejected Services <span class="admin-pill pill-red" id="adminBadge_rejected">0</span>
+      </button>
+      <button type="button" class="admin-tab-btn" id="btnAdminTab_suspended" onclick="switchAdminTab('suspended')">
+        <span>⏸️</span> Suspended Services <span class="admin-pill pill-orange" id="adminBadge_suspended">0</span>
+      </button>
+      <button type="button" class="admin-tab-btn" id="btnAdminTab_providers" onclick="switchAdminTab('providers')">
+        <span>🏢</span> Providers <span class="admin-pill pill-blue" id="adminBadge_providers">0</span>
+      </button>
+      <button type="button" class="admin-tab-btn" id="btnAdminTab_users" onclick="switchAdminTab('users')">
+        <span>👥</span> Users <span class="admin-pill pill-purple" id="adminBadge_users">0</span>
+      </button>
+      <button type="button" class="admin-tab-btn" id="btnAdminTab_bookings" onclick="switchAdminTab('bookings')">
+        <span>📑</span> Bookings & WhatsApp <span class="admin-pill pill-cyan" id="adminBadge_bookings">0</span>
+      </button>
+      <button type="button" class="admin-tab-btn" id="btnAdminTab_reports" onclick="switchAdminTab('reports')">
+        <span>📈</span> Reports
+      </button>
+      <button type="button" class="admin-tab-btn" id="btnAdminTab_settings" onclick="switchAdminTab('settings')">
+        <span>⚙️</span> Settings
+      </button>
+    </div>
+
+    <!-- Admin Scrollable Canvas -->
+    <div style="height:calc(100vh - 110px); overflow-y:auto; padding:20px;" id="adminDashboardScrollContent">
+
+      <!-- ================= SECTION 1: DASHBOARD OVERVIEW ================= -->
+      <div id="adminSection_dashboard" class="admin-content-section" style="display:block;">
+        <!-- Welcome Banner -->
+        <div style="background:linear-gradient(135deg, #1e293b, #0f172a); border:1px solid #334155; border-radius:14px; padding:20px; margin-bottom:20px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px;">
+          <div>
+            <h3 style="margin:0 0 6px 0; font-size:20px; font-weight:800; color:#ffffff;">Karibu Sana, Jackson Loshilari! 🇹🇿</h3>
+            <p style="margin:0; font-size:13px; color:#94a3b8; max-width:650px; line-height:1.5;">
+              This private portal gives you 100% authoritative oversight over Accommodation and Food Services across Tanzania. All new provider submissions and updates are gated behind your approval. WhatsApp bookings route directly to your concierge number <strong>+255 635 125 212</strong>.
+            </p>
+          </div>
+          <div style="display:flex; gap:10px; flex-wrap:wrap;">
+            <button type="button" onclick="switchAdminTab('pending')" style="background:#f59e0b; color:#000; font-weight:800; font-size:13px; padding:10px 16px; border:none; border-radius:8px; cursor:pointer; display:flex; align-items:center; gap:6px;">
+              <span>⚡</span> Review Pending (<span id="quickReviewPendingCount">0</span>)
+            </button>
+            <button type="button" onclick="openAdminAddServiceModal()" style="background:#0b84ff; color:#fff; font-weight:700; font-size:13px; padding:10px 16px; border:none; border-radius:8px; cursor:pointer; display:flex; align-items:center; gap:6px;">
+              <span>➕</span> Add Service
+            </button>
+          </div>
+        </div>
+
+        <!-- 8 Stat Metric Cards -->
+        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:14px; margin-bottom:24px;">
+          <div class="admin-metric-card" onclick="switchAdminTab('pending')" style="cursor:pointer; border-color:#f59e0b;">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <span style="font-size:12px; font-weight:700; color:#f59e0b; text-transform:uppercase;">Pending Review</span>
+              <span style="font-size:20px;">⏳</span>
+            </div>
+            <div style="font-size:30px; font-weight:900; color:#fbbf24; margin-top:8px;" id="statCountPending">0</div>
+            <div style="font-size:11px; color:#94a3b8; margin-top:4px;">Requires Admin Approval</div>
+          </div>
+
+          <div class="admin-metric-card" onclick="switchAdminTab('approved')" style="cursor:pointer;">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <span style="font-size:12px; font-weight:700; color:#22c55e; text-transform:uppercase;">Approved Live</span>
+              <span style="font-size:20px;">✅</span>
+            </div>
+            <div style="font-size:30px; font-weight:900; color:#4ade80; margin-top:8px;" id="statCountApproved">0</div>
+            <div style="font-size:11px; color:#94a3b8; margin-top:4px;">Visible to customers</div>
+          </div>
+
+          <div class="admin-metric-card" onclick="switchAdminTab('rejected')" style="cursor:pointer;">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <span style="font-size:12px; font-weight:700; color:#ef4444; text-transform:uppercase;">Rejected</span>
+              <span style="font-size:20px;">❌</span>
+            </div>
+            <div style="font-size:30px; font-weight:900; color:#f87171; margin-top:8px;" id="statCountRejected">0</div>
+            <div style="font-size:11px; color:#94a3b8; margin-top:4px;">With rejection notes</div>
+          </div>
+
+          <div class="admin-metric-card" onclick="switchAdminTab('suspended')" style="cursor:pointer;">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <span style="font-size:12px; font-weight:700; color:#f97316; text-transform:uppercase;">Suspended</span>
+              <span style="font-size:20px;">⏸️</span>
+            </div>
+            <div style="font-size:30px; font-weight:900; color:#fb923c; margin-top:8px;" id="statCountSuspended">0</div>
+            <div style="font-size:11px; color:#94a3b8; margin-top:4px;">Temporarily paused</div>
+          </div>
+
+          <div class="admin-metric-card" onclick="switchAdminTab('bookings')" style="cursor:pointer;">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <span style="font-size:12px; font-weight:700; color:#38bdf8; text-transform:uppercase;">WhatsApp Requests</span>
+              <span style="font-size:20px;">💬</span>
+            </div>
+            <div style="font-size:30px; font-weight:900; color:#67e8f9; margin-top:8px;" id="statCountBookings">0</div>
+            <div style="font-size:11px; color:#94a3b8; margin-top:4px;">+255 635 125 212</div>
+          </div>
+
+          <div class="admin-metric-card" onclick="switchAdminTab('providers')" style="cursor:pointer;">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <span style="font-size:12px; font-weight:700; color:#a78bfa; text-transform:uppercase;">Service Providers</span>
+              <span style="font-size:20px;">🏢</span>
+            </div>
+            <div style="font-size:30px; font-weight:900; color:#c084fc; margin-top:8px;" id="statCountProviders">0</div>
+            <div style="font-size:11px; color:#94a3b8; margin-top:4px;">Registered Hosts</div>
+          </div>
+
+          <div class="admin-metric-card" onclick="switchAdminTab('users')" style="cursor:pointer;">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <span style="font-size:12px; font-weight:700; color:#e2e8f0; text-transform:uppercase;">Total Users</span>
+              <span style="font-size:20px;">👥</span>
+            </div>
+            <div style="font-size:30px; font-weight:900; color:#ffffff; margin-top:8px;" id="statCountUsers">0</div>
+            <div style="font-size:11px; color:#94a3b8; margin-top:4px;">Cloud Firestore Accounts</div>
+          </div>
+
+          <div class="admin-metric-card">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <span style="font-size:12px; font-weight:700; color:#10b981; text-transform:uppercase;">Platform Health</span>
+              <span style="font-size:20px;">🔒</span>
+            </div>
+            <div style="font-size:20px; font-weight:800; color:#34d399; margin-top:12px;">Active & Secure</div>
+            <div style="font-size:11px; color:#94a3b8; margin-top:4px;">Firestore Rules Enforced</div>
+          </div>
+        </div>
+
+        <!-- Two Column Hub: Quick Review Spotlight + Recent Activity -->
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px; margin-bottom:20px;" class="admin-grid-2col">
+          <!-- Spotlight Box -->
+          <div style="background:#0f172a; border:1px solid #1e293b; border-radius:12px; padding:18px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+              <h4 style="margin:0; font-size:15px; color:#f8fafc; font-weight:700;">⚡ Next Service Requiring Review</h4>
+              <button type="button" onclick="switchAdminTab('pending')" style="background:transparent; border:none; color:#38bdf8; font-size:12px; font-weight:700; cursor:pointer;">View All Pending →</button>
+            </div>
+            <div id="adminSpotlightContainer">
+              <div style="text-align:center; padding:30px; color:#64748b; font-size:13px;">No pending services right now. All caught up! 🎉</div>
+            </div>
+          </div>
+
+          <!-- Quick WhatsApp Booking Orders Box -->
+          <div style="background:#0f172a; border:1px solid #1e293b; border-radius:12px; padding:18px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+              <h4 style="margin:0; font-size:15px; color:#f8fafc; font-weight:700;">💬 Latest WhatsApp Requests</h4>
+              <button type="button" onclick="switchAdminTab('bookings')" style="background:transparent; border:none; color:#38bdf8; font-size:12px; font-weight:700; cursor:pointer;">Manage Bookings →</button>
+            </div>
+            <div id="adminDashboardRecentBookings">
+              <div style="text-align:center; padding:30px; color:#64748b; font-size:13px;">Loading bookings...</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ================= SECTION 2: PENDING APPROVALS ================= -->
+      <div id="adminSection_pending" class="admin-content-section" style="display:none;">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:16px;">
+          <div>
+            <h3 style="margin:0; font-size:18px; font-weight:800; color:#ffffff;">Pending Service Approvals</h3>
+            <p style="margin:2px 0 0 0; font-size:12px; color:#94a3b8;">New submissions and updated listings waiting for your review. Invisible to travelers until approved.</p>
+          </div>
+          <div style="display:flex; gap:8px; flex-wrap:wrap;">
+            <select id="filterPendingType" onchange="renderAdminPendingList()" style="background:#1e293b; color:#f8fafc; border:1px solid #334155; padding:8px 12px; border-radius:8px; font-size:12px;">
+              <option value="all">All Categories (Accommodation & Food)</option>
+              <option value="Accommodation">Accommodation Only</option>
+              <option value="Food">Food Services Only</option>
+            </select>
+            <input type="text" id="searchPendingInput" oninput="renderAdminPendingList()" placeholder="Search pending services..." style="background:#1e293b; color:#f8fafc; border:1px solid #334155; padding:8px 12px; border-radius:8px; font-size:12px; width:180px;">
+          </div>
+        </div>
+
+        <div id="adminPendingListContainer" style="display:flex; flex-direction:column; gap:14px;">
+          <!-- Populated by renderAdminPendingList() -->
+        </div>
+      </div>
+
+      <!-- ================= SECTION 3: APPROVED SERVICES ================= -->
+      <div id="adminSection_approved" class="admin-content-section" style="display:none;">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:16px;">
+          <div>
+            <h3 style="margin:0; font-size:18px; font-weight:800; color:#ffffff;">Approved Services (Live to Travelers)</h3>
+            <p style="margin:2px 0 0 0; font-size:12px; color:#94a3b8;">Publicly visible accommodations and dining spots that have passed your admin inspection.</p>
+          </div>
+          <div style="display:flex; gap:8px; flex-wrap:wrap;">
+            <select id="filterApprovedType" onchange="renderAdminApprovedList()" style="background:#1e293b; color:#f8fafc; border:1px solid #334155; padding:8px 12px; border-radius:8px; font-size:12px;">
+              <option value="all">All Categories</option>
+              <option value="Accommodation">Accommodation</option>
+              <option value="Food">Food</option>
+            </select>
+            <input type="text" id="searchApprovedInput" oninput="renderAdminApprovedList()" placeholder="Search approved services..." style="background:#1e293b; color:#f8fafc; border:1px solid #334155; padding:8px 12px; border-radius:8px; font-size:12px; width:180px;">
+          </div>
+        </div>
+
+        <div id="adminApprovedListContainer" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(320px, 1fr)); gap:16px;">
+          <!-- Populated by renderAdminApprovedList() -->
+        </div>
+      </div>
+
+      <!-- ================= SECTION 4: REJECTED SERVICES ================= -->
+      <div id="adminSection_rejected" class="admin-content-section" style="display:none;">
+        <div style="margin-bottom:16px;">
+          <h3 style="margin:0; font-size:18px; font-weight:800; color:#ffffff;">Rejected Services</h3>
+          <p style="margin:2px 0 0 0; font-size:12px; color:#94a3b8;">Listings rejected by Admin with recorded reasons. Providers can see your feedback and resubmit.</p>
+        </div>
+
+        <div id="adminRejectedListContainer" style="display:flex; flex-direction:column; gap:12px;">
+          <!-- Populated by renderAdminRejectedList() -->
+        </div>
+      </div>
+
+      <!-- ================= SECTION 5: SUSPENDED SERVICES ================= -->
+      <div id="adminSection_suspended" class="admin-content-section" style="display:none;">
+        <div style="margin-bottom:16px;">
+          <h3 style="margin:0; font-size:18px; font-weight:800; color:#ffffff;">Suspended Services</h3>
+          <p style="margin:2px 0 0 0; font-size:12px; color:#94a3b8;">Services temporarily paused due to seasonal closure, compliance, or quality reviews. Invisible to customers.</p>
+        </div>
+
+        <div id="adminSuspendedListContainer" style="display:flex; flex-direction:column; gap:12px;">
+          <!-- Populated by renderAdminSuspendedList() -->
+        </div>
+      </div>
+
+      <!-- ================= SECTION 6: PROVIDERS DIRECTORY ================= -->
+      <div id="adminSection_providers" class="admin-content-section" style="display:none;">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:16px;">
+          <div>
+            <h3 style="margin:0; font-size:18px; font-weight:800; color:#ffffff;">Registered Service Providers</h3>
+            <p style="margin:2px 0 0 0; font-size:12px; color:#94a3b8;">Accommodation hosts and restaurateurs registered on TripBnA.</p>
+          </div>
+          <input type="text" id="searchProvidersInput" oninput="renderAdminProvidersList()" placeholder="Filter by provider name or email..." style="background:#1e293b; color:#f8fafc; border:1px solid #334155; padding:8px 12px; border-radius:8px; font-size:12px; width:240px;">
+        </div>
+
+        <div id="adminProvidersListContainer" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(300px, 1fr)); gap:14px;">
+          <!-- Populated by renderAdminProvidersList() -->
+        </div>
+      </div>
+
+      <!-- ================= SECTION 7: USERS DIRECTORY ================= -->
+      <div id="adminSection_users" class="admin-content-section" style="display:none;">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:16px;">
+          <div>
+            <h3 style="margin:0; font-size:18px; font-weight:800; color:#ffffff;">User Accounts Directory</h3>
+            <p style="margin:2px 0 0 0; font-size:12px; color:#94a3b8;">Travelers, Hosts, and Admins registered in Cloud Firestore.</p>
+          </div>
+          <input type="text" id="searchUsersInput" oninput="renderAdminUsersList()" placeholder="Filter users by email or name..." style="background:#1e293b; color:#f8fafc; border:1px solid #334155; padding:8px 12px; border-radius:8px; font-size:12px; width:240px;">
+        </div>
+
+        <div id="adminUsersListContainer" style="background:#0f172a; border:1px solid #1e293b; border-radius:12px; overflow-x:auto;">
+          <!-- Populated by renderAdminUsersList() -->
+        </div>
+      </div>
+
+      <!-- ================= SECTION 8: BOOKINGS & WHATSAPP REQUESTS ================= -->
+      <div id="adminSection_bookings" class="admin-content-section" style="display:none;">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:16px;">
+          <div>
+            <h3 style="margin:0; font-size:18px; font-weight:800; color:#ffffff;">Accommodation & Food Bookings (WhatsApp Concierge)</h3>
+            <p style="margin:2px 0 0 0; font-size:12px; color:#94a3b8;">All traveler requests sent to +255 635 125 212. Update statuses and connect with providers.</p>
+          </div>
+          <div style="display:flex; gap:8px; flex-wrap:wrap;">
+            <select id="filterBookingStatus" onchange="renderAdminBookingsList()" style="background:#1e293b; color:#f8fafc; border:1px solid #334155; padding:8px 12px; border-radius:8px; font-size:12px;">
+              <option value="all">All Booking Statuses</option>
+              <option value="Booking/Order Request Sent">Booking/Order Request Sent</option>
+              <option value="confirmed">Confirmed</option>
+              <option value="completed">Completed</option>
+              <option value="cancelled">Cancelled</option>
+            </select>
+            <input type="text" id="searchBookingsInput" oninput="renderAdminBookingsList()" placeholder="Search Ref or Customer..." style="background:#1e293b; color:#f8fafc; border:1px solid #334155; padding:8px 12px; border-radius:8px; font-size:12px; width:180px;">
+          </div>
+        </div>
+
+        <div id="adminBookingsListContainer" style="display:flex; flex-direction:column; gap:12px;">
+          <!-- Populated by renderAdminBookingsList() -->
+        </div>
+      </div>
+
+      <!-- ================= SECTION 9: REPORTS & ANALYTICS ================= -->
+      <div id="adminSection_reports" class="admin-content-section" style="display:none;">
+        <div style="margin-bottom:18px;">
+          <h3 style="margin:0; font-size:18px; font-weight:800; color:#ffffff;">Platform Reports & Analytics</h3>
+          <p style="margin:2px 0 0 0; font-size:12px; color:#94a3b8;">Real-time intelligence on services distribution, approval velocity, and popular destinations.</p>
+        </div>
+
+        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:16px;">
+          <!-- Card 1: Services by Category -->
+          <div style="background:#0f172a; border:1px solid #1e293b; border-radius:12px; padding:18px;">
+            <h4 style="margin:0 0 12px 0; font-size:14px; font-weight:700; color:#f8fafc;">Category Distribution</h4>
+            <div style="display:flex; flex-direction:column; gap:10px;" id="reportCategoryDist">
+              <!-- Rendered dynamically -->
+            </div>
+          </div>
+
+          <!-- Card 2: Approval Status Distribution -->
+          <div style="background:#0f172a; border:1px solid #1e293b; border-radius:12px; padding:18px;">
+            <h4 style="margin:0 0 12px 0; font-size:14px; font-weight:700; color:#f8fafc;">Service Status Breakdown</h4>
+            <div style="display:flex; flex-direction:column; gap:10px;" id="reportStatusDist">
+              <!-- Rendered dynamically -->
+            </div>
+          </div>
+
+          <!-- Card 3: Top Tanzanian Destinations -->
+          <div style="background:#0f172a; border:1px solid #1e293b; border-radius:12px; padding:18px;">
+            <h4 style="margin:0 0 12px 0; font-size:14px; font-weight:700; color:#f8fafc;">Top Destinations in Tanzania</h4>
+            <div style="display:flex; flex-direction:column; gap:10px;" id="reportDestDist">
+              <!-- Rendered dynamically -->
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ================= SECTION 10: SETTINGS & POLICIES ================= -->
+      <div id="adminSection_settings" class="admin-content-section" style="display:none;">
+        <div style="max-width:750px;">
+          <h3 style="margin:0 0 6px 0; font-size:18px; font-weight:800; color:#ffffff;">Admin & System Settings</h3>
+          <p style="margin:0 0 20px 0; font-size:12px; color:#94a3b8;">TripBnA policy governance, WhatsApp routing, and admin account management.</p>
+
+          <div style="background:#0f172a; border:1px solid #1e293b; border-radius:12px; padding:20px; margin-bottom:16px;">
+            <h4 style="margin:0 0 8px 0; font-size:15px; color:#f8fafc;">📱 WhatsApp Concierge Configuration</h4>
+            <p style="font-size:12px; color:#94a3b8; margin:0 0 14px 0;">All customer booking and order requests are routed to this number.</p>
+            <div style="display:flex; align-items:center; gap:12px; background:#1e293b; padding:12px; border-radius:8px; border:1px solid #334155;">
+              <span style="font-size:24px;">💬</span>
+              <div style="flex:1;">
+                <div style="font-weight:700; font-size:14px; color:#22c55e;">+255 635 125 212</div>
+                <div style="font-size:11px; color:#94a3b8;">Jackson Loshilari • Primary Concierge Number</div>
+              </div>
+              <a href="https://wa.me/255635125212?text=TripBnA%20Admin%20System%20Check" target="_blank" style="background:#25D366; color:#fff; text-decoration:none; font-size:12px; font-weight:700; padding:8px 14px; border-radius:6px;">
+                Test Message
+              </a>
+            </div>
+          </div>
+
+          <!-- 👑 Admin Appointment Card: Jackson Loshilari Exclusive Appointing Authority -->
+          <div style="background:#0f172a; border:1px solid #1e293b; border-radius:12px; padding:20px; margin-bottom:16px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <h4 style="margin:0; font-size:15px; color:#f8fafc;">👑 Administrator Access & Appointed Co-Admins</h4>
+              <span style="font-size:10px; background:#1e293b; color:#38bdf8; border:1px solid #0284c7; padding:2px 8px; border-radius:6px; font-weight:800;">OWNER CONTROLLED</span>
+            </div>
+            <p style="font-size:12px; color:#94a3b8; margin:0 0 14px 0;">
+              This dashboard and navigation link are strictly accessible by you (<strong>jacksonloshilari7@gmail.com</strong>). You can appoint a trusted second administrator with full dashboard oversight and revoke their permissions at any time with a single click.
+            </p>
+
+            <!-- Appoint Form (Visible only to Primary Owner Jackson) -->
+            <div id="appointAdminFormWrap" style="background:#1e293b; border:1px solid #334155; border-radius:10px; padding:12px; margin-bottom:14px;">
+              <label style="display:block; font-size:12px; font-weight:700; color:#cbd5e1; margin-bottom:6px;">Appoint Second Administrator by Email:</label>
+              <div style="display:flex; gap:8px;">
+                <input type="email" id="appointAdminEmailInput" placeholder="Enter user email (e.g. partner@tripbna.com)" style="flex:1; background:#0f172a; border:1px solid #475569; color:#f8fafc; padding:8px 12px; border-radius:6px; font-size:12px;">
+                <button type="button" onclick="submitAppointAdmin()" style="background:#15803d; color:#ffffff; font-weight:800; font-size:12px; padding:8px 16px; border:none; border-radius:6px; cursor:pointer; display:inline-flex; align-items:center; gap:4px; white-space:nowrap;">
+                  ➕ Appoint Admin
+                </button>
+              </div>
+            </div>
+
+            <!-- List of Current Appointed Admins -->
+            <div>
+              <div style="font-size:12px; font-weight:700; color:#cbd5e1; margin-bottom:8px;">Authorized Administrator Accounts:</div>
+              <div id="appointedAdminsListContainer" style="display:flex; flex-direction:column; gap:8px;">
+                <!-- Populated dynamically by renderAppointedAdminsList() -->
+              </div>
+            </div>
+          </div>
+
+          <div style="background:#0f172a; border:1px solid #1e293b; border-radius:12px; padding:20px; margin-bottom:16px;">
+            <h4 style="margin:0 0 8px 0; font-size:15px; color:#f8fafc;">🔒 Governance & Approval Rules</h4>
+            <div style="display:flex; flex-direction:column; gap:12px; font-size:13px; color:#cbd5e1;">
+              <div style="display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px solid #1e293b;">
+                <div>
+                  <div style="font-weight:700;">Mandatory Admin Approval for New Services</div>
+                  <div style="font-size:11px; color:#94a3b8;">All services created by providers are assigned "Pending" status.</div>
+                </div>
+                <span style="background:#166534; color:#4ade80; font-size:11px; font-weight:800; padding:3px 8px; border-radius:6px;">ENFORCED</span>
+              </div>
+              <div style="display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px solid #1e293b;">
+                <div>
+                  <div style="font-weight:700;">Mandatory Re-Review on Service Update</div>
+                  <div style="font-size:11px; color:#94a3b8;">When a provider edits a service, it resets to "Pending Review".</div>
+                </div>
+                <span style="background:#166534; color:#4ade80; font-size:11px; font-weight:800; padding:3px 8px; border-radius:6px;">ENFORCED</span>
+              </div>
+              <div style="display:flex; justify-content:space-between; align-items:center; padding:10px 0;">
+                <div>
+                  <div style="font-weight:700;">Exclusive Status Change Rights</div>
+                  <div style="font-size:11px; color:#94a3b8;">Only jacksonloshilari7@gmail.com can Approve, Reject, or Suspend.</div>
+                </div>
+                <span style="background:#166534; color:#4ade80; font-size:11px; font-weight:800; padding:3px 8px; border-radius:6px;">ENFORCED</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- =========================================================================
+       ADMIN SERVICE INSPECTION MODAL (Complete Specs, Media Slider, Host Info)
+       ========================================================================= -->
+  <div id="adminInspectModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.8); z-index:3600; align-items:center; justify-content:center; padding:16px;">
+    <div style="background:#0f172a; border:1px solid #334155; border-radius:14px; max-width:700px; width:100%; max-height:90vh; overflow-y:auto; color:#f8fafc; padding:20px; box-shadow:0 25px 50px -12px rgba(0,0,0,0.6);" id="adminInspectContent">
+      <!-- Populated dynamically by openAdminInspectModal(serviceId) -->
+    </div>
+  </div>
+
+  <!-- =========================================================================
+       ADMIN REJECT PROMPT MODAL (Reason input)
+       ========================================================================= -->
+  <div id="adminRejectPromptModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.8); z-index:3700; align-items:center; justify-content:center; padding:16px;">
+    <div style="background:#0f172a; border:1px solid #ef4444; border-radius:14px; max-width:480px; width:100%; color:#f8fafc; padding:20px; box-shadow:0 25px 50px -12px rgba(0,0,0,0.6);">
+      <h3 style="margin:0 0 8px 0; font-size:17px; color:#f87171;">❌ Reject Service Listing</h3>
+      <p style="margin:0 0 14px 0; font-size:12px; color:#94a3b8;">Please provide a specific reason so the provider can address the feedback and resubmit.</p>
+      
+      <input type="hidden" id="adminRejectServiceId" />
+      
+      <label style="font-size:12px; font-weight:700; display:block; margin-bottom:4px;">Common Feedback Reasons</label>
+      <select id="adminRejectPreset" onchange="applyRejectPreset(this.value)" style="width:100%; background:#1e293b; color:#f8fafc; border:1px solid #334155; padding:8px 10px; border-radius:6px; font-size:12px; margin-bottom:10px;">
+        <option value="">-- Choose Preset or Write Below --</option>
+        <option value="Incomplete or low-resolution room/dining photos provided. Please upload clear, authentic photos.">Incomplete/low-res photos</option>
+        <option value="Price must be accurately stated including all Tanzanian VAT and standard municipal levies.">Price missing tax/VAT</option>
+        <option value="Please provide valid accommodation license or restaurant health certification.">Unverified operational license</option>
+        <option value="Service description lacks essential details such as check-in times or menu options.">Lacks essential details</option>
+        <option value="Duplicate listing detected. Please update your existing listing instead.">Duplicate listing</option>
+      </select>
+
+      <label style="font-size:12px; font-weight:700; display:block; margin-bottom:4px;">Rejection Feedback Notes (Required)</label>
+      <textarea id="adminRejectReasonText" rows="3" style="width:100%; background:#1e293b; color:#f8fafc; border:1px solid #334155; padding:8px 10px; border-radius:6px; font-size:12px; box-sizing:border-box;" placeholder="Explain what the provider needs to correct..."></textarea>
+
+      <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:16px;">
+        <button type="button" onclick="closeAdminRejectModal()" style="background:#334155; color:#f8fafc; border:none; padding:8px 16px; border-radius:6px; font-size:12px; cursor:pointer;">Cancel</button>
+        <button type="button" onclick="confirmAdminReject()" style="background:#ef4444; color:#ffffff; border:none; padding:8px 16px; border-radius:6px; font-size:12px; font-weight:700; cursor:pointer;">Confirm Rejection</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- =========================================================================
+       ADMIN SUSPEND PROMPT MODAL (Reason input)
+       ========================================================================= -->
+  <div id="adminSuspendPromptModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.8); z-index:3700; align-items:center; justify-content:center; padding:16px;">
+    <div style="background:#0f172a; border:1px solid #f97316; border-radius:14px; max-width:480px; width:100%; color:#f8fafc; padding:20px; box-shadow:0 25px 50px -12px rgba(0,0,0,0.6);">
+      <h3 style="margin:0 0 8px 0; font-size:17px; color:#fb923c;">⏸️ Suspend Service Listing</h3>
+      <p style="margin:0 0 14px 0; font-size:12px; color:#94a3b8;">This will pause the listing and remove it from customer view until reactivated.</p>
+      
+      <input type="hidden" id="adminSuspendServiceId" />
+
+      <label style="font-size:12px; font-weight:700; display:block; margin-bottom:4px;">Suspension Reason</label>
+      <textarea id="adminSuspendReasonText" rows="3" style="width:100%; background:#1e293b; color:#f8fafc; border:1px solid #334155; padding:8px 10px; border-radius:6px; font-size:12px; box-sizing:border-box;" placeholder="e.g. Temporary property renovations, seasonal off-peak hiatus, or provider request..."></textarea>
+
+      <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:16px;">
+        <button type="button" onclick="closeAdminSuspendModal()" style="background:#334155; color:#f8fafc; border:none; padding:8px 16px; border-radius:6px; font-size:12px; cursor:pointer;">Cancel</button>
+        <button type="button" onclick="confirmAdminSuspend()" style="background:#f97316; color:#ffffff; border:none; padding:8px 16px; border-radius:6px; font-size:12px; font-weight:700; cursor:pointer;">Confirm Suspension</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- =========================================================================
+       ADMIN DIRECT ADD/EDIT SERVICE MODAL (Auto-Approved for Admin)
+       ========================================================================= -->
+  <div id="adminServiceEditorModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.8); z-index:3600; align-items:center; justify-content:center; padding:16px;">
+    <div style="background:#0f172a; border:1px solid #334155; border-radius:14px; max-width:650px; width:100%; max-height:90vh; overflow-y:auto; color:#f8fafc; padding:20px; box-shadow:0 25px 50px -12px rgba(0,0,0,0.6);">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+        <h3 style="margin:0; font-size:18px; color:#ffffff;" id="adminEditorModalTitle">➕ Add Admin-Verified Service</h3>
+        <button type="button" onclick="closeAdminAddServiceModal()" style="background:transparent; border:none; color:#94a3b8; font-size:16px; cursor:pointer;">✕</button>
+      </div>
+      <form id="adminDirectServiceForm" onsubmit="handleAdminDirectServiceSubmit(event)">
+        <input type="hidden" id="adminEditServiceId" />
+        <div style="margin-bottom:10px;">
+          <label style="font-size:12px; font-weight:700; display:block; margin-bottom:4px;">Service Category</label>
+          <select id="adm_type" style="width:100%; background:#1e293b; color:#f8fafc; border:1px solid #334155; padding:8px 10px; border-radius:6px; font-size:13px;" required onchange="toggleAdminEditorTypeFields()">
+            <option value="Accommodation">Accommodation</option>
+            <option value="Food">Food & Dining</option>
+          </select>
+        </div>
+
+        <div style="margin-bottom:10px;">
+          <label style="font-size:12px; font-weight:700; display:block; margin-bottom:4px;">Service Name / Title</label>
+          <input id="adm_name" style="width:100%; background:#1e293b; color:#f8fafc; border:1px solid #334155; padding:8px 10px; border-radius:6px; font-size:13px; box-sizing:border-box;" placeholder="e.g. Serengeti Luxury Sunset Lodge" required />
+        </div>
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:10px;">
+          <div>
+            <label style="font-size:12px; font-weight:700; display:block; margin-bottom:4px;">Destination / Location</label>
+            <input id="adm_place" style="width:100%; background:#1e293b; color:#f8fafc; border:1px solid #334155; padding:8px 10px; border-radius:6px; font-size:13px; box-sizing:border-box;" placeholder="e.g. Serengeti, Zanzibar, Arusha" required />
+          </div>
+          <div>
+            <label style="font-size:12px; font-weight:700; display:block; margin-bottom:4px;">Price ($ USD)</label>
+            <input id="adm_price" type="number" step="any" style="width:100%; background:#1e293b; color:#f8fafc; border:1px solid #334155; padding:8px 10px; border-radius:6px; font-size:13px; box-sizing:border-box;" placeholder="e.g. 150" required />
+          </div>
+        </div>
+
+        <div id="adminEditorSpecificFields">
+          <!-- Populated by toggleAdminEditorTypeFields() -->
+        </div>
+
+        <div style="margin-bottom:10px;">
+          <label style="font-size:12px; font-weight:700; display:block; margin-bottom:4px;">Image URLs (One per line)</label>
+          <textarea id="adm_images" rows="2" style="width:100%; background:#1e293b; color:#f8fafc; border:1px solid #334155; padding:8px 10px; border-radius:6px; font-size:12px; box-sizing:border-box;" placeholder="https://images.unsplash.com/..."></textarea>
+        </div>
+
+        <div style="margin-bottom:14px;">
+          <label style="font-size:12px; font-weight:700; display:block; margin-bottom:4px;">Playable Video URLs (One per line, MP4/WebM)</label>
+          <textarea id="adm_videos" rows="2" style="width:100%; background:#1e293b; color:#f8fafc; border:1px solid #334155; padding:8px 10px; border-radius:6px; font-size:12px; box-sizing:border-box;" placeholder="https://commondatastorage.googleapis.com/..."></textarea>
+        </div>
+
+        <div style="display:flex; justify-content:flex-end; gap:8px;">
+          <button type="button" onclick="closeAdminAddServiceModal()" style="background:#334155; color:#f8fafc; border:none; padding:8px 16px; border-radius:6px; font-size:12px; cursor:pointer;">Cancel</button>
+          <button type="submit" id="adminSaveServiceBtn" style="background:#0b84ff; color:#ffffff; border:none; padding:8px 16px; border-radius:6px; font-size:12px; font-weight:700; cursor:pointer;">Save & Publish (Approved)</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
 <div id="transportBookingOverlay" style="display:none; position:fixed; inset:0; background:#f8fafc; z-index:2000; overflow:auto;">
   <div style="max-width:900px; margin:20px auto; padding:24px; background:#fff; border-radius:12px; box-shadow:0 10px 25px rgba(0,0,0,0.1);">
     <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #e2e8f0; padding-bottom:14px; margin-bottom:16px;">
@@ -4299,6 +5166,18 @@ Last Updated: April 2026 | Version 2.0 | TripBnA Platform Policies
           if (emailEl) emailEl.textContent = 'Sign in to access all features';
         }
       }
+
+      // Check Admin Authorization: Exclusive to Jackson Loshilari & Appointed Co-Admins
+      const isAuthAdmin = typeof isAdmin === 'function' ? isAdmin(user) : (user && (user.email || '').toLowerCase().trim() === 'jacksonloshilari7@gmail.com');
+      
+      const navAdminBtn = document.getElementById('navAdminDashboard');
+      const sideAdminLink = document.getElementById('sidebarAdminLink');
+      if (navAdminBtn) navAdminBtn.style.display = isAuthAdmin ? 'inline-flex' : 'none';
+      if (sideAdminLink) sideAdminLink.style.display = isAuthAdmin ? 'flex' : 'none';
+
+      if (typeof refreshAdminBadgesAndDashboard === 'function') {
+        refreshAdminBadgesAndDashboard();
+      }
     }
 
     // Initialize Firebase Auth listener
@@ -4490,13 +5369,164 @@ Last Updated: April 2026 | Version 2.0 | TripBnA Platform Policies
     const searchResultsDiv = document.getElementById('searchResults');
     let currentEditingServiceId = null;
 
+    // 👑 Administrator Governance: Jackson Loshilari Exclusive Authority & Appointed Co-Admins
+    function getAppointedAdmins() {
+      try {
+        const list = JSON.parse(localStorage.getItem('tripbna_appointed_admins')) || [];
+        return Array.isArray(list) ? list.map(e => String(e).toLowerCase().trim()) : [];
+      } catch(e) {
+        return [];
+      }
+    }
+    window.getAppointedAdmins = getAppointedAdmins;
+
+    function isPrimaryOwner(user) {
+      if (!user) return false;
+      const email = (user.email || '').toLowerCase().trim();
+      return email === 'jacksonloshilari7@gmail.com';
+    }
+    window.isPrimaryOwner = isPrimaryOwner;
+
     // RBAC Permissions Check: Admin or Service Provider Owner
     function isAdmin(user) {
       if (!user) return false;
       const email = (user.email || '').toLowerCase().trim();
-      return email === 'jacksonloshilari7@gmail.com' || (window.currentUserProfile && window.currentUserProfile.role === 'admin');
+      if (email === 'jacksonloshilari7@gmail.com') return true;
+      const appointed = getAppointedAdmins();
+      if (appointed.includes(email)) return true;
+      return (window.currentUserProfile && window.currentUserProfile.role === 'admin');
     }
     window.isAdmin = isAdmin;
+
+    async function submitAppointAdmin() {
+      if (!isPrimaryOwner(window.currentUser)) {
+        alert("Permission Restricted: Only the Primary Owner Jackson Loshilari (jacksonloshilari7@gmail.com) can appoint a second administrator.");
+        return;
+      }
+      const emailInput = document.getElementById('appointAdminEmailInput');
+      const email = (emailInput?.value || '').toLowerCase().trim();
+      if (!email || !email.includes('@') || !email.includes('.')) {
+        alert("Please enter a valid email address to appoint as second administrator.");
+        return;
+      }
+      if (email === 'jacksonloshilari7@gmail.com') {
+        alert("jacksonloshilari7@gmail.com is already the permanent Primary Owner.");
+        return;
+      }
+
+      const list = getAppointedAdmins();
+      if (list.includes(email)) {
+        alert(`${email} is already an appointed administrator.`);
+        return;
+      }
+
+      list.push(email);
+      localStorage.setItem('tripbna_appointed_admins', JSON.stringify(list));
+
+      if (window.db && window.setDoc && window.doc) {
+        try {
+          await window.setDoc(window.doc(window.db, "system", "admin_governance"), {
+            appointedAdmins: list,
+            updatedAt: window.serverTimestamp ? window.serverTimestamp() : new Date().toISOString(),
+            updatedBy: window.currentUser.email
+          }, { merge: true });
+        } catch(e) {
+          console.warn("Firestore admin governance sync error:", e);
+        }
+      }
+
+      if (emailInput) emailInput.value = '';
+      showToast(`👑 Successfully appointed ${email} as Administrator.`);
+      renderAppointedAdminsList();
+      updateAuthUI(true, window.currentUserProfile || window.currentUser);
+    }
+    window.submitAppointAdmin = submitAppointAdmin;
+
+    async function removeAppointedAdmin(emailToRemove) {
+      if (!isPrimaryOwner(window.currentUser)) {
+        alert("Permission Restricted: Only Primary Owner Jackson Loshilari can remove an administrator.");
+        return;
+      }
+      if (!confirm(`Are you sure you want to remove administrator rights from ${emailToRemove}? They will immediately lose access to the admin dashboard.`)) {
+        return;
+      }
+
+      let list = getAppointedAdmins();
+      list = list.filter(e => e.toLowerCase() !== emailToRemove.toLowerCase());
+      localStorage.setItem('tripbna_appointed_admins', JSON.stringify(list));
+
+      if (window.db && window.setDoc && window.doc) {
+        try {
+          await window.setDoc(window.doc(window.db, "system", "admin_governance"), {
+            appointedAdmins: list,
+            updatedAt: window.serverTimestamp ? window.serverTimestamp() : new Date().toISOString(),
+            updatedBy: window.currentUser.email
+          }, { merge: true });
+        } catch(e) {
+          console.warn("Firestore admin governance sync error:", e);
+        }
+      }
+
+      showToast(`Admin rights revoked for ${emailToRemove}.`);
+      renderAppointedAdminsList();
+      updateAuthUI(true, window.currentUserProfile || window.currentUser);
+    }
+    window.removeAppointedAdmin = removeAppointedAdmin;
+
+    function renderAppointedAdminsList() {
+      const container = document.getElementById('appointedAdminsListContainer');
+      if (!container) return;
+
+      const isOwner = isPrimaryOwner(window.currentUser);
+      const appointed = getAppointedAdmins();
+
+      let html = `
+        <div style="background:#0f172a; border:1.5px solid #334155; border-radius:8px; padding:12px 14px; display:flex; justify-content:space-between; align-items:center;">
+          <div style="display:flex; align-items:center; gap:10px;">
+            <span style="font-size:22px;">👑</span>
+            <div>
+              <div style="font-weight:700; color:#f8fafc; font-size:13px;">jacksonloshilari7@gmail.com</div>
+              <div style="font-size:11px; color:#22c55e;">Primary Administrator & App Creator (Permanent)</div>
+            </div>
+          </div>
+          <span style="background:#166534; color:#4ade80; font-size:10px; font-weight:800; padding:3px 8px; border-radius:999px;">PRIMARY OWNER</span>
+        </div>
+      `;
+
+      if (appointed.length === 0) {
+        html += `
+          <div style="padding:12px; background:#1e293b; border-radius:8px; font-size:12px; color:#94a3b8; text-align:center; border:1px dashed #475569;">
+            No second administrator currently appointed. Use the form above to appoint one.
+          </div>
+        `;
+      } else {
+        appointed.forEach(email => {
+          html += `
+            <div style="background:#1e293b; border:1px solid #334155; border-radius:8px; padding:12px 14px; display:flex; justify-content:space-between; align-items:center; margin-top:6px;">
+              <div style="display:flex; align-items:center; gap:10px;">
+                <span style="font-size:20px;">🛡️</span>
+                <div>
+                  <div style="font-weight:700; color:#f8fafc; font-size:13px;">${escapeHTML(email)}</div>
+                  <div style="font-size:11px; color:#38bdf8;">Appointed Co-Administrator • Full Dashboard Oversight</div>
+                </div>
+              </div>
+              <div>
+                ${isOwner ? `
+                  <button type="button" onclick="removeAppointedAdmin('${escapeHTML(email)}')" style="background:#ef4444; color:#fff; font-size:11px; font-weight:800; border:none; border-radius:6px; padding:6px 12px; cursor:pointer;">
+                    🗑️ Remove Admin
+                  </button>
+                ` : `
+                  <span style="font-size:11px; color:#94a3b8;">Appointed Admin</span>
+                `}
+              </div>
+            </div>
+          `;
+        });
+      }
+
+      container.innerHTML = html;
+    }
+    window.renderAppointedAdminsList = renderAppointedAdminsList;
 
     function canUserEditService(s) {
       if (!s) return false;
@@ -5033,6 +6063,9 @@ Last Updated: April 2026 | Version 2.0 | TripBnA Platform Policies
             renderAccommodationSection();
             renderFoodSection();
             renderTables();
+            if (typeof refreshAdminBadgesAndDashboard === 'function') {
+              refreshAdminBadgesAndDashboard();
+            }
             if (document.getElementById('searchPanel')?.style.display === 'block') {
               runSearch(currentSearchTerm, currentSearchCategory);
             }
@@ -5041,6 +6074,9 @@ Last Updated: April 2026 | Version 2.0 | TripBnA Platform Policies
             renderAccommodationSection();
             renderFoodSection();
             renderTables();
+            if (typeof refreshAdminBadgesAndDashboard === 'function') {
+              refreshAdminBadgesAndDashboard();
+            }
           });
         } catch(e) {
           console.warn("Could not attach services listener:", e);
@@ -5343,11 +6379,10 @@ Last Updated: April 2026 | Version 2.0 | TripBnA Platform Policies
 
       term = (term || '').toLowerCase().trim();
 
-      // Rule: Search results show Approved services to regular users; providers can also see their own
+      // Rule: Search results show ONLY Approved services to travelers
       const results = services.filter(s => {
         const isApproved = s.status === 'Approved';
-        const canEdit = canUserEditService(s);
-        if (!isApproved && !canEdit) return false;
+        if (!isApproved) return false;
 
         if (category && s.type !== category) return false;
 
@@ -5612,84 +6647,108 @@ Last Updated: April 2026 | Version 2.0 | TripBnA Platform Policies
     }
     window.formatCardNumber = formatCardNumber;
 
-    // Process Mobile Money with USSD STK Push Simulator
-    function processMobilePayment() {
-      const phoneNum = document.getElementById('checkoutMobileNumber')?.value.trim();
-      const dialCode = document.getElementById('checkoutMobileCountry')?.value || '+255';
-      if (!phoneNum) {
-        alert('Please enter your mobile phone number.');
+    // Process Pay via WhatsApp (Primary Active Payment Gateway)
+    async function processWhatsAppPayment() {
+      if (!activeBookingPayload) {
+        alert('No active booking details found.');
         return;
       }
 
-      const promptSim = document.getElementById('mobilePromptSimulator');
-      const simPrompt = document.getElementById('mobileSimPrompt');
-      const simTimer = document.getElementById('mobileSimTimer');
-      const payBtn = document.getElementById('btnSubmitMobilePay');
+      const custName = document.getElementById('checkoutWhatsappName')?.value.trim() || getCurrentUserName() || 'Traveler';
+      const custPhone = document.getElementById('checkoutWhatsappPhone')?.value.trim();
+      const custNotes = document.getElementById('checkoutWhatsappNotes')?.value.trim() || '';
 
-      if (promptSim) promptSim.style.display = 'block';
-      if (simPrompt) simPrompt.textContent = `📲 ${selectedMobileProviderName} USSD Prompt sent to ${dialCode} ${phoneNum}!`;
-      if (payBtn) payBtn.disabled = true;
+      if (!custPhone) {
+        alert('Please provide your WhatsApp phone number so the TripBnA concierge team can contact you.');
+        document.getElementById('checkoutWhatsappPhone')?.focus();
+        return;
+      }
 
-      let secondsLeft = 4;
-      if (simTimer) simTimer.textContent = `${secondsLeft}s`;
+      // Update booking payload with customer info
+      if (!activeBookingPayload.passengerDetails) activeBookingPayload.passengerDetails = {};
+      activeBookingPayload.passengerDetails.name = custName;
+      activeBookingPayload.passengerDetails.phone = custPhone;
+      if (custNotes) {
+        if (!activeBookingPayload.metadata) activeBookingPayload.metadata = {};
+        activeBookingPayload.metadata.specialRequests = custNotes;
+      }
 
-      if (mobilePromptTimerInterval) clearInterval(mobilePromptTimerInterval);
-      mobilePromptTimerInterval = setInterval(() => {
-        secondsLeft--;
-        if (simTimer) simTimer.textContent = `${secondsLeft}s`;
-        if (secondsLeft <= 0) {
-          clearInterval(mobilePromptTimerInterval);
-          finalizeBookingSuccess(`${selectedMobileProviderName} (${dialCode} ${phoneNum})`, `MPESA-${Date.now()}`);
+      const total = Number(activeBookingPayload.totalPrice || 0);
+      const sTitle = activeBookingPayload.serviceTitle || activeBookingPayload.type || 'TripBnA Service';
+      const dest = activeBookingPayload.destination || 'Tanzania';
+      const refCode = generateBookingRef(activeBookingPayload.type);
+
+      // Construct professional WhatsApp concierge message
+      let lines = [
+        `*Habari TripBnA Concierge!* 🇹🇿`,
+        `I would like to complete my booking request:`,
+        `• *Ref:* ${refCode}`,
+        `• *Service:* ${sTitle}`,
+        `• *Category:* ${activeBookingPayload.type}`,
+        `• *Location:* ${dest}`,
+        `• *Total Price:* $${total.toFixed(2)} USD`,
+        `• *Customer:* ${custName}`,
+        `• *WhatsApp:* ${custPhone}`
+      ];
+
+      if (activeBookingPayload.metadata?.checkIn) {
+        lines.push(`• *Dates:* ${activeBookingPayload.metadata.checkIn} to ${activeBookingPayload.metadata.checkOut || 'N/A'} (${activeBookingPayload.metadata.nights || 1} nights)`);
+        lines.push(`• *Guests:* ${activeBookingPayload.passengerDetails?.guests || 1}`);
+      }
+
+      if (activeBookingPayload.items && Array.isArray(activeBookingPayload.items)) {
+        lines.push(`• *Menu Items:*`);
+        activeBookingPayload.items.forEach(it => {
+          lines.push(`   - ${it.quantity}x ${it.name} ($${it.price})`);
+        });
+        if (activeBookingPayload.deliveryType) {
+          lines.push(`• *Order Type:* ${activeBookingPayload.deliveryType}`);
         }
-      }, 1000);
+      }
+
+      if (custNotes) {
+        lines.push(`• *Special Notes:* ${custNotes}`);
+      }
+
+      lines.push(`\nPlease assist me with booking confirmation and payment processing.`);
+
+      const fullMessage = lines.join('\n');
+      const whatsappUrl = `https://wa.me/255635125212?text=${encodeURIComponent(fullMessage)}`;
+
+      // Finalize booking in Firestore with WhatsApp Concierge tag
+      await finalizeBookingSuccess('Pay via WhatsApp (+255 635 125 212)', `WA-${Date.now()}`);
+
+      // Open WhatsApp chat directly in a new tab
+      window.open(whatsappUrl, '_blank');
+    }
+    window.processWhatsAppPayment = processWhatsAppPayment;
+
+    function showComingSoonNotice(gatewayName) {
+      alert(`⏳ ${gatewayName} Gateway is Coming Soon!\n\nFor instant booking verification and payment processing, please use "Pay via WhatsApp (+255 635 125 212)". We are switching you to WhatsApp Checkout.`);
+      switchCheckoutMethod('whatsapp');
+    }
+
+    // Process Mobile Money (Coming Soon - redirects to WhatsApp)
+    function processMobilePayment() {
+      showComingSoonNotice('Mobile Money');
     }
     window.processMobilePayment = processMobilePayment;
 
-    // Process Card Payment
+    // Process Card Payment (Coming Soon - redirects to WhatsApp)
     function processCardPayment() {
-      const cardNum = document.getElementById('cardCheckoutNumber')?.value.trim();
-      const expiry = document.getElementById('cardCheckoutExpiry')?.value.trim();
-      const cvv = document.getElementById('cardCheckoutCvv')?.value.trim();
-      const holder = document.getElementById('cardCheckoutName')?.value.trim();
-
-      if (!cardNum || cardNum.length < 15) {
-        alert('Please enter a valid card number.');
-        return;
-      }
-      if (!expiry || !cvv || !holder) {
-        alert('Please complete all credit card fields.');
-        return;
-      }
-
-      const statusEl = document.getElementById('paymentStatus');
-      if (statusEl) statusEl.textContent = 'Verifying card with 3D-Secure...';
-
-      setTimeout(() => {
-        finalizeBookingSuccess(`Bank Card (ending in ${cardNum.slice(-4)})`, `CARD-${Date.now()}`);
-      }, 1200);
+      showComingSoonNotice('Credit/Debit Card');
     }
     window.processCardPayment = processCardPayment;
 
-    // Process TripBnA Wallet Payment
+    // Process TripBnA Wallet Payment (Coming Soon - redirects to WhatsApp)
     function processWalletPayment() {
-      if (!activeBookingPayload) return;
-      let total = Number(activeBookingPayload.totalPrice || 0);
-      let coinDiscount = (applyCoinDiscountChecked && userTripCoins >= 500) ? Math.min(total, userTripCoins / 250) : 0;
-      let finalPayable = Math.max(0, total - coinDiscount);
-
-      if (userWalletBalance < finalPayable) {
-        alert(`Insufficient TripBnA Wallet balance ($${userWalletBalance.toFixed(2)}). Please top up your wallet or use Mobile Money / Card.`);
-        return;
-      }
-
-      userWalletBalance -= finalPayable;
-      finalizeBookingSuccess('TripBnA Digital Wallet', `WALLET-${Date.now()}`);
+      showComingSoonNotice('TripBnA Wallet');
     }
     window.processWalletPayment = processWalletPayment;
 
-    // Process PayPal Direct
+    // Process PayPal Direct (Coming Soon - redirects to WhatsApp)
     function processPayPalDirect() {
-      finalizeBookingSuccess('PayPal Checkout', `PAYPAL-${Date.now()}`);
+      showComingSoonNotice('PayPal Checkout');
     }
     window.processPayPalDirect = processPayPalDirect;
 
@@ -6108,6 +7167,1166 @@ Last Updated: April 2026 | Version 2.0 | TripBnA Platform Policies
       showToast(`Booking #${refCode} cancelled. Refund of $${refundAmount.toFixed(2)} credited to your wallet.`);
     }
     window.cancelBooking = cancelBooking;
+
+    /* =========================================================================
+       SEARCH HELPER FUNCTION
+       ========================================================================= */
+    function openSearch(category = '') {
+      const panel = document.getElementById('searchPanel');
+      if (panel) {
+        panel.style.display = 'block';
+        if (category) {
+          runSearch('', category);
+        }
+        panel.scrollIntoView({ behavior: 'smooth' });
+        const input = document.getElementById('searchInputTop');
+        if (input) input.focus();
+      }
+    }
+    window.openSearch = openSearch;
+
+    /* =========================================================================
+       TRIPBNA MASTER ADMIN DASHBOARD CONTROLLER (JACKSON LOSHILARI ONLY)
+       Focus: Accommodation and Food Services Governance & WhatsApp Bookings
+       ========================================================================= */
+    let currentAdminTab = 'dashboard';
+    let adminBookingsCache = [];
+    let adminUsersCache = [];
+    let adminPendingServiceTarget = null;
+    let adminServiceToInspect = null;
+
+    function openAdminDashboard() {
+      const user = window.currentUser;
+      const isAuthAdmin = isAdmin(user);
+
+      if (!isAuthAdmin) {
+        alert("🔒 Access Denied: The Master TripBnA Admin Dashboard is strictly reserved for Jackson Loshilari (jacksonloshilari7@gmail.com) and appointed co-administrators. Please sign in with authorized credentials.");
+        openModal('loginModal');
+        return;
+      }
+
+      const overlay = document.getElementById('adminDashboardOverlay');
+      if (overlay) {
+        overlay.style.display = 'block';
+        document.body.style.overflow = 'hidden';
+        switchAdminTab('dashboard');
+        syncAdminDashboardData();
+      }
+    }
+    window.openAdminDashboard = openAdminDashboard;
+
+    function closeAdminDashboard() {
+      const overlay = document.getElementById('adminDashboardOverlay');
+      if (overlay) {
+        overlay.style.display = 'none';
+        document.body.style.overflow = '';
+      }
+    }
+    window.closeAdminDashboard = closeAdminDashboard;
+
+    function switchAdminTab(tabKey) {
+      currentAdminTab = tabKey;
+      
+      const tabKeys = ['dashboard', 'pending', 'approved', 'rejected', 'suspended', 'providers', 'users', 'bookings', 'reports', 'settings'];
+      tabKeys.forEach(t => {
+        const btn = document.getElementById(`btnAdminTab_${t}`);
+        const sec = document.getElementById(`adminSection_${t}`);
+        if (btn) btn.classList.toggle('active', t === tabKey);
+        if (sec) sec.style.display = (t === tabKey) ? 'block' : 'none';
+      });
+
+      switch(tabKey) {
+        case 'dashboard': renderAdminDashboard(); break;
+        case 'pending': renderAdminPendingList(); break;
+        case 'approved': renderAdminApprovedList(); break;
+        case 'rejected': renderAdminRejectedList(); break;
+        case 'suspended': renderAdminSuspendedList(); break;
+        case 'providers': renderAdminProvidersList(); break;
+        case 'users': renderAdminUsersList(); break;
+        case 'bookings': renderAdminBookingsList(); break;
+        case 'reports': renderAdminReports(); break;
+        case 'settings': renderAdminSettings(); break;
+      }
+    }
+    window.switchAdminTab = switchAdminTab;
+
+    async function syncAdminDashboardData() {
+      if (window.db && window.collection && window.getDocs) {
+        try {
+          const bookingsSnap = await window.getDocs(window.collection(window.db, "bookings"));
+          const bList = [];
+          bookingsSnap.forEach(d => bList.push({ id: d.id, ...d.data() }));
+          adminBookingsCache = bList;
+        } catch(e) {
+          console.warn("Admin bookings fetch error:", e);
+          if (Array.isArray(window.userBookings)) adminBookingsCache = window.userBookings;
+        }
+
+        try {
+          const usersSnap = await window.getDocs(window.collection(window.db, "users"));
+          const uList = [];
+          usersSnap.forEach(d => uList.push({ id: d.id, ...d.data() }));
+          adminUsersCache = uList;
+        } catch(e) {
+          console.warn("Admin users fetch error:", e);
+        }
+      }
+
+      refreshAdminBadgesAndDashboard();
+      switchAdminTab(currentAdminTab);
+    }
+    window.syncAdminDashboardData = syncAdminDashboardData;
+
+    function refreshAdminBadgesAndDashboard() {
+      const svcs = window.services || [];
+      const pendingCount = svcs.filter(s => s.status === 'Pending').length;
+      const approvedCount = svcs.filter(s => s.status === 'Approved').length;
+      const rejectedCount = svcs.filter(s => s.status === 'Rejected').length;
+      const suspendedCount = svcs.filter(s => s.status === 'Suspended').length;
+      const bookingsCount = adminBookingsCache.length;
+
+      const providerEmails = new Set();
+      svcs.forEach(s => {
+        if (s.providerEmail) providerEmails.add(s.providerEmail);
+        else if (s.providerName) providerEmails.add(s.providerName);
+      });
+      const providersCount = Math.max(providerEmails.size, 1);
+      const usersCount = Math.max(adminUsersCache.length, 1);
+
+      const topBadge = document.getElementById('topAdminPendingBadge');
+      if (topBadge) {
+        topBadge.textContent = pendingCount;
+        topBadge.style.display = pendingCount > 0 ? 'inline-block' : 'none';
+      }
+
+      const bp = document.getElementById('adminBadge_pending');
+      if (bp) bp.textContent = pendingCount;
+      const ba = document.getElementById('adminBadge_approved');
+      if (ba) ba.textContent = approvedCount;
+      const br = document.getElementById('adminBadge_rejected');
+      if (br) br.textContent = rejectedCount;
+      const bs = document.getElementById('adminBadge_suspended');
+      if (bs) bs.textContent = suspendedCount;
+      const bpr = document.getElementById('adminBadge_providers');
+      if (bpr) bpr.textContent = providersCount;
+      const bu = document.getElementById('adminBadge_users');
+      if (bu) bu.textContent = usersCount;
+      const bb = document.getElementById('adminBadge_bookings');
+      if (bb) bb.textContent = bookingsCount;
+
+      const qPending = document.getElementById('quickReviewPendingCount');
+      if (qPending) qPending.textContent = pendingCount;
+
+      const scP = document.getElementById('statCountPending');
+      if (scP) scP.textContent = pendingCount;
+      const scA = document.getElementById('statCountApproved');
+      if (scA) scA.textContent = approvedCount;
+      const scR = document.getElementById('statCountRejected');
+      if (scR) scR.textContent = rejectedCount;
+      const scS = document.getElementById('statCountSuspended');
+      if (scS) scS.textContent = suspendedCount;
+      const scB = document.getElementById('statCountBookings');
+      if (scB) scB.textContent = bookingsCount;
+      const scPr = document.getElementById('statCountProviders');
+      if (scPr) scPr.textContent = providersCount;
+      const scU = document.getElementById('statCountUsers');
+      if (scU) scU.textContent = usersCount;
+    }
+    window.refreshAdminBadgesAndDashboard = refreshAdminBadgesAndDashboard;
+
+    function renderAdminDashboard() {
+      const svcs = window.services || [];
+      const pendingList = svcs.filter(s => s.status === 'Pending');
+      const spotlightEl = document.getElementById('adminSpotlightContainer');
+      
+      if (spotlightEl) {
+        if (pendingList.length === 0) {
+          spotlightEl.innerHTML = `
+            <div style="text-align:center; padding:35px 20px; color:#94a3b8;">
+              <div style="font-size:36px; margin-bottom:8px;">🎉</div>
+              <div style="font-weight:700; font-size:15px; color:#f8fafc;">All Pending Services Reviewed!</div>
+              <div style="font-size:12px; margin-top:4px;">No new Accommodation or Food listings waiting for approval.</div>
+            </div>
+          `;
+        } else {
+          const item = pendingList[0];
+          const imgUrl = (item.images && item.images[0]) ? item.images[0] : "https://images.unsplash.com/photo-1547471080-7cc2caa01a7e?auto=format&fit=crop&w=600&q=80";
+          spotlightEl.innerHTML = `
+            <div style="display:flex; gap:14px; align-items:flex-start; background:#1e293b; padding:14px; border-radius:10px; border:1px solid #334155;">
+              <img src="${imgUrl}" style="width:90px; height:80px; object-fit:cover; border-radius:8px; border:1px solid #475569;" />
+              <div style="flex:1; min-width:0;">
+                <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px;">
+                  <strong style="font-size:15px; color:#ffffff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${escapeHTML(item.name)}</strong>
+                  <span class="admin-pill pill-amber">PENDING</span>
+                </div>
+                <div style="font-size:12px; color:#94a3b8; margin:2px 0;">📍 ${escapeHTML(item.place || 'Tanzania')} • <span style="color:#38bdf8;">${item.type}</span></div>
+                <div style="font-size:13px; font-weight:800; color:#4ade80;">$${item.price} <span style="font-size:11px; font-weight:normal; color:#cbd5e1;">(${item.type === 'Accommodation' ? 'per night' : 'avg dish'})</span></div>
+                <div style="font-size:11px; color:#cbd5e1; margin-top:4px;">Host: <strong>${escapeHTML(item.providerName || item.providerEmail || 'Unknown')}</strong></div>
+                <div style="display:flex; gap:6px; margin-top:10px;">
+                  <button type="button" onclick="adminApproveService('${item.id}')" style="background:#16a34a; color:#fff; border:none; padding:6px 12px; border-radius:6px; font-size:11px; font-weight:700; cursor:pointer;">✅ Approve</button>
+                  <button type="button" onclick="openAdminInspectModal('${item.id}')" style="background:#0284c7; color:#fff; border:none; padding:6px 12px; border-radius:6px; font-size:11px; font-weight:700; cursor:pointer;">👁️ Inspect</button>
+                  <button type="button" onclick="openAdminRejectModal('${item.id}')" style="background:#ef4444; color:#fff; border:none; padding:6px 12px; border-radius:6px; font-size:11px; font-weight:700; cursor:pointer;">❌ Reject</button>
+                </div>
+              </div>
+            </div>
+          `;
+        }
+      }
+
+      const recentBookingsEl = document.getElementById('adminDashboardRecentBookings');
+      if (recentBookingsEl) {
+        if (adminBookingsCache.length === 0) {
+          recentBookingsEl.innerHTML = `
+            <div style="text-align:center; padding:35px 20px; color:#94a3b8;">
+              <div style="font-size:32px; margin-bottom:6px;">💬</div>
+              <div style="font-weight:700; font-size:14px; color:#f8fafc;">No WhatsApp Concierge Bookings Yet</div>
+              <div style="font-size:12px; margin-top:2px;">Incoming traveler bookings will appear here instantly.</div>
+            </div>
+          `;
+        } else {
+          const recentList = adminBookingsCache.slice(0, 3);
+          recentBookingsEl.innerHTML = recentList.map(b => {
+            const bRef = b.bookingRef || 'TB-WA';
+            const price = b.totalPrice || b.amountPaid || 0;
+            const waChatUrl = `https://wa.me/255635125212?text=TripBnA%20Concierge%20Status%20Update%20for%20Booking%20${encodeURIComponent(bRef)}`;
+            return `
+              <div style="display:flex; justify-content:space-between; align-items:center; background:#1e293b; padding:10px 12px; border-radius:8px; border:1px solid #334155; margin-bottom:8px;">
+                <div>
+                  <div style="font-size:13px; font-weight:700; color:#f8fafc;">${escapeHTML(b.customerName || 'Traveler')} • <span style="color:#38bdf8;">${escapeHTML(b.serviceTitle || b.serviceType || 'Service')}</span></div>
+                  <div style="font-size:11px; color:#94a3b8;">Ref: <strong>${escapeHTML(bRef)}</strong> • $${price} • ${escapeHTML(b.status || 'Received')}</div>
+                </div>
+                <div style="display:flex; gap:6px;">
+                  <a href="${waChatUrl}" target="_blank" style="background:#25D366; color:#fff; text-decoration:none; font-size:11px; font-weight:700; padding:6px 10px; border-radius:6px; display:inline-flex; align-items:center; gap:4px;">
+                    <span>💬</span> WhatsApp
+                  </a>
+                </div>
+              </div>
+            `;
+          }).join('');
+        }
+      }
+    }
+
+    function renderAdminPendingList() {
+      const container = document.getElementById('adminPendingListContainer');
+      if (!container) return;
+
+      const typeFilter = document.getElementById('filterPendingType')?.value || 'all';
+      const search = (document.getElementById('searchPendingInput')?.value || '').toLowerCase().trim();
+
+      const svcs = window.services || [];
+      const pendingItems = svcs.filter(s => {
+        if (s.status !== 'Pending') return false;
+        if (typeFilter !== 'all' && s.type !== typeFilter) return false;
+        if (search) {
+          const matchName = (s.name || '').toLowerCase().includes(search);
+          const matchPlace = (s.place || '').toLowerCase().includes(search);
+          const matchProvider = (s.providerName || s.providerEmail || '').toLowerCase().includes(search);
+          if (!matchName && !matchPlace && !matchProvider) return false;
+        }
+        return true;
+      });
+
+      if (pendingItems.length === 0) {
+        container.innerHTML = `
+          <div style="text-align:center; padding:50px 20px; background:#0f172a; border-radius:12px; border:1px dashed #334155; color:#94a3b8;">
+            <div style="font-size:42px; margin-bottom:10px;">✨</div>
+            <div style="font-weight:800; font-size:16px; color:#ffffff;">No Pending Approvals</div>
+            <div style="font-size:13px; margin-top:4px;">All submitted Accommodation and Food services have been evaluated.</div>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = pendingItems.map(s => {
+        const img = (s.images && s.images[0]) ? s.images[0] : "https://images.unsplash.com/photo-1547471080-7cc2caa01a7e?auto=format&fit=crop&w=600&q=80";
+        const catBadge = s.type === 'Accommodation' 
+          ? `<span class="admin-pill pill-blue">🏨 ACCOMMODATION</span>` 
+          : `<span class="admin-pill pill-orange">🍽️ FOOD & DINING</span>`;
+
+        return `
+          <div style="background:#0f172a; border:1px solid #334155; border-radius:12px; padding:16px; display:flex; gap:16px; align-items:flex-start; flex-wrap:wrap;">
+            <img src="${img}" style="width:120px; height:100px; object-fit:cover; border-radius:8px; border:1px solid #1e293b;" />
+            <div style="flex:1; min-width:260px;">
+              <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px;">
+                <div>
+                  <h4 style="margin:0; font-size:16px; font-weight:800; color:#f8fafc;">${escapeHTML(s.name)}</h4>
+                  <div style="font-size:12px; color:#94a3b8; margin:2px 0;">📍 ${escapeHTML(s.place || 'Tanzania')} • ID: ${s.id}</div>
+                </div>
+                <div style="display:flex; gap:6px; align-items:center;">
+                  ${catBadge}
+                  <span class="admin-pill pill-amber">PENDING REVIEW</span>
+                </div>
+              </div>
+
+              <div style="display:flex; gap:14px; font-size:12px; color:#cbd5e1; margin:8px 0; flex-wrap:wrap; background:#1e293b; padding:8px 12px; border-radius:6px;">
+                <div>💰 Rate: <strong style="color:#4ade80;">$${s.price}</strong></div>
+                ${s.roomType ? `<div>🛏️ Room: <strong>${escapeHTML(s.roomType)}</strong></div>` : ''}
+                ${s.foodType ? `<div>🍴 Cuisine: <strong>${escapeHTML(s.foodType)}</strong></div>` : ''}
+                <div>👤 Provider: <strong>${escapeHTML(s.providerName || s.providerEmail || 'Verified Host')}</strong></div>
+              </div>
+
+              ${s.amenities ? `<div style="font-size:11px; color:#94a3b8; margin-bottom:4px;">⭐ Amenities: ${escapeHTML(s.amenities)}</div>` : ''}
+              ${s.specialOffers ? `<div style="font-size:11px; color:#fbbf24; margin-bottom:6px;">🎁 Special Offer: ${escapeHTML(s.specialOffers)}</div>` : ''}
+
+              <div style="display:flex; gap:8px; margin-top:12px; flex-wrap:wrap;">
+                <button type="button" onclick="adminApproveService('${s.id}')" style="background:#16a34a; color:#fff; border:none; padding:8px 16px; border-radius:6px; font-size:12px; font-weight:700; cursor:pointer; display:inline-flex; align-items:center; gap:6px;">
+                  ✅ Approve & Publish
+                </button>
+                <button type="button" onclick="openAdminInspectModal('${s.id}')" style="background:#0284c7; color:#fff; border:none; padding:8px 14px; border-radius:6px; font-size:12px; font-weight:700; cursor:pointer; display:inline-flex; align-items:center; gap:6px;">
+                  👁️ Full Inspection
+                </button>
+                <button type="button" onclick="openAdminRejectModal('${s.id}')" style="background:#ef4444; color:#fff; border:none; padding:8px 14px; border-radius:6px; font-size:12px; font-weight:700; cursor:pointer; display:inline-flex; align-items:center; gap:6px;">
+                  ❌ Reject
+                </button>
+                <button type="button" onclick="openAdminSuspendModal('${s.id}')" style="background:#f97316; color:#fff; border:none; padding:8px 14px; border-radius:6px; font-size:12px; font-weight:700; cursor:pointer; display:inline-flex; align-items:center; gap:6px;">
+                  ⏸️ Suspend
+                </button>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function renderAdminApprovedList() {
+      const container = document.getElementById('adminApprovedListContainer');
+      if (!container) return;
+
+      const typeFilter = document.getElementById('filterApprovedType')?.value || 'all';
+      const search = (document.getElementById('searchApprovedInput')?.value || '').toLowerCase().trim();
+
+      const svcs = window.services || [];
+      const approvedItems = svcs.filter(s => {
+        if (s.status !== 'Approved') return false;
+        if (typeFilter !== 'all' && s.type !== typeFilter) return false;
+        if (search) {
+          const matchName = (s.name || '').toLowerCase().includes(search);
+          const matchPlace = (s.place || '').toLowerCase().includes(search);
+          if (!matchName && !matchPlace) return false;
+        }
+        return true;
+      });
+
+      if (approvedItems.length === 0) {
+        container.innerHTML = `
+          <div style="grid-column:1/-1; text-align:center; padding:50px 20px; background:#0f172a; border-radius:12px; border:1px dashed #334155; color:#94a3b8;">
+            <div style="font-size:42px; margin-bottom:10px;">🏨</div>
+            <div style="font-weight:800; font-size:16px; color:#ffffff;">No Approved Services Found</div>
+            <div style="font-size:13px; margin-top:4px;">Approve pending services or add a verified service directly.</div>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = approvedItems.map(s => {
+        const img = (s.images && s.images[0]) ? s.images[0] : "https://images.unsplash.com/photo-1547471080-7cc2caa01a7e?auto=format&fit=crop&w=600&q=80";
+        return `
+          <div style="background:#0f172a; border:1px solid #1e293b; border-radius:12px; overflow:hidden; display:flex; flex-direction:column;">
+            <img src="${img}" style="width:100%; height:160px; object-fit:cover;" />
+            <div style="padding:16px; flex:1; display:flex; flex-direction:column;">
+              <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px;">
+                <h4 style="margin:0; font-size:16px; font-weight:800; color:#ffffff;">${escapeHTML(s.name)}</h4>
+                <span class="admin-pill pill-green">APPROVED</span>
+              </div>
+              <div style="font-size:12px; color:#94a3b8; margin:4px 0;">📍 ${escapeHTML(s.place || 'Tanzania')} • ${s.type}</div>
+              <div style="font-size:15px; font-weight:800; color:#4ade80; margin:6px 0;">$${s.price}</div>
+              <div style="font-size:11px; color:#94a3b8; flex:1;">Provider: ${escapeHTML(s.providerName || s.providerEmail || 'Admin Verified')}</div>
+              
+              <div style="display:flex; gap:6px; margin-top:14px; padding-top:12px; border-top:1px solid #1e293b; flex-wrap:wrap;">
+                <button type="button" onclick="openAdminInspectModal('${s.id}')" style="flex:1; background:#0284c7; color:#fff; border:none; padding:6px 8px; border-radius:6px; font-size:11px; font-weight:700; cursor:pointer;">👁️ Inspect</button>
+                <button type="button" onclick="openAdminEditServiceModal('${s.id}')" style="flex:1; background:#334155; color:#fff; border:none; padding:6px 8px; border-radius:6px; font-size:11px; font-weight:700; cursor:pointer;">✏️ Edit</button>
+                <button type="button" onclick="openAdminSuspendModal('${s.id}')" style="flex:1; background:#f97316; color:#fff; border:none; padding:6px 8px; border-radius:6px; font-size:11px; font-weight:700; cursor:pointer;">⏸️ Suspend</button>
+                <button type="button" onclick="adminDeleteService('${s.id}')" style="background:#7f1d1d; color:#f87171; border:none; padding:6px 10px; border-radius:6px; font-size:11px; font-weight:700; cursor:pointer;">🗑️</button>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function renderAdminRejectedList() {
+      const container = document.getElementById('adminRejectedListContainer');
+      if (!container) return;
+
+      const svcs = window.services || [];
+      const rejectedItems = svcs.filter(s => s.status === 'Rejected');
+
+      if (rejectedItems.length === 0) {
+        container.innerHTML = `
+          <div style="text-align:center; padding:50px 20px; background:#0f172a; border-radius:12px; border:1px dashed #334155; color:#94a3b8;">
+            <div style="font-size:36px; margin-bottom:10px;">✅</div>
+            <div style="font-weight:700; font-size:15px; color:#ffffff;">No Rejected Services</div>
+            <div style="font-size:12px; margin-top:4px;">No services currently flagged as rejected.</div>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = rejectedItems.map(s => {
+        return `
+          <div style="background:#0f172a; border:1px solid #7f1d1d; border-radius:12px; padding:16px; display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:12px;">
+            <div style="flex:1; min-width:280px;">
+              <div style="display:flex; gap:8px; align-items:center;">
+                <h4 style="margin:0; font-size:16px; color:#ffffff;">${escapeHTML(s.name)}</h4>
+                <span class="admin-pill pill-red">REJECTED</span>
+              </div>
+              <div style="font-size:12px; color:#94a3b8; margin:4px 0;">📍 ${escapeHTML(s.place || 'Tanzania')} • ${s.type} • $${s.price}</div>
+              <div style="background:#1e1418; border:1px solid #991b1b; padding:10px 12px; border-radius:8px; margin-top:8px;">
+                <div style="font-size:11px; font-weight:700; color:#f87171; text-transform:uppercase;">Reason for Rejection:</div>
+                <div style="font-size:13px; color:#fecaca; margin-top:2px;">${escapeHTML(s.rejectionReason || 'Did not satisfy quality or licensing prerequisites.')}</div>
+                <div style="font-size:10px; color:#94a3b8; margin-top:4px;">Reviewed by: ${escapeHTML(s.reviewedBy || 'jacksonloshilari7@gmail.com')} • ${s.reviewedAt ? new Date(s.reviewedAt).toLocaleDateString() : 'Recent'}</div>
+              </div>
+            </div>
+            <div style="display:flex; gap:8px;">
+              <button type="button" onclick="adminApproveService('${s.id}')" style="background:#16a34a; color:#fff; border:none; padding:8px 14px; border-radius:6px; font-size:12px; font-weight:700; cursor:pointer;">
+                🔄 Re-evaluate & Approve
+              </button>
+              <button type="button" onclick="adminDeleteService('${s.id}')" style="background:#334155; color:#f87171; border:none; padding:8px 14px; border-radius:6px; font-size:12px; font-weight:700; cursor:pointer;">
+                🗑️ Delete
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function renderAdminSuspendedList() {
+      const container = document.getElementById('adminSuspendedListContainer');
+      if (!container) return;
+
+      const svcs = window.services || [];
+      const suspendedItems = svcs.filter(s => s.status === 'Suspended');
+
+      if (suspendedItems.length === 0) {
+        container.innerHTML = `
+          <div style="text-align:center; padding:50px 20px; background:#0f172a; border-radius:12px; border:1px dashed #334155; color:#94a3b8;">
+            <div style="font-size:36px; margin-bottom:10px;">🟢</div>
+            <div style="font-weight:700; font-size:15px; color:#ffffff;">No Suspended Services</div>
+            <div style="font-size:12px; margin-top:4px;">All active services are running normally.</div>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = suspendedItems.map(s => {
+        return `
+          <div style="background:#0f172a; border:1px solid #c2410c; border-radius:12px; padding:16px; display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:12px;">
+            <div style="flex:1; min-width:280px;">
+              <div style="display:flex; gap:8px; align-items:center;">
+                <h4 style="margin:0; font-size:16px; color:#ffffff;">${escapeHTML(s.name)}</h4>
+                <span class="admin-pill pill-orange">SUSPENDED</span>
+              </div>
+              <div style="font-size:12px; color:#94a3b8; margin:4px 0;">📍 ${escapeHTML(s.place || 'Tanzania')} • ${s.type} • $${s.price}</div>
+              <div style="background:#1e1b18; border:1px solid #ea580c; padding:10px 12px; border-radius:8px; margin-top:8px;">
+                <div style="font-size:11px; font-weight:700; color:#fb923c; text-transform:uppercase;">Suspension Cause:</div>
+                <div style="font-size:13px; color:#fed7aa; margin-top:2px;">${escapeHTML(s.suspensionReason || 'Temporarily paused on provider request or maintenance.')}</div>
+              </div>
+            </div>
+            <div style="display:flex; gap:8px;">
+              <button type="button" onclick="adminApproveService('${s.id}')" style="background:#16a34a; color:#fff; border:none; padding:8px 14px; border-radius:6px; font-size:12px; font-weight:700; cursor:pointer;">
+                ▶️ Reactivate & Publish
+              </button>
+              <button type="button" onclick="adminDeleteService('${s.id}')" style="background:#334155; color:#f87171; border:none; padding:8px 14px; border-radius:6px; font-size:12px; font-weight:700; cursor:pointer;">
+                🗑️ Delete
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function renderAdminProvidersList() {
+      const container = document.getElementById('adminProvidersListContainer');
+      if (!container) return;
+
+      const search = (document.getElementById('searchProvidersInput')?.value || '').toLowerCase().trim();
+      const svcs = window.services || [];
+
+      const map = new Map();
+      svcs.forEach(s => {
+        const key = s.providerEmail || s.providerName || 'system_admin';
+        if (!map.has(key)) {
+          map.set(key, {
+            email: s.providerEmail || (key.includes('@') ? key : 'host@tripbna.com'),
+            name: s.providerName || key.split('@')[0],
+            accommodations: 0,
+            foods: 0,
+            pendingCount: 0,
+            approvedCount: 0,
+            services: []
+          });
+        }
+        const prov = map.get(key);
+        if (s.type === 'Accommodation') prov.accommodations++;
+        if (s.type === 'Food') prov.foods++;
+        if (s.status === 'Pending') prov.pendingCount++;
+        if (s.status === 'Approved') prov.approvedCount++;
+        prov.services.push(s);
+      });
+
+      let providers = Array.from(map.values());
+      if (search) {
+        providers = providers.filter(p => p.name.toLowerCase().includes(search) || p.email.toLowerCase().includes(search));
+      }
+
+      if (providers.length === 0) {
+        container.innerHTML = `<div style="grid-column:1/-1; text-align:center; padding:40px; color:#94a3b8;">No matching providers found.</div>`;
+        return;
+      }
+
+      container.innerHTML = providers.map(p => {
+        return `
+          <div style="background:#0f172a; border:1px solid #1e293b; border-radius:12px; padding:16px;">
+            <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+              <div>
+                <h4 style="margin:0; font-size:15px; font-weight:800; color:#f8fafc;">${escapeHTML(p.name)}</h4>
+                <div style="font-size:12px; color:#38bdf8; margin:2px 0;">${escapeHTML(p.email)}</div>
+              </div>
+              <span class="admin-pill pill-blue">HOST</span>
+            </div>
+
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin:14px 0; font-size:12px; background:#1e293b; padding:10px; border-radius:8px;">
+              <div>🏨 Stays: <strong>${p.accommodations}</strong></div>
+              <div>🍽️ Dining: <strong>${p.foods}</strong></div>
+              <div style="color:#fbbf24;">⏳ Pending: <strong>${p.pendingCount}</strong></div>
+              <div style="color:#4ade80;">✅ Live: <strong>${p.approvedCount}</strong></div>
+            </div>
+
+            <div style="display:flex; gap:6px;">
+              <a href="https://wa.me/255635125212?text=Habari%20${encodeURIComponent(p.name)},%20this%20is%20TripBnA%20Admin%20regarding%20your%20listings" target="_blank" style="flex:1; text-align:center; background:#25D366; color:#fff; text-decoration:none; padding:7px 10px; border-radius:6px; font-size:11px; font-weight:700;">
+                💬 WhatsApp
+              </a>
+              <a href="mailto:${encodeURIComponent(p.email)}?subject=TripBnA%20Service%20Provider%20Notification" style="flex:1; text-align:center; background:#334155; color:#f8fafc; text-decoration:none; padding:7px 10px; border-radius:6px; font-size:11px; font-weight:700;">
+                ✉️ Email
+              </a>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function renderAdminUsersList() {
+      const container = document.getElementById('adminUsersListContainer');
+      if (!container) return;
+
+      const search = (document.getElementById('searchUsersInput')?.value || '').toLowerCase().trim();
+      let users = adminUsersCache.length ? adminUsersCache : [
+        { uid: 'admin-1', email: 'jacksonloshilari7@gmail.com', name: 'Jackson Loshilari', role: 'admin', tripCoins: 500 },
+        { uid: 'prov-1', email: 'provider@tripbna.com', name: 'Zanzibar Beach Host', role: 'provider', tripCoins: 200 }
+      ];
+
+      if (search) {
+        users = users.filter(u => (u.email || '').toLowerCase().includes(search) || (u.name || '').toLowerCase().includes(search));
+      }
+
+      container.innerHTML = `
+        <table style="width:100%; border-collapse:collapse; font-size:13px; text-align:left; color:#cbd5e1;">
+          <thead>
+            <tr style="background:#1e293b; color:#94a3b8; font-size:11px; text-transform:uppercase;">
+              <th style="padding:12px;">User</th>
+              <th style="padding:12px;">Email</th>
+              <th style="padding:12px;">Role</th>
+              <th style="padding:12px;">TripCoins</th>
+              <th style="padding:12px;">UID</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${users.map(u => `
+              <tr style="border-bottom:1px solid #1e293b;">
+                <td style="padding:12px; font-weight:700; color:#f8fafc;">${escapeHTML(u.name || 'Traveler')}</td>
+                <td style="padding:12px; color:#38bdf8;">${escapeHTML(u.email || 'N/A')}</td>
+                <td style="padding:12px;">
+                  <span class="admin-pill ${u.role === 'admin' ? 'pill-purple' : (u.role === 'provider' ? 'pill-blue' : 'pill-green')}">
+                    ${(u.role || 'traveler').toUpperCase()}
+                  </span>
+                </td>
+                <td style="padding:12px; font-weight:800; color:#fbbf24;">${u.tripCoins || 0} TC</td>
+                <td style="padding:12px; font-family:monospace; font-size:11px; color:#64748b;">${escapeHTML(u.uid || u.id || '')}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      `;
+    }
+
+    function renderAdminBookingsList() {
+      const container = document.getElementById('adminBookingsListContainer');
+      if (!container) return;
+
+      const statusFilter = document.getElementById('filterBookingStatus')?.value || 'all';
+      const search = (document.getElementById('searchBookingsInput')?.value || '').toLowerCase().trim();
+
+      let bookings = adminBookingsCache;
+      if (statusFilter !== 'all') {
+        bookings = bookings.filter(b => (b.status || '').toLowerCase() === statusFilter.toLowerCase());
+      }
+      if (search) {
+        bookings = bookings.filter(b => {
+          const matchRef = (b.bookingRef || '').toLowerCase().includes(search);
+          const matchCust = (b.customerName || '').toLowerCase().includes(search);
+          const matchTitle = (b.serviceTitle || '').toLowerCase().includes(search);
+          return matchRef || matchCust || matchTitle;
+        });
+      }
+
+      if (bookings.length === 0) {
+        container.innerHTML = `
+          <div style="text-align:center; padding:50px 20px; background:#0f172a; border-radius:12px; border:1px dashed #334155; color:#94a3b8;">
+            <div style="font-size:36px; margin-bottom:8px;">📑</div>
+            <div style="font-weight:700; font-size:15px; color:#ffffff;">No Bookings Found</div>
+            <div style="font-size:12px; margin-top:2px;">Traveler bookings and food orders made via WhatsApp will be listed here.</div>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = bookings.map(b => {
+        const bRef = b.bookingRef || 'TB-WA';
+        const price = b.totalPrice || b.amountPaid || 0;
+        const custPhone = b.customerPhone || '';
+        const custWaUrl = custPhone ? `https://wa.me/${custPhone.replace(/\D/g, '')}?text=Habari%20${encodeURIComponent(b.customerName || 'Traveler')},%20this%20is%20TripBnA%20Concierge%20regarding%20booking%20${encodeURIComponent(bRef)}.` : null;
+
+        return `
+          <div style="background:#0f172a; border:1px solid #1e293b; border-radius:12px; padding:16px;">
+            <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:10px;">
+              <div>
+                <div style="display:flex; align-items:center; gap:8px;">
+                  <h4 style="margin:0; font-size:16px; font-weight:800; color:#f8fafc;">${escapeHTML(b.serviceTitle || b.serviceType || 'Service')}</h4>
+                  <span class="admin-pill pill-cyan">${escapeHTML(bRef)}</span>
+                </div>
+                <div style="font-size:13px; color:#94a3b8; margin:4px 0;">
+                  Customer: <strong style="color:#ffffff;">${escapeHTML(b.customerName || 'Traveler')}</strong> • 📞 <strong>${escapeHTML(b.customerPhone || 'N/A')}</strong> • ✉️ ${escapeHTML(b.customerEmail || 'N/A')}
+                </div>
+              </div>
+              <div style="text-align:right;">
+                <div style="font-size:18px; font-weight:900; color:#4ade80;">$${price}</div>
+                <div style="font-size:11px; color:#38bdf8;">${escapeHTML(b.paymentMethod || 'Pay via WhatsApp')}</div>
+              </div>
+            </div>
+
+            <div style="background:#1e293b; border:1px solid #334155; padding:10px 12px; border-radius:8px; margin:12px 0; font-size:12px; color:#cbd5e1; display:flex; flex-wrap:wrap; gap:16px;">
+              <div>Type: <strong>${escapeHTML(b.serviceType || b.category || 'Experience')}</strong></div>
+              <div>Destination: <strong>${escapeHTML(b.destination || 'Tanzania')}</strong></div>
+              ${b.checkIn ? `<div>Dates: <strong>${b.checkIn} to ${b.checkOut || 'N/A'}</strong> (${b.nights || 1} nights, ${b.guests || 1} guests)</div>` : ''}
+              ${b.deliveryType ? `<div>Delivery: <strong>${escapeHTML(b.deliveryType)}</strong></div>` : ''}
+              ${b.metadata?.specialRequests ? `<div>Notes: <em>"${escapeHTML(b.metadata.specialRequests)}"</em></div>` : ''}
+            </div>
+
+            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+              <div style="display:flex; align-items:center; gap:8px;">
+                <label style="font-size:12px; color:#94a3b8; font-weight:700;">Status:</label>
+                <select onchange="updateAdminBookingStatus('${b.id}', this.value)" style="background:#1e293b; color:#f8fafc; border:1px solid #334155; padding:6px 10px; border-radius:6px; font-size:12px;">
+                  <option value="Booking/Order Request Sent" ${b.status === 'Booking/Order Request Sent' ? 'selected' : ''}>Booking/Order Request Sent</option>
+                  <option value="confirmed" ${b.status === 'confirmed' ? 'selected' : ''}>Confirmed</option>
+                  <option value="completed" ${b.status === 'completed' ? 'selected' : ''}>Completed</option>
+                  <option value="cancelled" ${b.status === 'cancelled' ? 'selected' : ''}>Cancelled</option>
+                </select>
+              </div>
+
+              <div style="display:flex; gap:8px;">
+                ${custWaUrl ? `
+                  <a href="${custWaUrl}" target="_blank" style="background:#25D366; color:#fff; text-decoration:none; padding:6px 12px; border-radius:6px; font-size:12px; font-weight:700; display:inline-flex; align-items:center; gap:4px;">
+                    <span>💬</span> Message Customer
+                  </a>
+                ` : ''}
+                <a href="https://wa.me/255635125212?text=TripBnA%20Concierge%20Action%20on%20Booking%20${encodeURIComponent(bRef)}" target="_blank" style="background:#0284c7; color:#fff; text-decoration:none; padding:6px 12px; border-radius:6px; font-size:12px; font-weight:700; display:inline-flex; align-items:center; gap:4px;">
+                  <span>📱</span> Concierge Line
+                </a>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    async function updateAdminBookingStatus(bookingId, newStatus) {
+      if (window.db && window.updateDoc && window.doc) {
+        try {
+          await window.updateDoc(window.doc(window.db, "bookings", String(bookingId)), {
+            status: newStatus,
+            updatedAt: window.serverTimestamp ? window.serverTimestamp() : new Date().toISOString()
+          });
+          showToast(`Booking status updated to ${newStatus}`);
+        } catch(e) {
+          console.error("Update booking status error:", e);
+          alert("Error updating status: " + e.message);
+        }
+      }
+      const b = adminBookingsCache.find(item => String(item.id) === String(bookingId));
+      if (b) b.status = newStatus;
+    }
+    window.updateAdminBookingStatus = updateAdminBookingStatus;
+
+    function renderAdminReports() {
+      const svcs = window.services || [];
+      const catEl = document.getElementById('reportCategoryDist');
+      const statEl = document.getElementById('reportStatusDist');
+      const destEl = document.getElementById('reportDestDist');
+
+      const accCount = svcs.filter(s => s.type === 'Accommodation').length;
+      const foodCount = svcs.filter(s => s.type === 'Food').length;
+      const total = svcs.length || 1;
+
+      if (catEl) {
+        catEl.innerHTML = `
+          <div style="font-size:13px;">
+            <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
+              <span>🏨 Accommodations</span>
+              <strong>${accCount} (${Math.round(accCount / total * 100)}%)</strong>
+            </div>
+            <div style="width:100%; height:8px; background:#1e293b; border-radius:999px; overflow:hidden;">
+              <div style="width:${Math.round(accCount / total * 100)}%; height:100%; background:#38bdf8;"></div>
+            </div>
+          </div>
+          <div style="font-size:13px; margin-top:10px;">
+            <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
+              <span>🍽️ Food & Dining</span>
+              <strong>${foodCount} (${Math.round(foodCount / total * 100)}%)</strong>
+            </div>
+            <div style="width:100%; height:8px; background:#1e293b; border-radius:999px; overflow:hidden;">
+              <div style="width:${Math.round(foodCount / total * 100)}%; height:100%; background:#f97316;"></div>
+            </div>
+          </div>
+        `;
+      }
+
+      if (statEl) {
+        const approvedCount = svcs.filter(s => s.status === 'Approved').length;
+        const pendingCount = svcs.filter(s => s.status === 'Pending').length;
+        const rejectedCount = svcs.filter(s => s.status === 'Rejected').length;
+        const suspendedCount = svcs.filter(s => s.status === 'Suspended').length;
+
+        statEl.innerHTML = `
+          <div style="display:flex; justify-content:space-between; font-size:13px; padding:6px 0; border-bottom:1px solid #1e293b;">
+            <span style="color:#4ade80;">✅ Approved & Live</span>
+            <strong>${approvedCount}</strong>
+          </div>
+          <div style="display:flex; justify-content:space-between; font-size:13px; padding:6px 0; border-bottom:1px solid #1e293b;">
+            <span style="color:#fbbf24;">⏳ Pending Admin Approval</span>
+            <strong>${pendingCount}</strong>
+          </div>
+          <div style="display:flex; justify-content:space-between; font-size:13px; padding:6px 0; border-bottom:1px solid #1e293b;">
+            <span style="color:#f87171;">❌ Rejected</span>
+            <strong>${rejectedCount}</strong>
+          </div>
+          <div style="display:flex; justify-content:space-between; font-size:13px; padding:6px 0;">
+            <span style="color:#fb923c;">⏸️ Suspended</span>
+            <strong>${suspendedCount}</strong>
+          </div>
+        `;
+      }
+
+      if (destEl) {
+        const destCounts = {};
+        svcs.forEach(s => {
+          const place = (s.place || 'Other').split(',')[0].trim();
+          destCounts[place] = (destCounts[place] || 0) + 1;
+        });
+        const topDests = Object.entries(destCounts).sort((a,b) => b[1] - a[1]).slice(0, 5);
+
+        destEl.innerHTML = topDests.map(([d, c]) => `
+          <div style="display:flex; justify-content:space-between; font-size:13px; padding:6px 0; border-bottom:1px solid #1e293b;">
+            <span>📍 ${escapeHTML(d)}</span>
+            <strong style="color:#38bdf8;">${c} service(s)</strong>
+          </div>
+        `).join('');
+      }
+    }
+
+    async function adminApproveService(id) {
+      if (!isAdmin(window.currentUser)) {
+        alert("Permission Denied: Only authorized administrator can approve services.");
+        return;
+      }
+
+      if (window.db && window.updateDoc && window.doc) {
+        try {
+          await window.updateDoc(window.doc(window.db, "services", String(id)), {
+            status: "Approved",
+            approvedAt: window.serverTimestamp ? window.serverTimestamp() : new Date().toISOString(),
+            approvedBy: window.currentUser.email || 'jacksonloshilari7@gmail.com'
+          });
+        } catch(e) {
+          console.error("Admin approve error:", e);
+          alert("Error approving service: " + e.message);
+          return;
+        }
+      }
+
+      const svc = services.find(s => String(s.id) === String(id));
+      if (svc) svc.status = "Approved";
+
+      closeAdminInspectModal();
+      refreshAdminBadgesAndDashboard();
+      switchAdminTab(currentAdminTab);
+      renderAccommodationSection();
+      renderFoodSection();
+      renderTables();
+      showToast("✅ Service successfully Approved and is now visible to travelers!");
+    }
+    window.adminApproveService = adminApproveService;
+
+    function openAdminInspectModal(id) {
+      const svc = services.find(s => String(s.id) === String(id));
+      if (!svc) return;
+      adminServiceToInspect = svc;
+
+      const modal = document.getElementById('adminInspectModal');
+      const content = document.getElementById('adminInspectContent');
+      if (!modal || !content) return;
+
+      const images = Array.isArray(svc.images) ? svc.images : (svc.images ? [svc.images] : []);
+      const videos = Array.isArray(svc.videos) ? svc.videos : (svc.videos ? [svc.videos] : []);
+
+      const mediaGalleryHtml = [
+        ...images.map(img => `<img src="${img}" style="width:100%; max-height:220px; object-fit:cover; border-radius:8px; border:1px solid #334155;">`),
+        ...videos.map(vid => `<video src="${vid}" controls style="width:100%; max-height:220px; border-radius:8px; border:1px solid #334155; background:#000;"></video>`)
+      ].join('');
+
+      content.innerHTML = `
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:14px; border-bottom:1px solid #334155; padding-bottom:10px;">
+          <div>
+            <div style="display:flex; align-items:center; gap:8px;">
+              <h3 style="margin:0; font-size:18px; color:#ffffff;">${escapeHTML(svc.name)}</h3>
+              <span class="admin-pill ${svc.status === 'Approved' ? 'pill-green' : (svc.status === 'Pending' ? 'pill-amber' : (svc.status === 'Rejected' ? 'pill-red' : 'pill-orange'))}">
+                ${(svc.status || 'PENDING').toUpperCase()}
+              </span>
+            </div>
+            <div style="font-size:12px; color:#94a3b8; margin-top:2px;">Category: <strong>${svc.type}</strong> • Location: <strong>${escapeHTML(svc.place || 'Tanzania')}</strong></div>
+          </div>
+          <button type="button" onclick="closeAdminInspectModal()" style="background:transparent; border:none; color:#94a3b8; font-size:18px; cursor:pointer;">✕</button>
+        </div>
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:16px;">
+          ${mediaGalleryHtml || '<div style="grid-column:1/-1; text-align:center; padding:20px; color:#64748b;">No media uploaded.</div>'}
+        </div>
+
+        <div style="background:#1e293b; border-radius:8px; padding:14px; margin-bottom:14px; font-size:13px; line-height:1.6;">
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+            <div>Price / Rate: <strong style="color:#4ade80; font-size:15px;">$${svc.price}</strong></div>
+            <div>Service ID: <span style="font-family:monospace; color:#94a3b8;">${svc.id}</span></div>
+            ${svc.roomType ? `<div>Room Category: <strong>${escapeHTML(svc.roomType)}</strong></div>` : ''}
+            ${svc.foodType ? `<div>Cuisine Specialty: <strong>${escapeHTML(svc.foodType)}</strong></div>` : ''}
+            <div>Registered Host: <strong>${escapeHTML(svc.providerName || 'N/A')}</strong></div>
+            <div>Host Email: <strong style="color:#38bdf8;">${escapeHTML(svc.providerEmail || 'N/A')}</strong></div>
+          </div>
+
+          ${svc.amenities ? `<div style="margin-top:10px; border-top:1px dashed #334155; padding-top:8px;"><strong>Amenities:</strong> ${escapeHTML(svc.amenities)}</div>` : ''}
+          ${svc.specialOffers ? `<div style="margin-top:4px;"><strong>Special Offers:</strong> ${escapeHTML(svc.specialOffers)}</div>` : ''}
+          ${svc.rejectionReason ? `<div style="margin-top:8px; background:#7f1d1d; padding:8px; border-radius:6px; color:#fecaca;"><strong>Rejection History:</strong> ${escapeHTML(svc.rejectionReason)}</div>` : ''}
+        </div>
+
+        <div style="display:flex; justify-content:flex-end; gap:8px; border-top:1px solid #334155; padding-top:12px;">
+          <button type="button" onclick="closeAdminInspectModal()" style="background:#334155; color:#f8fafc; border:none; padding:8px 16px; border-radius:6px; font-size:12px; cursor:pointer;">Close</button>
+          ${svc.status !== 'Approved' ? `<button type="button" onclick="adminApproveService('${svc.id}')" style="background:#16a34a; color:#fff; border:none; padding:8px 16px; border-radius:6px; font-size:12px; font-weight:700; cursor:pointer;">✅ Approve</button>` : ''}
+          ${svc.status !== 'Rejected' ? `<button type="button" onclick="closeAdminInspectModal(); openAdminRejectModal('${svc.id}')" style="background:#ef4444; color:#fff; border:none; padding:8px 16px; border-radius:6px; font-size:12px; font-weight:700; cursor:pointer;">❌ Reject</button>` : ''}
+          ${svc.status !== 'Suspended' ? `<button type="button" onclick="closeAdminInspectModal(); openAdminSuspendModal('${svc.id}')" style="background:#f97316; color:#fff; border:none; padding:8px 16px; border-radius:6px; font-size:12px; font-weight:700; cursor:pointer;">⏸️ Suspend</button>` : ''}
+        </div>
+      `;
+
+      modal.style.display = 'flex';
+    }
+    window.openAdminInspectModal = openAdminInspectModal;
+
+    function closeAdminInspectModal() {
+      const modal = document.getElementById('adminInspectModal');
+      if (modal) modal.style.display = 'none';
+    }
+    window.closeAdminInspectModal = closeAdminInspectModal;
+
+    function openAdminRejectModal(id) {
+      adminPendingServiceTarget = id;
+      const modal = document.getElementById('adminRejectPromptModal');
+      const inputId = document.getElementById('adminRejectServiceId');
+      const reasonEl = document.getElementById('adminRejectReasonText');
+      const presetEl = document.getElementById('adminRejectPreset');
+      if (inputId) inputId.value = id;
+      if (reasonEl) reasonEl.value = '';
+      if (presetEl) presetEl.value = '';
+      if (modal) modal.style.display = 'flex';
+    }
+    window.openAdminRejectModal = openAdminRejectModal;
+
+    function closeAdminRejectModal() {
+      const modal = document.getElementById('adminRejectPromptModal');
+      if (modal) modal.style.display = 'none';
+    }
+    window.closeAdminRejectModal = closeAdminRejectModal;
+
+    function applyRejectPreset(val) {
+      const reasonEl = document.getElementById('adminRejectReasonText');
+      if (reasonEl && val) reasonEl.value = val;
+    }
+    window.applyRejectPreset = applyRejectPreset;
+
+    async function confirmAdminReject() {
+      const id = adminPendingServiceTarget || document.getElementById('adminRejectServiceId')?.value;
+      const reason = document.getElementById('adminRejectReasonText')?.value.trim();
+
+      if (!reason) {
+        alert("Please provide a rejection reason so the provider knows what to fix.");
+        return;
+      }
+
+      if (window.db && window.updateDoc && window.doc) {
+        try {
+          await window.updateDoc(window.doc(window.db, "services", String(id)), {
+            status: "Rejected",
+            rejectionReason: reason,
+            reviewedAt: window.serverTimestamp ? window.serverTimestamp() : new Date().toISOString(),
+            reviewedBy: window.currentUser ? window.currentUser.email : 'jacksonloshilari7@gmail.com'
+          });
+        } catch(e) {
+          console.error("Reject service error:", e);
+          alert("Error rejecting service: " + e.message);
+          return;
+        }
+      }
+
+      const svc = services.find(s => String(s.id) === String(id));
+      if (svc) {
+        svc.status = "Rejected";
+        svc.rejectionReason = reason;
+      }
+
+      closeAdminRejectModal();
+      refreshAdminBadgesAndDashboard();
+      switchAdminTab(currentAdminTab);
+      renderAccommodationSection();
+      renderFoodSection();
+      renderTables();
+      showToast("Listing rejected with feedback sent to provider.");
+    }
+    window.confirmAdminReject = confirmAdminReject;
+
+    function openAdminSuspendModal(id) {
+      adminPendingServiceTarget = id;
+      const modal = document.getElementById('adminSuspendPromptModal');
+      const inputId = document.getElementById('adminSuspendServiceId');
+      const reasonEl = document.getElementById('adminSuspendReasonText');
+      if (inputId) inputId.value = id;
+      if (reasonEl) reasonEl.value = '';
+      if (modal) modal.style.display = 'flex';
+    }
+    window.openAdminSuspendModal = openAdminSuspendModal;
+
+    function closeAdminSuspendModal() {
+      const modal = document.getElementById('adminSuspendPromptModal');
+      if (modal) modal.style.display = 'none';
+    }
+    window.closeAdminSuspendModal = closeAdminSuspendModal;
+
+    async function confirmAdminSuspend() {
+      const id = adminPendingServiceTarget || document.getElementById('adminSuspendServiceId')?.value;
+      const reason = document.getElementById('adminSuspendReasonText')?.value.trim() || 'Temporary suspension by admin';
+
+      if (window.db && window.updateDoc && window.doc) {
+        try {
+          await window.updateDoc(window.doc(window.db, "services", String(id)), {
+            status: "Suspended",
+            suspensionReason: reason,
+            reviewedAt: window.serverTimestamp ? window.serverTimestamp() : new Date().toISOString(),
+            reviewedBy: window.currentUser ? window.currentUser.email : 'jacksonloshilari7@gmail.com'
+          });
+        } catch(e) {
+          console.error("Suspend service error:", e);
+          alert("Error suspending service: " + e.message);
+          return;
+        }
+      }
+
+      const svc = services.find(s => String(s.id) === String(id));
+      if (svc) {
+        svc.status = "Suspended";
+        svc.suspensionReason = reason;
+      }
+
+      closeAdminSuspendModal();
+      refreshAdminBadgesAndDashboard();
+      switchAdminTab(currentAdminTab);
+      renderAccommodationSection();
+      renderFoodSection();
+      renderTables();
+      showToast("Service suspended and removed from traveler view.");
+    }
+    window.confirmAdminSuspend = confirmAdminSuspend;
+
+    async function adminDeleteService(id) {
+      if (!confirm("Are you sure you want to permanently delete this listing? This action cannot be undone.")) return;
+
+      if (window.db && window.deleteDoc && window.doc) {
+        try {
+          await window.deleteDoc(window.doc(window.db, "services", String(id)));
+        } catch(e) {
+          console.error("Delete service error:", e);
+        }
+      }
+
+      const idx = services.findIndex(s => String(s.id) === String(id));
+      if (idx !== -1) services.splice(idx, 1);
+
+      refreshAdminBadgesAndDashboard();
+      switchAdminTab(currentAdminTab);
+      renderAccommodationSection();
+      renderFoodSection();
+      renderTables();
+      showToast("Service deleted.");
+    }
+    window.adminDeleteService = adminDeleteService;
+
+    function openAdminAddServiceModal() {
+      document.getElementById('adminEditServiceId').value = '';
+      document.getElementById('adminEditorModalTitle').textContent = '➕ Add Admin-Verified Service';
+      document.getElementById('adminDirectServiceForm').reset();
+      toggleAdminEditorTypeFields();
+      document.getElementById('adminServiceEditorModal').style.display = 'flex';
+    }
+    window.openAdminAddServiceModal = openAdminAddServiceModal;
+
+    function openAdminEditServiceModal(id) {
+      const svc = services.find(s => String(s.id) === String(id));
+      if (!svc) return;
+
+      document.getElementById('adminEditServiceId').value = svc.id;
+      document.getElementById('adminEditorModalTitle').textContent = `✏️ Edit Service: ${svc.name}`;
+      document.getElementById('adm_type').value = svc.type || 'Accommodation';
+      toggleAdminEditorTypeFields();
+      document.getElementById('adm_name').value = svc.name || '';
+      document.getElementById('adm_place').value = svc.place || '';
+      document.getElementById('adm_price').value = svc.price || 0;
+      document.getElementById('adm_images').value = (svc.images || []).join('\n');
+      document.getElementById('adm_videos').value = (svc.videos || []).join('\n');
+
+      if (svc.type === 'Accommodation') {
+        const roomEl = document.getElementById('adm_acc_room');
+        if (roomEl) roomEl.value = svc.roomType || '';
+        const amenEl = document.getElementById('adm_acc_amen');
+        if (amenEl) amenEl.value = svc.amenities || '';
+      } else if (svc.type === 'Food') {
+        const foodEl = document.getElementById('adm_food_type');
+        if (foodEl) foodEl.value = svc.foodType || '';
+      }
+
+      document.getElementById('adminServiceEditorModal').style.display = 'flex';
+    }
+    window.openAdminEditServiceModal = openAdminEditServiceModal;
+
+    function closeAdminAddServiceModal() {
+      const modal = document.getElementById('adminServiceEditorModal');
+      if (modal) modal.style.display = 'none';
+    }
+    window.closeAdminAddServiceModal = closeAdminAddServiceModal;
+
+    function toggleAdminEditorTypeFields() {
+      const type = document.getElementById('adm_type')?.value || 'Accommodation';
+      const container = document.getElementById('adminEditorSpecificFields');
+      if (!container) return;
+
+      if (type === 'Accommodation') {
+        container.innerHTML = `
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:10px;">
+            <div>
+              <label style="font-size:12px; font-weight:700; display:block; margin-bottom:4px;">Room / Suite Type</label>
+              <input id="adm_acc_room" style="width:100%; background:#1e293b; color:#f8fafc; border:1px solid #334155; padding:8px 10px; border-radius:6px; font-size:13px; box-sizing:border-box;" placeholder="e.g. Presidential Safari Tent" />
+            </div>
+            <div>
+              <label style="font-size:12px; font-weight:700; display:block; margin-bottom:4px;">Amenities</label>
+              <input id="adm_acc_amen" style="width:100%; background:#1e293b; color:#f8fafc; border:1px solid #334155; padding:8px 10px; border-radius:6px; font-size:13px; box-sizing:border-box;" placeholder="e.g. WiFi, Pool, Game Drives" />
+            </div>
+          </div>
+        `;
+      } else {
+        container.innerHTML = `
+          <div style="margin-bottom:10px;">
+            <label style="font-size:12px; font-weight:700; display:block; margin-bottom:4px;">Cuisine Specialty</label>
+            <input id="adm_food_type" style="width:100%; background:#1e293b; color:#f8fafc; border:1px solid #334155; padding:8px 10px; border-radius:6px; font-size:13px; box-sizing:border-box;" placeholder="e.g. Authentic Swahili & Seafood" />
+          </div>
+        `;
+      }
+    }
+    window.toggleAdminEditorTypeFields = toggleAdminEditorTypeFields;
+
+    async function handleAdminDirectServiceSubmit(e) {
+      e.preventDefault();
+      const editId = document.getElementById('adminEditServiceId')?.value;
+      const type = document.getElementById('adm_type')?.value;
+      const name = document.getElementById('adm_name')?.value.trim();
+      const place = document.getElementById('adm_place')?.value.trim();
+      const price = Number(document.getElementById('adm_price')?.value || 0);
+
+      const images = (document.getElementById('adm_images')?.value || '')
+        .split('\n').map(l => l.trim()).filter(l => l.startsWith('http'));
+      const videos = (document.getElementById('adm_videos')?.value || '')
+        .split('\n').map(l => l.trim()).filter(l => l.startsWith('http'));
+
+      if (images.length === 0) {
+        images.push(type === 'Accommodation' ? "https://images.unsplash.com/photo-1547471080-7cc2caa01a7e?auto=format&fit=crop&w=600&q=80" : "https://images.unsplash.com/photo-1555939594-58d7cb561ad1?auto=format&fit=crop&w=600&q=80");
+      }
+
+      const payload = {
+        name,
+        type,
+        place,
+        price,
+        images,
+        videos,
+        status: "Approved",
+        providerId: "system_admin",
+        providerEmail: "jacksonloshilari7@gmail.com",
+        providerName: "TripBnA Verified Admin",
+        updatedAt: window.serverTimestamp ? window.serverTimestamp() : new Date().toISOString()
+      };
+
+      if (type === 'Accommodation') {
+        payload.roomType = document.getElementById('adm_acc_room')?.value.trim() || 'Safari Suite';
+        payload.amenities = document.getElementById('adm_acc_amen')?.value.trim() || '';
+      } else {
+        payload.foodType = document.getElementById('adm_food_type')?.value.trim() || 'Swahili Cuisine';
+      }
+
+      if (editId) {
+        if (window.db && window.updateDoc && window.doc) {
+          try {
+            await window.updateDoc(window.doc(window.db, "services", String(editId)), payload);
+          } catch(err) {
+            console.error("Update service error:", err);
+          }
+        }
+        const idx = services.findIndex(s => String(s.id) === String(editId));
+        if (idx !== -1) services[idx] = { ...services[idx], ...payload };
+        showToast("Service updated and verified live!");
+      } else {
+        payload.createdAt = window.serverTimestamp ? window.serverTimestamp() : new Date().toISOString();
+        if (window.db && window.addDoc && window.collection) {
+          try {
+            const docRef = await window.addDoc(window.collection(window.db, "services"), payload);
+            payload.id = docRef.id;
+          } catch(err) {
+            console.error("Add service error:", err);
+            payload.id = 's_' + Date.now();
+          }
+        } else {
+          payload.id = 's_' + Date.now();
+        }
+        services.push(payload);
+        showToast("Service published live!");
+      }
+
+      closeAdminAddServiceModal();
+      refreshAdminBadgesAndDashboard();
+      switchAdminTab('approved');
+      renderAccommodationSection();
+      renderFoodSection();
+      renderTables();
+    }
+    window.handleAdminDirectServiceSubmit = handleAdminDirectServiceSubmit;
+
+    function renderAdminSettings() {
+      // Policies & Governance Settings
+      renderAppointedAdminsList();
+    }
+    window.renderAdminSettings = renderAdminSettings;
 
     // Select Transport Payment Method from Transport overlay
     function selectTransportPaymentMethod(method) {
@@ -7533,12 +9752,6 @@ window.recalcAccommodationBooking = recalcAccommodationBooking;
 
 // Accommodation "Confirm Now" (Direct Firestore write to bookings)
 async function confirmAccommodationNow() {
-  if (!window.currentUser) {
-    alert("Please log in before confirming your accommodation.");
-    openModal('loginModal');
-    return;
-  }
-
   if (!selectedAccommodation) return alert("Please select an accommodation first.");
 
   const checkIn = document.getElementById('accBookingCheckIn')?.value;
@@ -7582,7 +9795,7 @@ async function confirmAccommodationNow() {
 
   const bookingData = {
     bookingRef: refCode,
-    userId: window.currentUser.uid,
+    userId: window.currentUser ? window.currentUser.uid : ('guest_' + Date.now()),
     customerName: fullName,
     customerEmail: email,
     customerPhone: phone,
@@ -7985,12 +10198,6 @@ function toggleCartVisibility() {
 
 // Food "Confirm Now" (Direct Firestore write to bookings)
 async function confirmFoodOrderNow() {
-  if (!window.currentUser) {
-    alert("Please log in before placing your food order.");
-    openModal('loginModal');
-    return;
-  }
-
   if (cart.length === 0) return alert("Your cart is empty! Please add dishes from the menu first.");
 
   const customerName = document.getElementById("foodCustomerName")?.value.trim();
@@ -8028,9 +10235,9 @@ async function confirmFoodOrderNow() {
 
   const orderData = {
     bookingRef: refCode,
-    userId: window.currentUser.uid,
+    userId: window.currentUser ? window.currentUser.uid : ('guest_' + Date.now()),
     customerName: customerName,
-    customerEmail: window.currentUser.email || 'customer@tripbna.com',
+    customerEmail: (window.currentUser && window.currentUser.email) ? window.currentUser.email : 'guest@tripbna.com',
     customerPhone: customerPhone,
     serviceType: 'Food',
     category: 'Food',
