@@ -23,83 +23,42 @@
        background:#f2f6f8; color:#222; 
      color:inherit; text-decoration:none; }
 
-    /* ---------- Top nav ---------- */
+    /* ---------- Top nav (three buttons) ---------- */
     .topbar {
-      position: sticky;
-      top: 0;
-      z-index: 1100;
-      background: rgba(255, 255, 255, 0.95);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-      border-bottom: 1px solid #e2e8f0;
-      display: flex;
-      justify-content: center;
-      padding: 10px 14px;
-      box-shadow: 0 4px 18px rgba(0,0,0,0.03);
+      position:sticky;
+      top:0;
+      z-index:1100;
+      background:linear-gradient(180deg,#fff,#f8fbfc);
+      border-bottom:1px solid #e6eef2;
+      display:flex;
+      justify-content:center;
+      padding:10px;
+      box-shadow:0 2px 8px rgba(0,0,0,0.03);
     }
     .topbar .btn-row {
-      width: 100%;
-      max-width: 1100px;
-      display: flex;
-      gap: 10px;
-      align-items: center;
-      overflow-x: auto;
-      scrollbar-width: none;
-      -webkit-overflow-scrolling: touch;
-      padding: 2px;
-    }
-    .topbar .btn-row::-webkit-scrollbar {
-      display: none;
+      width:100%;
+      max-width:1100px;
+      display:flex;
+      gap:12px;
+      align-items:center;
     }
     .topbar .btn {
-      flex: 1;
-      min-width: 115px;
-      padding: 11px 16px;
-      border-radius: 10px;
-      border: 1.5px solid #cbd5e1;
-      background: #ffffff;
-      color: #334155;
-      font-weight: 800;
-      font-size: 13px;
-      letter-spacing: 0.3px;
-      text-align: center;
-      cursor: pointer;
-      user-select: none;
-      transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-      white-space: nowrap;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+      flex:1;
+      padding:12px 16px;
+      border-radius:8px;
+      border:1px solid #cfe7dd;
+      background:#2e8b57;
+      color:#fff;
+      font-weight:700;
+      text-align:center;
+      cursor:pointer;
+      user-select:none;
     }
-    .topbar .btn:hover {
-      background: #f8fafc;
-      color: #0f172a;
-      border-color: #94a3b8;
-      transform: translateY(-1px);
-    }
-    .topbar .btn:active {
-      transform: translateY(0);
-    }
-    .topbar .btn.active {
-      background: linear-gradient(135deg, #15803d 0%, #166534 100%) !important;
-      color: #ffffff !important;
-      border-color: #15803d !important;
-      box-shadow: 0 4px 14px rgba(22, 101, 52, 0.28) !important;
-      transform: translateY(-1px);
-    }
-    @media (max-width: 640px) {
-      .topbar {
-        padding: 8px 10px;
-      }
-      .topbar .btn {
-        min-width: 96px;
-        padding: 8px 10px;
-        font-size: 11px;
-        gap: 3px;
-        border-radius: 8px;
-      }
+    .topbar .btn:active { transform:translateY(1px); }
+    .topbar .btn.secondary {
+      background:#fff;
+      color:#2e8b57;
+      border:1px solid #2e8b57;
     }
 
     /* ---------- Layout ---------- */
@@ -252,12 +211,6 @@
       gap: 12px;
       margin: 16px 0 20px 0;
     }
-    @media (max-width: 580px) {
-      .transport-type-grid {
-        grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
-        gap: 8px;
-      }
-    }
     .transport-type-btn {
       display: flex;
       flex-direction: column;
@@ -265,151 +218,27 @@
       justify-content: center;
       padding: 16px 10px;
       background: #ffffff;
-      border: 1.5px solid #e2e8f0;
+      border: 2px solid #e2e8f0;
       border-radius: 14px;
       cursor: pointer;
-      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      transition: all 0.25s ease;
       text-align: center;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
       outline: none;
-      position: relative;
-      overflow: hidden;
     }
     .transport-type-btn:hover {
-      border-color: #10b981;
-      background: #f0fdf4;
+      border-color: #0b84ff;
+      background: #f0f7ff;
       transform: translateY(-3px);
-      box-shadow: 0 10px 22px rgba(16, 185, 129, 0.16);
+      box-shadow: 0 8px 20px rgba(11,132,255,0.18);
     }
     .transport-type-btn:active {
       transform: translateY(0);
     }
     .transport-type-btn.selected {
-      border-color: #15803d;
-      background: #f0fdf4;
-      box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.25), 0 8px 18px rgba(21, 128, 61, 0.15);
-      transform: translateY(-2px);
-    }
-    .transport-type-btn.selected::after {
-      content: '✓ Selected';
-      position: absolute;
-      top: 6px;
-      right: 6px;
-      background: #15803d;
-      color: #ffffff;
-      font-size: 9px;
-      font-weight: 800;
-      padding: 1px 5px;
-      border-radius: 4px;
-    }
-    .transport-icon-bubble {
-      font-size: 32px;
-      margin-bottom: 6px;
-      transition: transform 0.2s ease;
-    }
-    .transport-type-btn:hover .transport-icon-bubble {
-      transform: scale(1.15);
-    }
-    .transport-type-title {
-      font-weight: 800;
-      font-size: 14px;
-      color: #0f172a;
-    }
-    .transport-type-price-tag {
-      font-size: 11px;
-      font-weight: 700;
-      color: #166534;
-      background: #dcfce7;
-      padding: 2px 8px;
-      border-radius: 999px;
-      margin-top: 6px;
-      display: inline-block;
-    }
-
-    /* Continuous Right-to-Left Media Reel for Itinerary & Experiences */
-    @keyframes moveRightToLeftMarquee {
-      0% {
-        transform: translateX(0);
-      }
-      100% {
-        transform: translateX(-50%);
-      }
-    }
-    .itinerary-reel-container {
-      position: relative;
-      width: 100%;
-      overflow: hidden;
-      border-radius: 14px;
-      background: linear-gradient(180deg, #090d16 0%, #0f172a 100%);
-      border: 1px solid #1e293b;
-      padding: 12px 0 16px 0;
-      margin: 14px 0 18px 0;
-      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.35);
-    }
-    .itinerary-reel-track {
-      display: flex;
-      gap: 16px;
-      width: max-content;
-      animation: moveRightToLeftMarquee 32s linear infinite;
-      padding-left: 16px;
-    }
-    .itinerary-reel-track:hover {
-      animation-play-state: paused;
-    }
-    .itinerary-media-card {
-      flex: 0 0 280px;
-      width: 280px;
-      height: 195px;
-      border-radius: 12px;
-      overflow: hidden;
-      position: relative;
-      background: #1e293b;
-      border: 1px solid rgba(255, 255, 255, 0.12);
-      box-shadow: 0 6px 16px rgba(0,0,0,0.3);
-      transition: transform 0.25s ease, box-shadow 0.25s ease;
-    }
-    .itinerary-media-card:hover {
-      transform: translateY(-4px);
-      box-shadow: 0 12px 28px rgba(0,0,0,0.45);
-      border-color: rgba(56, 189, 248, 0.5);
-    }
-    .itinerary-media-card img,
-    .itinerary-media-card video {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      display: block;
-    }
-    .itinerary-media-tag {
-      position: absolute;
-      top: 10px;
-      left: 10px;
-      background: rgba(15, 23, 42, 0.85);
-      color: #38bdf8;
-      font-size: 10px;
-      font-weight: 800;
-      padding: 3px 8px;
-      border-radius: 6px;
-      backdrop-filter: blur(6px);
-      z-index: 5;
-      letter-spacing: 0.3px;
-      border: 1px solid rgba(56, 189, 248, 0.3);
-      display: flex;
-      align-items: center;
-      gap: 4px;
-    }
-    .itinerary-media-caption {
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      background: linear-gradient(to top, rgba(15, 23, 42, 0.95) 0%, rgba(15, 23, 42, 0.6) 65%, transparent 100%);
-      color: #f8fafc;
-      font-size: 12px;
-      font-weight: 700;
-      padding: 24px 10px 8px 10px;
-      z-index: 5;
-      line-height: 1.3;
+      border-color: #0b84ff;
+      background: #e0f2fe;
+      box-shadow: 0 0 0 3px rgba(11,132,255,0.25);
     }
 
     /* ---------- Right-to-Left Media Carousel Component ---------- */
@@ -2161,11 +1990,11 @@ body { font-family: Arial, sans-serif; margin:0; padding:20px; background:#f0f2f
   <!-- TOP NAV: Buttons in one row at top -->
   <div class="topbar" role="navigation">
     <div class="btn-row">
-      <button id="navTransport" class="btn active" onclick="openSection('transport')">🚗 TRANSPORT</button>
-      <button id="navAccommodation" class="btn" onclick="openSection('accommodation')">🏨 ACCOMMODATION</button>
-      <button id="navFood" class="btn" onclick="openSection('food')">🍽️ FOOD</button>
-      <button id="navSearch" class="btn btn-search-nav" onclick="openSearch()">🔍 SEARCH</button>
-      <button id="navAdminDashboard" class="btn btn-admin-nav" style="display:none;" onclick="openAdminDashboard()">🛡️ ADMIN <span id="topAdminPendingBadge" style="background:#f59e0b; color:#000; font-size:10px; padding:2px 6px; border-radius:10px; margin-left:4px; font-weight:800; display:none;">0</span></button>
+      <button id="navTransport" class="btn" onclick="openSection('transport')">TRANSPORT</button>
+      <button id="navAccommodation" class="btn" onclick="openSection('accommodation')">ACCOMMODATION</button>
+      <button id="navFood" class="btn" onclick="openSection('food')">FOOD</button>
+      <button id="navSearch" class="btn" style="background:#0284c7; color:#fff; font-weight:700;" onclick="openSearch()">🔍 SEARCH</button>
+      <button id="navAdminDashboard" class="btn" style="display:none; background:#0f172a; color:#f8fafc; font-weight:700; border:1px solid #334155; margin-left:6px;" onclick="openAdminDashboard()">🛡️ ADMIN <span id="topAdminPendingBadge" style="background:#f59e0b; color:#000; font-size:10px; padding:2px 6px; border-radius:10px; margin-left:4px; font-weight:800; display:none;">0</span></button>
     </div>
   </div>
 
@@ -2657,72 +2486,47 @@ body { font-family: Arial, sans-serif; margin:0; padding:20px; background:#f0f2f
 
           <!-- Transport Type Buttons: Flight, Bus, Trains, Bike, Taxi, Jeep, Yacht -->
           <div class="transport-type-grid">
-            <button type="button" class="transport-type-btn" id="btnTransport_Flight" onclick="selectTransportType('Flight', '✈️', 120, 'Domestic & Regional Flights')">
-              <div class="transport-icon-bubble">✈️</div>
-              <div class="transport-type-title">Flight</div>
-              <div class="transport-type-price-tag">From $120 / seat</div>
+            <button type="button" class="transport-type-btn" onclick="selectTransportType('Flight', '✈️', 120, 'Domestic & Regional Flights')">
+              <div style="font-size:32px; margin-bottom:6px;">✈️</div>
+              <div style="font-weight:700; font-size:15px; color:#0f172a;">Flight</div>
+              <div class="muted" style="font-size:12px; margin-top:2px;">From $120 / seat</div>
             </button>
             
-            <button type="button" class="transport-type-btn" id="btnTransport_Bus" onclick="selectTransportType('Bus', '🚌', 15, 'Intercity & Luxury Coaches')">
-              <div class="transport-icon-bubble">🚌</div>
-              <div class="transport-type-title">Bus</div>
-              <div class="transport-type-price-tag">From $15 / seat</div>
+            <button type="button" class="transport-type-btn" onclick="selectTransportType('Bus', '🚌', 15, 'Intercity & Luxury Coaches')">
+              <div style="font-size:32px; margin-bottom:6px;">🚌</div>
+              <div style="font-weight:700; font-size:15px; color:#0f172a;">Bus</div>
+              <div class="muted" style="font-size:12px; margin-top:2px;">From $15 / seat</div>
             </button>
             
-            <button type="button" class="transport-type-btn" id="btnTransport_Trains" onclick="selectTransportType('Trains', '🚆', 20, 'SGR & Express Train Services')">
-              <div class="transport-icon-bubble">🚆</div>
-              <div class="transport-type-title">Trains</div>
-              <div class="transport-type-price-tag">From $20 / seat</div>
+            <button type="button" class="transport-type-btn" onclick="selectTransportType('Trains', '🚆', 20, 'SGR & Express Train Services')">
+              <div style="font-size:32px; margin-bottom:6px;">🚆</div>
+              <div style="font-weight:700; font-size:15px; color:#0f172a;">Trains</div>
+              <div class="muted" style="font-size:12px; margin-top:2px;">From $20 / seat</div>
             </button>
             
-            <button type="button" class="transport-type-btn" id="btnTransport_Bike" onclick="selectTransportType('Bike', '🏍️', 10, 'Motorbike & Bodaboda Rentals')">
-              <div class="transport-icon-bubble">🏍️</div>
-              <div class="transport-type-title">Bike</div>
-              <div class="transport-type-price-tag">From $10 / ride</div>
+            <button type="button" class="transport-type-btn" onclick="selectTransportType('Bike', '🏍️', 10, 'Motorbike & Bodaboda Rentals')">
+              <div style="font-size:32px; margin-bottom:6px;">🏍️</div>
+              <div style="font-weight:700; font-size:15px; color:#0f172a;">Bike</div>
+              <div class="muted" style="font-size:12px; margin-top:2px;">From $10 / ride</div>
             </button>
             
-            <button type="button" class="transport-type-btn" id="btnTransport_Taxi" onclick="selectTransportType('Taxi', '🚕', 25, 'Private City & Airport Cabs')">
-              <div class="transport-icon-bubble">🚕</div>
-              <div class="transport-type-title">Taxi</div>
-              <div class="transport-type-price-tag">From $25 / ride</div>
+            <button type="button" class="transport-type-btn" onclick="selectTransportType('Taxi', '🚕', 25, 'Private City & Airport Cabs')">
+              <div style="font-size:32px; margin-bottom:6px;">🚕</div>
+              <div style="font-weight:700; font-size:15px; color:#0f172a;">Taxi</div>
+              <div class="muted" style="font-size:12px; margin-top:2px;">From $25 / ride</div>
             </button>
             
-            <button type="button" class="transport-type-btn" id="btnTransport_Jeep" onclick="selectTransportType('Jeep', '🚙', 150, '4x4 Safari & Overland 4WD')">
-              <div class="transport-icon-bubble">🚙</div>
-              <div class="transport-type-title">Jeep 4x4</div>
-              <div class="transport-type-price-tag">From $150 / day</div>
+            <button type="button" class="transport-type-btn" onclick="selectTransportType('Jeep', '🚙', 150, '4x4 Safari & Overland 4WD')">
+              <div style="font-size:32px; margin-bottom:6px;">🚙</div>
+              <div style="font-weight:700; font-size:15px; color:#0f172a;">Jeep</div>
+              <div class="muted" style="font-size:12px; margin-top:2px;">From $150 / day</div>
             </button>
             
-            <button type="button" class="transport-type-btn" id="btnTransport_Yacht" onclick="selectTransportType('Yacht', '🛥️', 250, 'Private Marine & Island Charters')">
-              <div class="transport-icon-bubble">🛥️</div>
-              <div class="transport-type-title">Yacht & Boat</div>
-              <div class="transport-type-price-tag">From $250 / trip</div>
+            <button type="button" class="transport-type-btn" onclick="selectTransportType('Yacht', '🛥️', 250, 'Private Marine & Island Charters')">
+              <div style="font-size:32px; margin-bottom:6px;">🛥️</div>
+              <div style="font-weight:700; font-size:15px; color:#0f172a;">Yacht</div>
+              <div class="muted" style="font-size:12px; margin-top:2px;">From $250 / trip</div>
             </button>
-          </div>
-
-          <!-- Dynamic Active Transport Preview Card -->
-          <div id="transportSelectionCard" style="display:none; background:#f0fdf4; border:1.5px solid #86efac; border-radius:12px; padding:16px; margin:14px 0; box-shadow:0 4px 14px rgba(22,101,52,0.06);">
-            <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:10px;">
-              <div style="display:flex; align-items:center; gap:12px;">
-                <div id="selTransportIcon" style="font-size:36px; background:#fff; width:52px; height:52px; border-radius:12px; display:flex; align-items:center; justify-content:center; box-shadow:0 2px 8px rgba(0,0,0,0.06); border:1px solid #dcfce7;">✈️</div>
-                <div>
-                  <div style="display:flex; align-items:center; gap:8px;">
-                    <h3 id="selTransportTitle" style="margin:0; font-size:16px; font-weight:800; color:#14532d;">Flight Service Selected</h3>
-                    <span id="selTransportPricePill" style="background:#15803d; color:#fff; font-size:11px; font-weight:800; padding:2px 8px; border-radius:999px;">From $120/seat</span>
-                  </div>
-                  <div id="selTransportDesc" style="font-size:13px; color:#166534; margin-top:2px;">Domestic & Regional Flights across Tanzania and Zanzibar</div>
-                </div>
-              </div>
-              <button type="button" id="btnBookSelectedTransport" onclick="proceedSelectedTransportBooking()" style="background:#15803d; color:#ffffff; font-weight:800; font-size:13px; padding:10px 18px; border:none; border-radius:8px; cursor:pointer; display:inline-flex; align-items:center; gap:6px; box-shadow:0 2px 10px rgba(21,128,61,0.25);">
-                ⚡ Book / Reserve This Mode
-              </button>
-            </div>
-            <div id="selTransportPopularRoutes" style="margin-top:12px; padding-top:10px; border-top:1px dashed #bbf7d0; font-size:12px; color:#15803d; display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
-              <strong>Popular Routes:</strong>
-              <span class="chip" style="background:#fff; border:1px solid #86efac; color:#166534; font-size:11px;">Dar es Salaam ⇄ Zanzibar</span>
-              <span class="chip" style="background:#fff; border:1px solid #86efac; color:#166534; font-size:11px;">Arusha ⇄ Serengeti Airstrip</span>
-              <span class="chip" style="background:#fff; border:1px solid #86efac; color:#166534; font-size:11px;">Kilimanjaro (JRO) Transfers</span>
-            </div>
           </div>
 
           <!-- Quick Route Search -->
@@ -2939,6 +2743,12 @@ body { font-family: Arial, sans-serif; margin:0; padding:20px; background:#f0f2f
     </div>
 
     <div class="menu-links">
+      <!-- Dedicated Private Admin Dashboard Link (Admin Only) -->
+      <a href="#" onclick="openAdminDashboard(); return false;" id="sidebarAdminLink" style="display:none; color:#1e3a8a; background:#e0f2fe; border:1px solid #7dd3fc; border-radius:8px; padding:10px 14px; font-weight:700; margin-bottom:6px; align-items:center; justify-content:space-between;">
+        <span>🛡️ TripBnA Admin Dashboard</span>
+        <span id="sidebarAdminBadge" style="background:#f59e0b; color:#000; font-size:11px; padding:2px 8px; border-radius:999px; font-weight:800; display:none;">0</span>
+      </a>
+
       <a href="#" onclick="openModal('profileModal'); return false;">👤 View Profile</a>
       <a href="#" onclick="openModal('loginModal'); return false;" id="sidebarLoginLink">🔐 Login</a>
       <a href="#" onclick="openModal('signupModal'); return false;" id="sidebarSignupLink">📝 Sign Up</a>
@@ -2951,17 +2761,8 @@ body { font-family: Arial, sans-serif; margin:0; padding:20px; background:#f0f2f
       <a href="#" onclick="openDashboard(); return false;">📊 Provider Dashboard</a>
       <a href="#" onclick="openModal('logoutModal'); return false;" id="sidebarLogoutLink">🚪 Logout</a>
 
-      <!-- Dedicated Private Admin Dashboard Link (Restricted to Jackson Loshilari & Appointed Co-Admins Only) -->
-      <a href="#" onclick="openAdminDashboard(); return false;" id="sidebarAdminLink" style="display:none; color:#ffffff; background:linear-gradient(135deg, #0f172a 0%, #1e293b 100%); border:1.5px solid #334155; border-radius:10px; padding:11px 14px; font-weight:800; font-size:13px; margin:12px 0 6px 0; align-items:center; justify-content:space-between; box-shadow:0 4px 14px rgba(15,23,42,0.25); text-decoration:none;">
-        <span style="display:flex; align-items:center; gap:8px;">
-          <span style="font-size:16px;">🛡️</span>
-          <span>TripBnA Admin Dashboard</span>
-        </span>
-        <span id="sidebarAdminBadge" style="background:#f59e0b; color:#000; font-size:11px; padding:2px 8px; border-radius:999px; font-weight:900; display:none;">0</span>
-      </a>
-
       <!-- Compact Language Settings (Reduced Height) -->
-      <div class="card" style="margin-top:4px; margin-bottom:8px; padding:8px 10px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px;">
+      <div class="card" style="margin-top:10px; margin-bottom:8px; padding:8px 10px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px;">
         <div style="font-weight:700; font-size:11px; color:#475569; margin-bottom:5px; display:flex; justify-content:space-between; align-items:center;">
           <span>🌐 Language</span>
           <span style="font-size:10px; color:#94a3b8; font-weight:normal;">Global</span>
@@ -4524,36 +4325,6 @@ Last Updated: April 2026 | Version 2.0 | TripBnA Platform Policies
             </div>
           </div>
 
-          <!-- 👑 Admin Appointment Card: Jackson Loshilari Exclusive Appointing Authority -->
-          <div style="background:#0f172a; border:1px solid #1e293b; border-radius:12px; padding:20px; margin-bottom:16px;">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-              <h4 style="margin:0; font-size:15px; color:#f8fafc;">👑 Administrator Access & Appointed Co-Admins</h4>
-              <span style="font-size:10px; background:#1e293b; color:#38bdf8; border:1px solid #0284c7; padding:2px 8px; border-radius:6px; font-weight:800;">OWNER CONTROLLED</span>
-            </div>
-            <p style="font-size:12px; color:#94a3b8; margin:0 0 14px 0;">
-              This dashboard and navigation link are strictly accessible by you (<strong>jacksonloshilari7@gmail.com</strong>). You can appoint a trusted second administrator with full dashboard oversight and revoke their permissions at any time with a single click.
-            </p>
-
-            <!-- Appoint Form (Visible only to Primary Owner Jackson) -->
-            <div id="appointAdminFormWrap" style="background:#1e293b; border:1px solid #334155; border-radius:10px; padding:12px; margin-bottom:14px;">
-              <label style="display:block; font-size:12px; font-weight:700; color:#cbd5e1; margin-bottom:6px;">Appoint Second Administrator by Email:</label>
-              <div style="display:flex; gap:8px;">
-                <input type="email" id="appointAdminEmailInput" placeholder="Enter user email (e.g. partner@tripbna.com)" style="flex:1; background:#0f172a; border:1px solid #475569; color:#f8fafc; padding:8px 12px; border-radius:6px; font-size:12px;">
-                <button type="button" onclick="submitAppointAdmin()" style="background:#15803d; color:#ffffff; font-weight:800; font-size:12px; padding:8px 16px; border:none; border-radius:6px; cursor:pointer; display:inline-flex; align-items:center; gap:4px; white-space:nowrap;">
-                  ➕ Appoint Admin
-                </button>
-              </div>
-            </div>
-
-            <!-- List of Current Appointed Admins -->
-            <div>
-              <div style="font-size:12px; font-weight:700; color:#cbd5e1; margin-bottom:8px;">Authorized Administrator Accounts:</div>
-              <div id="appointedAdminsListContainer" style="display:flex; flex-direction:column; gap:8px;">
-                <!-- Populated dynamically by renderAppointedAdminsList() -->
-              </div>
-            </div>
-          </div>
-
           <div style="background:#0f172a; border:1px solid #1e293b; border-radius:12px; padding:20px; margin-bottom:16px;">
             <h4 style="margin:0 0 8px 0; font-size:15px; color:#f8fafc;">🔒 Governance & Approval Rules</h4>
             <div style="display:flex; flex-direction:column; gap:12px; font-size:13px; color:#cbd5e1;">
@@ -5167,13 +4938,14 @@ Last Updated: April 2026 | Version 2.0 | TripBnA Platform Policies
         }
       }
 
-      // Check Admin Authorization: Exclusive to Jackson Loshilari & Appointed Co-Admins
-      const isAuthAdmin = typeof isAdmin === 'function' ? isAdmin(user) : (user && (user.email || '').toLowerCase().trim() === 'jacksonloshilari7@gmail.com');
+      // Check Admin Authorization: jacksonloshilari7@gmail.com or role 'admin'
+      const email = user ? (user.email || '').toLowerCase().trim() : '';
+      const isAuthAdmin = email === 'jacksonloshilari7@gmail.com' || (window.currentUserProfile && window.currentUserProfile.role === 'admin');
       
       const navAdminBtn = document.getElementById('navAdminDashboard');
       const sideAdminLink = document.getElementById('sidebarAdminLink');
-      if (navAdminBtn) navAdminBtn.style.display = isAuthAdmin ? 'inline-flex' : 'none';
-      if (sideAdminLink) sideAdminLink.style.display = isAuthAdmin ? 'flex' : 'none';
+      if (navAdminBtn) navAdminBtn.style.display = isAuthAdmin ? 'inline-block' : 'none';
+      if (sideAdminLink) sideAdminLink.style.display = isAuthAdmin ? 'block' : 'none';
 
       if (typeof refreshAdminBadgesAndDashboard === 'function') {
         refreshAdminBadgesAndDashboard();
@@ -5369,164 +5141,13 @@ Last Updated: April 2026 | Version 2.0 | TripBnA Platform Policies
     const searchResultsDiv = document.getElementById('searchResults');
     let currentEditingServiceId = null;
 
-    // 👑 Administrator Governance: Jackson Loshilari Exclusive Authority & Appointed Co-Admins
-    function getAppointedAdmins() {
-      try {
-        const list = JSON.parse(localStorage.getItem('tripbna_appointed_admins')) || [];
-        return Array.isArray(list) ? list.map(e => String(e).toLowerCase().trim()) : [];
-      } catch(e) {
-        return [];
-      }
-    }
-    window.getAppointedAdmins = getAppointedAdmins;
-
-    function isPrimaryOwner(user) {
-      if (!user) return false;
-      const email = (user.email || '').toLowerCase().trim();
-      return email === 'jacksonloshilari7@gmail.com';
-    }
-    window.isPrimaryOwner = isPrimaryOwner;
-
     // RBAC Permissions Check: Admin or Service Provider Owner
     function isAdmin(user) {
       if (!user) return false;
       const email = (user.email || '').toLowerCase().trim();
-      if (email === 'jacksonloshilari7@gmail.com') return true;
-      const appointed = getAppointedAdmins();
-      if (appointed.includes(email)) return true;
-      return (window.currentUserProfile && window.currentUserProfile.role === 'admin');
+      return email === 'jacksonloshilari7@gmail.com' || (window.currentUserProfile && window.currentUserProfile.role === 'admin');
     }
     window.isAdmin = isAdmin;
-
-    async function submitAppointAdmin() {
-      if (!isPrimaryOwner(window.currentUser)) {
-        alert("Permission Restricted: Only the Primary Owner Jackson Loshilari (jacksonloshilari7@gmail.com) can appoint a second administrator.");
-        return;
-      }
-      const emailInput = document.getElementById('appointAdminEmailInput');
-      const email = (emailInput?.value || '').toLowerCase().trim();
-      if (!email || !email.includes('@') || !email.includes('.')) {
-        alert("Please enter a valid email address to appoint as second administrator.");
-        return;
-      }
-      if (email === 'jacksonloshilari7@gmail.com') {
-        alert("jacksonloshilari7@gmail.com is already the permanent Primary Owner.");
-        return;
-      }
-
-      const list = getAppointedAdmins();
-      if (list.includes(email)) {
-        alert(`${email} is already an appointed administrator.`);
-        return;
-      }
-
-      list.push(email);
-      localStorage.setItem('tripbna_appointed_admins', JSON.stringify(list));
-
-      if (window.db && window.setDoc && window.doc) {
-        try {
-          await window.setDoc(window.doc(window.db, "system", "admin_governance"), {
-            appointedAdmins: list,
-            updatedAt: window.serverTimestamp ? window.serverTimestamp() : new Date().toISOString(),
-            updatedBy: window.currentUser.email
-          }, { merge: true });
-        } catch(e) {
-          console.warn("Firestore admin governance sync error:", e);
-        }
-      }
-
-      if (emailInput) emailInput.value = '';
-      showToast(`👑 Successfully appointed ${email} as Administrator.`);
-      renderAppointedAdminsList();
-      updateAuthUI(true, window.currentUserProfile || window.currentUser);
-    }
-    window.submitAppointAdmin = submitAppointAdmin;
-
-    async function removeAppointedAdmin(emailToRemove) {
-      if (!isPrimaryOwner(window.currentUser)) {
-        alert("Permission Restricted: Only Primary Owner Jackson Loshilari can remove an administrator.");
-        return;
-      }
-      if (!confirm(`Are you sure you want to remove administrator rights from ${emailToRemove}? They will immediately lose access to the admin dashboard.`)) {
-        return;
-      }
-
-      let list = getAppointedAdmins();
-      list = list.filter(e => e.toLowerCase() !== emailToRemove.toLowerCase());
-      localStorage.setItem('tripbna_appointed_admins', JSON.stringify(list));
-
-      if (window.db && window.setDoc && window.doc) {
-        try {
-          await window.setDoc(window.doc(window.db, "system", "admin_governance"), {
-            appointedAdmins: list,
-            updatedAt: window.serverTimestamp ? window.serverTimestamp() : new Date().toISOString(),
-            updatedBy: window.currentUser.email
-          }, { merge: true });
-        } catch(e) {
-          console.warn("Firestore admin governance sync error:", e);
-        }
-      }
-
-      showToast(`Admin rights revoked for ${emailToRemove}.`);
-      renderAppointedAdminsList();
-      updateAuthUI(true, window.currentUserProfile || window.currentUser);
-    }
-    window.removeAppointedAdmin = removeAppointedAdmin;
-
-    function renderAppointedAdminsList() {
-      const container = document.getElementById('appointedAdminsListContainer');
-      if (!container) return;
-
-      const isOwner = isPrimaryOwner(window.currentUser);
-      const appointed = getAppointedAdmins();
-
-      let html = `
-        <div style="background:#0f172a; border:1.5px solid #334155; border-radius:8px; padding:12px 14px; display:flex; justify-content:space-between; align-items:center;">
-          <div style="display:flex; align-items:center; gap:10px;">
-            <span style="font-size:22px;">👑</span>
-            <div>
-              <div style="font-weight:700; color:#f8fafc; font-size:13px;">jacksonloshilari7@gmail.com</div>
-              <div style="font-size:11px; color:#22c55e;">Primary Administrator & App Creator (Permanent)</div>
-            </div>
-          </div>
-          <span style="background:#166534; color:#4ade80; font-size:10px; font-weight:800; padding:3px 8px; border-radius:999px;">PRIMARY OWNER</span>
-        </div>
-      `;
-
-      if (appointed.length === 0) {
-        html += `
-          <div style="padding:12px; background:#1e293b; border-radius:8px; font-size:12px; color:#94a3b8; text-align:center; border:1px dashed #475569;">
-            No second administrator currently appointed. Use the form above to appoint one.
-          </div>
-        `;
-      } else {
-        appointed.forEach(email => {
-          html += `
-            <div style="background:#1e293b; border:1px solid #334155; border-radius:8px; padding:12px 14px; display:flex; justify-content:space-between; align-items:center; margin-top:6px;">
-              <div style="display:flex; align-items:center; gap:10px;">
-                <span style="font-size:20px;">🛡️</span>
-                <div>
-                  <div style="font-weight:700; color:#f8fafc; font-size:13px;">${escapeHTML(email)}</div>
-                  <div style="font-size:11px; color:#38bdf8;">Appointed Co-Administrator • Full Dashboard Oversight</div>
-                </div>
-              </div>
-              <div>
-                ${isOwner ? `
-                  <button type="button" onclick="removeAppointedAdmin('${escapeHTML(email)}')" style="background:#ef4444; color:#fff; font-size:11px; font-weight:800; border:none; border-radius:6px; padding:6px 12px; cursor:pointer;">
-                    🗑️ Remove Admin
-                  </button>
-                ` : `
-                  <span style="font-size:11px; color:#94a3b8;">Appointed Admin</span>
-                `}
-              </div>
-            </div>
-          `;
-        });
-      }
-
-      container.innerHTML = html;
-    }
-    window.renderAppointedAdminsList = renderAppointedAdminsList;
 
     function canUserEditService(s) {
       if (!s) return false;
@@ -6379,10 +6000,11 @@ Last Updated: April 2026 | Version 2.0 | TripBnA Platform Policies
 
       term = (term || '').toLowerCase().trim();
 
-      // Rule: Search results show ONLY Approved services to travelers
+      // Rule: Search results show Approved services to regular users; providers can also see their own
       const results = services.filter(s => {
         const isApproved = s.status === 'Approved';
-        if (!isApproved) return false;
+        const canEdit = canUserEditService(s);
+        if (!isApproved && !canEdit) return false;
 
         if (category && s.type !== category) return false;
 
@@ -6723,32 +6345,84 @@ Last Updated: April 2026 | Version 2.0 | TripBnA Platform Policies
     }
     window.processWhatsAppPayment = processWhatsAppPayment;
 
-    function showComingSoonNotice(gatewayName) {
-      alert(`⏳ ${gatewayName} Gateway is Coming Soon!\n\nFor instant booking verification and payment processing, please use "Pay via WhatsApp (+255 635 125 212)". We are switching you to WhatsApp Checkout.`);
-      switchCheckoutMethod('whatsapp');
-    }
-
-    // Process Mobile Money (Coming Soon - redirects to WhatsApp)
+    // Process Mobile Money with USSD STK Push Simulator
     function processMobilePayment() {
-      showComingSoonNotice('Mobile Money');
+      const phoneNum = document.getElementById('checkoutMobileNumber')?.value.trim();
+      const dialCode = document.getElementById('checkoutMobileCountry')?.value || '+255';
+      if (!phoneNum) {
+        alert('Please enter your mobile phone number.');
+        return;
+      }
+
+      const promptSim = document.getElementById('mobilePromptSimulator');
+      const simPrompt = document.getElementById('mobileSimPrompt');
+      const simTimer = document.getElementById('mobileSimTimer');
+      const payBtn = document.getElementById('btnSubmitMobilePay');
+
+      if (promptSim) promptSim.style.display = 'block';
+      if (simPrompt) simPrompt.textContent = `📲 ${selectedMobileProviderName} USSD Prompt sent to ${dialCode} ${phoneNum}!`;
+      if (payBtn) payBtn.disabled = true;
+
+      let secondsLeft = 4;
+      if (simTimer) simTimer.textContent = `${secondsLeft}s`;
+
+      if (mobilePromptTimerInterval) clearInterval(mobilePromptTimerInterval);
+      mobilePromptTimerInterval = setInterval(() => {
+        secondsLeft--;
+        if (simTimer) simTimer.textContent = `${secondsLeft}s`;
+        if (secondsLeft <= 0) {
+          clearInterval(mobilePromptTimerInterval);
+          finalizeBookingSuccess(`${selectedMobileProviderName} (${dialCode} ${phoneNum})`, `MPESA-${Date.now()}`);
+        }
+      }, 1000);
     }
     window.processMobilePayment = processMobilePayment;
 
-    // Process Card Payment (Coming Soon - redirects to WhatsApp)
+    // Process Card Payment
     function processCardPayment() {
-      showComingSoonNotice('Credit/Debit Card');
+      const cardNum = document.getElementById('cardCheckoutNumber')?.value.trim();
+      const expiry = document.getElementById('cardCheckoutExpiry')?.value.trim();
+      const cvv = document.getElementById('cardCheckoutCvv')?.value.trim();
+      const holder = document.getElementById('cardCheckoutName')?.value.trim();
+
+      if (!cardNum || cardNum.length < 15) {
+        alert('Please enter a valid card number.');
+        return;
+      }
+      if (!expiry || !cvv || !holder) {
+        alert('Please complete all credit card fields.');
+        return;
+      }
+
+      const statusEl = document.getElementById('paymentStatus');
+      if (statusEl) statusEl.textContent = 'Verifying card with 3D-Secure...';
+
+      setTimeout(() => {
+        finalizeBookingSuccess(`Bank Card (ending in ${cardNum.slice(-4)})`, `CARD-${Date.now()}`);
+      }, 1200);
     }
     window.processCardPayment = processCardPayment;
 
-    // Process TripBnA Wallet Payment (Coming Soon - redirects to WhatsApp)
+    // Process TripBnA Wallet Payment
     function processWalletPayment() {
-      showComingSoonNotice('TripBnA Wallet');
+      if (!activeBookingPayload) return;
+      let total = Number(activeBookingPayload.totalPrice || 0);
+      let coinDiscount = (applyCoinDiscountChecked && userTripCoins >= 500) ? Math.min(total, userTripCoins / 250) : 0;
+      let finalPayable = Math.max(0, total - coinDiscount);
+
+      if (userWalletBalance < finalPayable) {
+        alert(`Insufficient TripBnA Wallet balance ($${userWalletBalance.toFixed(2)}). Please top up your wallet or use Mobile Money / Card.`);
+        return;
+      }
+
+      userWalletBalance -= finalPayable;
+      finalizeBookingSuccess('TripBnA Digital Wallet', `WALLET-${Date.now()}`);
     }
     window.processWalletPayment = processWalletPayment;
 
-    // Process PayPal Direct (Coming Soon - redirects to WhatsApp)
+    // Process PayPal Direct
     function processPayPalDirect() {
-      showComingSoonNotice('PayPal Checkout');
+      finalizeBookingSuccess('PayPal Checkout', `PAYPAL-${Date.now()}`);
     }
     window.processPayPalDirect = processPayPalDirect;
 
@@ -7197,11 +6871,12 @@ Last Updated: April 2026 | Version 2.0 | TripBnA Platform Policies
 
     function openAdminDashboard() {
       const user = window.currentUser;
-      const isAuthAdmin = isAdmin(user);
+      const email = user ? (user.email || '').toLowerCase().trim() : '';
+      const isAuthAdmin = email === 'jacksonloshilari7@gmail.com' || (window.currentUserProfile && window.currentUserProfile.role === 'admin');
 
       if (!isAuthAdmin) {
-        alert("🔒 Access Denied: The Master TripBnA Admin Dashboard is strictly reserved for Jackson Loshilari (jacksonloshilari7@gmail.com) and appointed co-administrators. Please sign in with authorized credentials.");
-        openModal('loginModal');
+        alert("🔒 Access Denied: The Master TripBnA Admin Dashboard is strictly reserved for the authorized administrator (jacksonloshilari7@gmail.com). Please sign in with authorized credentials.");
+        openModal('signinModal');
         return;
       }
 
@@ -8323,8 +7998,7 @@ Last Updated: April 2026 | Version 2.0 | TripBnA Platform Policies
     window.handleAdminDirectServiceSubmit = handleAdminDirectServiceSubmit;
 
     function renderAdminSettings() {
-      // Policies & Governance Settings
-      renderAppointedAdminsList();
+      // Policies & Settings
     }
     window.renderAdminSettings = renderAdminSettings;
 
@@ -9752,6 +9426,12 @@ window.recalcAccommodationBooking = recalcAccommodationBooking;
 
 // Accommodation "Confirm Now" (Direct Firestore write to bookings)
 async function confirmAccommodationNow() {
+  if (!window.currentUser) {
+    alert("Please log in before confirming your accommodation.");
+    openModal('loginModal');
+    return;
+  }
+
   if (!selectedAccommodation) return alert("Please select an accommodation first.");
 
   const checkIn = document.getElementById('accBookingCheckIn')?.value;
@@ -9795,7 +9475,7 @@ async function confirmAccommodationNow() {
 
   const bookingData = {
     bookingRef: refCode,
-    userId: window.currentUser ? window.currentUser.uid : ('guest_' + Date.now()),
+    userId: window.currentUser.uid,
     customerName: fullName,
     customerEmail: email,
     customerPhone: phone,
@@ -10198,6 +9878,12 @@ function toggleCartVisibility() {
 
 // Food "Confirm Now" (Direct Firestore write to bookings)
 async function confirmFoodOrderNow() {
+  if (!window.currentUser) {
+    alert("Please log in before placing your food order.");
+    openModal('loginModal');
+    return;
+  }
+
   if (cart.length === 0) return alert("Your cart is empty! Please add dishes from the menu first.");
 
   const customerName = document.getElementById("foodCustomerName")?.value.trim();
@@ -10235,9 +9921,9 @@ async function confirmFoodOrderNow() {
 
   const orderData = {
     bookingRef: refCode,
-    userId: window.currentUser ? window.currentUser.uid : ('guest_' + Date.now()),
+    userId: window.currentUser.uid,
     customerName: customerName,
-    customerEmail: (window.currentUser && window.currentUser.email) ? window.currentUser.email : 'guest@tripbna.com',
+    customerEmail: window.currentUser.email || 'customer@tripbna.com',
     customerPhone: customerPhone,
     serviceType: 'Food',
     category: 'Food',
