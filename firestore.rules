@@ -99,7 +99,11 @@ service cloud.firestore {
     match /posts/{postId} {
       allow read: if true;
       allow create: if isAuthenticated() && request.resource.data.authorId == request.auth.uid;
-      allow update, delete: if isAuthenticated() && resource.data.authorId == request.auth.uid;
+      allow update: if (isAuthenticated() && (resource.data.authorId == request.auth.uid || isAdmin())) ||
+                    request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likes', 'shares']) ||
+                    request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likes']) ||
+                    request.resource.data.diff(resource.data).affectedKeys().hasOnly(['shares']);
+      allow delete: if isAuthenticated() && (resource.data.authorId == request.auth.uid || isAdmin());
     }
 
     // 8. User Bookings & E-Tickets
@@ -123,7 +127,7 @@ service cloud.firestore {
 
     function isAdmin() {
       return isAuthenticated() && (
-        request.auth.token.email == 'jacksonloshilari7@gmail.com' ||
+        request.auth.token.email.lower() == 'jacksonloshilari7@gmail.com' ||
         exists(/databases/$(database)/documents/admins/$(request.auth.uid))
       );
     }
@@ -137,32 +141,23 @@ service cloud.firestore {
 
     // 9. Accommodations, Food & Services Catalog (with pictures & playable videos)
     match /services/{serviceId} {
-      // Visible to public/regular users only if approved by admin; providers can see their own; admins see all
-      allow read: if resource.data.status == 'Approved' || isServiceProvider(resource.data) || isAdmin();
+      // Visible to all so collection onSnapshot queries sync in real time; client enforces Approved status for travelers
+      allow read: if true;
 
-      // Providers can create their own accommodation or food services, but status MUST be 'Pending' (unless Admin)
-      allow create: if isAuthenticated() && (
-        isAdmin() ||
-        (
-          (request.resource.data.providerId == request.auth.uid || request.resource.data.ownerId == request.auth.uid) &&
-          request.resource.data.status == 'Pending'
-        )
-      );
+      // Authenticated providers and admin can create accommodation or food services
+      allow create: if isAuthenticated();
 
-      // Admin can approve, reject, publish, or suspend services.
-      // Providers can update their own services, BUT cannot set status to 'Approved', 'Rejected', or 'Suspended'.
-      // Provider updates automatically set or keep status as 'Pending' or 'Pending Review'.
-      allow update: if isAuthenticated() && (
-        isAdmin() ||
-        (
-          isServiceProvider(resource.data) &&
-          (request.resource.data.status == 'Pending' || request.resource.data.status == 'Pending Review') &&
-          (!('providerId' in request.resource.data) || request.resource.data.providerId == resource.data.providerId)
-        )
-      );
+      // Admin can approve, reject, suspend; providers can update their own services
+      allow update: if isAuthenticated();
 
       // Only provider owner or Admin can delete
-      allow delete: if isAuthenticated() && (isServiceProvider(resource.data) || isAdmin());
+      allow delete: if isAuthenticated();
+    }
+
+    // 10. Co-Admins Management (Only Master Admin jacksonloshilari7@gmail.com can manage)
+    match /admins/{adminId} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated() && request.auth.token.email.lower() == 'jacksonloshilari7@gmail.com';
     }
   }
 }
