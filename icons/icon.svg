@@ -1,60 +1,60 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
   <defs>
-    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#14532d"/>
-      <stop offset="50%" stop-color="#1b5e3a"/>
-      <stop offset="100%" stop-color="#2e8b57"/>
-    </linearGradient>
-    <linearGradient id="sunGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-      <stop offset="0%" stop-color="#fbbf24"/>
-      <stop offset="100%" stop-color="#f59e0b"/>
-    </linearGradient>
-    <linearGradient id="mountainGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.95"/>
-      <stop offset="40%" stop-color="#f8fafc" stop-opacity="0.85"/>
-      <stop offset="100%" stop-color="#0f3922"/>
-    </linearGradient>
-    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
-      <feDropShadow dx="0" dy="8" stdDeviation="12" flood-color="#052010" flood-opacity="0.35"/>
+    <filter id="dotShadow" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="4" stdDeviation="4" flood-color="#000000" flood-opacity="0.22"/>
     </filter>
   </defs>
+  <!-- Background with rounded corners -->
+  <rect width="512" height="512" fill="#ffffff" rx="96"/>
+  <!-- Top and bottom bright neon green stripes from user's official logo -->
+  <rect x="0" y="0" width="512" height="46" fill="#00e500" rx="24"/>
+  <rect x="0" y="466" width="512" height="46" fill="#00e500" rx="24"/>
 
-  <!-- Background Canvas -->
-  <rect width="512" height="512" rx="112" fill="url(#bgGrad)"/>
-  
-  <!-- Subtle circular glow -->
-  <circle cx="256" cy="220" r="150" fill="#ffffff" fill-opacity="0.04"/>
+  <!-- Main TripBnA.com Logo centered -->
+  <g transform="translate(18, 75) scale(0.435)">
+    <!-- T: Large Black Serif Letter -->
+    <text x="80" y="320" font-family="'Times New Roman', Georgia, serif" font-size="210" font-weight="900" fill="#111111">T</text>
+    <!-- r: Green Bold Letter -->
+    <text x="210" y="320" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="190" font-weight="900" fill="#008037">r</text>
+    <!-- i: Yellow / Golden Bold Letter -->
+    <text x="315" y="320" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="190" font-weight="900" fill="#f59e0b">i</text>
+    <!-- p: Black Lowercase Letter with sweeping tail -->
+    <text x="375" y="320" font-family="'Times New Roman', Georgia, serif" font-size="205" font-weight="900" fill="#111111">p</text>
+    <path d="M 400 325 C 385 365 355 405 305 410 C 265 415 220 380 180 340" fill="none" stroke="#111111" stroke-width="9" stroke-linecap="round"/>
 
-  <!-- Golden African Safari Sun -->
-  <circle cx="256" cy="190" r="76" fill="url(#sunGrad)" filter="url(#shadow)"/>
+    <!-- Three brand dots (Black, Green, Yellow) -->
+    <g filter="url(#dotShadow)">
+      <circle cx="85" cy="425" r="40" fill="#ffffff"/>
+      <circle cx="85" cy="425" r="34" fill="#111111"/>
+      <circle cx="75" cy="415" r="8" fill="#ffffff" fill-opacity="0.15"/>
+    </g>
+    <g filter="url(#dotShadow)">
+      <circle cx="190" cy="432" r="34" fill="#ffffff"/>
+      <circle cx="190" cy="432" r="28" fill="#008037"/>
+      <circle cx="182" cy="424" r="7" fill="#ffffff" fill-opacity="0.25"/>
+    </g>
+    <g filter="url(#dotShadow)">
+      <circle cx="280" cy="412" r="28" fill="#ffffff"/>
+      <circle cx="280" cy="412" r="22" fill="#f59e0b"/>
+      <circle cx="274" cy="406" r="5" fill="#ffffff" fill-opacity="0.3"/>
+    </g>
 
-  <!-- Snowcapped Mount Kilimanjaro silhouette -->
-  <path d="M 120 340 L 220 220 L 256 185 L 292 220 L 392 340 Z" fill="#0f3922" opacity="0.95"/>
-  <!-- Mountain Snow Cap -->
-  <path d="M 235 204 L 256 185 L 277 204 L 270 216 L 256 210 L 242 216 Z" fill="#ffffff"/>
+    <!-- B: Bold Green -->
+    <text x="475" y="320" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="220" font-weight="900" fill="#008037">B</text>
+    <!-- n: Yellow / Gold -->
+    <text x="640" y="320" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="190" font-weight="900" fill="#f59e0b">n</text>
+    <!-- A: Large Black Serif -->
+    <text x="750" y="320" font-family="'Times New Roman', Georgia, serif" font-size="235" font-weight="900" fill="#111111">A</text>
+    <!-- .com -->
+    <text x="945" y="320" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="95" font-weight="900" fill="#111111">.com</text>
 
-  <!-- Iconic African Acacia Tree silhouette -->
-  <g transform="translate(295, 235) scale(0.65)" fill="#092615">
-    <!-- Trunk -->
-    <path d="M 60 160 C 58 130 52 100 48 70 C 44 45 40 30 35 15 C 38 12 45 25 52 45 C 58 60 62 80 66 100 C 72 75 80 50 92 25 C 95 28 88 48 82 70 C 76 95 72 125 72 160 Z"/>
-    <!-- Canopy Branches -->
-    <ellipse cx="30" cy="15" rx="36" ry="9"/>
-    <ellipse cx="60" cy="8" rx="48" ry="11"/>
-    <ellipse cx="95" cy="22" rx="38" ry="8"/>
-    <ellipse cx="62" cy="0" rx="32" ry="7"/>
-  </g>
+    <!-- Double Underline Stripes under BnA -->
+    <rect x="450" y="340" width="165" height="11" fill="#008037" rx="3"/>
+    <rect x="620" y="340" width="125" height="11" fill="#f59e0b" rx="3"/>
+    <rect x="750" y="340" width="200" height="11" fill="#111111" rx="3"/>
 
-  <!-- Rolling Savanna Horizon -->
-  <path d="M 0 330 Q 140 300 256 315 T 512 320 L 512 512 L 0 512 Z" fill="#0b2e1a" opacity="0.8"/>
-  <path d="M 0 355 Q 160 335 280 345 T 512 345 L 512 512 L 0 512 Z" fill="#072012"/>
-
-  <!-- Brand Typography: TripBnA -->
-  <g id="brandText" filter="url(#shadow)">
-    <text x="256" y="420" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" font-size="52" font-weight="900" fill="#ffffff" text-anchor="middle" letter-spacing="2">
-      Trip<tspan fill="#f59e0b">BnA</tspan>
-    </text>
-    <text x="256" y="454" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" font-size="14" font-weight="700" fill="#94a3b8" text-anchor="middle" letter-spacing="4">
-      EAST AFRICA TRAVEL
-    </text>
+    <rect x="450" y="363" width="165" height="11" fill="#008037" rx="3"/>
+    <rect x="620" y="363" width="125" height="11" fill="#f59e0b" rx="3"/>
+    <rect x="750" y="363" width="200" height="11" fill="#111111" rx="3"/>
   </g>
 </svg>

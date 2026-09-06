@@ -4,7 +4,7 @@
  * network-first navigation, and safe bypass for Firebase and cloud APIs.
  */
 
-const CACHE_VERSION = 'tripbna-pwa-v1.0.2';
+const CACHE_VERSION = 'tripbna-pwa-v1.0.3';
 const STATIC_CACHE = `tripbna-static-${CACHE_VERSION}`;
 const RUNTIME_CACHE = `tripbna-runtime-${CACHE_VERSION}`;
 
@@ -20,8 +20,16 @@ const PRECACHE_ASSETS = [
   '/og-image.png',
   '/icons/logo.svg',
   '/icons/logo-square.svg',
+  '/icons/icon.svg',
+  '/icons/icon-maskable.svg',
   '/icons/icon-48.png',
+  '/icons/icon-72.png',
+  '/icons/icon-96.png',
+  '/icons/icon-128.png',
+  '/icons/icon-144.png',
+  '/icons/icon-152.png',
   '/icons/icon-192.png',
+  '/icons/icon-384.png',
   '/icons/icon-512.png',
   '/icons/icon-maskable-512.png',
   '/icons/apple-touch-icon.png',

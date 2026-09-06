@@ -2132,7 +2132,7 @@ body { font-family: Arial, sans-serif; margin:0; padding:20px; background:#f0f2f
       <button id="navAccommodation" class="btn" onclick="openSection('accommodation')">ACCOMMODATION</button>
       <button id="navFood" class="btn" onclick="openSection('food')">FOOD</button>
       <button id="navSearch" class="btn" style="background:#0284c7; color:#fff; font-weight:700;" onclick="openSearch()">🔍 SEARCH</button>
-      <button id="navInstallPWA" class="btn" style="background:#16a34a; color:#fff; font-weight:700; display:none; align-items:center; justify-content:center; gap:6px; border:1px solid #15803d; box-shadow:0 2px 8px rgba(22,163,74,0.3); white-space:nowrap;" onclick="handlePWAInstallClick()" title="Install TripBnA App">📲 INSTALL</button>
+      <button id="navInstallPWA" class="btn" style="background:linear-gradient(135deg, #16a34a, #15803d); color:#fff; font-weight:800; display:inline-flex; align-items:center; justify-content:center; gap:6px; border:1px solid #14532d; box-shadow:0 2px 8px rgba(22,163,74,0.3); white-space:nowrap;" onclick="openDownloadAppModal()" title="Download & Install TripBnA App">📲 DOWNLOAD APP</button>
       <button id="navAdminDashboard" class="btn" style="background:#0f172a; color:#38bdf8; font-weight:800; border:2px solid #0284c7; box-shadow:0 2px 10px rgba(2,132,199,0.35); margin-left:6px; white-space:nowrap; display:none; align-items:center; justify-content:center; gap:6px;" onclick="handleAdminPortalClick()" title="TripBnA Master Admin Portal">🛡️ ADMIN <span id="topAdminPendingBadge" style="background:#f59e0b; color:#0f172a; font-size:11px; padding:2px 7px; border-radius:999px; margin-left:4px; font-weight:800; display:none;">0</span></button>
     </div>
   </div>
@@ -2151,7 +2151,7 @@ body { font-family: Arial, sans-serif; margin:0; padding:20px; background:#f0f2f
       <div style="font-size:11px; color:#d1fae5; line-height:1.3;">Fast offline access, fullscreen mode & safari updates.</div>
     </div>
     <div style="display:flex; align-items:center; gap:6px; flex-shrink:0;">
-      <button onclick="handlePWAInstallClick()" style="background:#f59e0b; color:#0f172a; border:none; padding:8px 12px; font-size:12px; font-weight:800; border-radius:8px; cursor:pointer; box-shadow:0 2px 6px rgba(0,0,0,0.2);">Install</button>
+      <button onclick="openDownloadAppModal()" style="background:#f59e0b; color:#0f172a; border:none; padding:8px 14px; font-size:12px; font-weight:800; border-radius:8px; cursor:pointer; box-shadow:0 2px 6px rgba(0,0,0,0.2); white-space:nowrap;">📲 Download</button>
       <button onclick="dismissPWABanner()" style="background:transparent; border:none; color:#cbd5e1; font-size:16px; cursor:pointer; padding:4px;">✕</button>
     </div>
   </div>
@@ -2911,6 +2911,14 @@ body { font-family: Arial, sans-serif; margin:0; padding:20px; background:#f0f2f
             <button class="btn secondary" onclick="alert('Real-time chat coming soon')">Chat</button>
           </div>
         </div>
+
+        <!-- Dedicated Download & Install App Widget -->
+        <div class="card" style="margin-top:12px; background:linear-gradient(135deg, #f0fdf4, #dcfce7); border:1px solid #86efac; border-radius:12px; text-align:center; padding:14px;">
+          <img src="/icons/icon-192.png" alt="TripBnA App" style="width:48px; height:48px; border-radius:12px; box-shadow:0 4px 12px rgba(0,0,0,0.15); margin-bottom:8px; border:2px solid #00e500; object-fit:cover;" />
+          <h3 style="margin:0 0 4px 0; color:#14532d; font-size:15px; font-weight:800;">Get TripBnA App</h3>
+          <div class="muted" style="font-size:11px; margin-bottom:10px; color:#166534; line-height:1.4;">Fast offline safari maps, instant booking & zero app store download</div>
+          <button class="primary" style="width:100%; padding:9px 12px; background:#15803d; border-radius:8px; font-weight:800; font-size:12px; cursor:pointer;" onclick="openDownloadAppModal()">📲 Download App (Free)</button>
+        </div>
       </div>
 
     </div>
@@ -2949,9 +2957,9 @@ body { font-family: Arial, sans-serif; margin:0; padding:20px; background:#f0f2f
       </a>
 
       <!-- Install TripBnA Progressive Web App Link -->
-      <a href="#" onclick="handlePWAInstallClick(); return false;" id="sidebarInstallPWALink" style="display:none; color:#15803d; background:#f0fdf4; border:1px solid #bbf7d0; border-radius:8px; padding:10px 14px; font-weight:700; margin-bottom:6px; align-items:center; justify-content:space-between;">
-        <span>📲 Install TripBnA App</span>
-        <span style="background:#22c55e; color:#fff; font-size:10px; padding:2px 7px; border-radius:999px; font-weight:700;">FREE</span>
+      <a href="#" onclick="openDownloadAppModal(); return false;" id="sidebarInstallPWALink" style="display:flex; color:#15803d; background:#f0fdf4; border:1px solid #bbf7d0; border-radius:8px; padding:10px 14px; font-weight:700; margin-bottom:6px; align-items:center; justify-content:space-between;">
+        <span>📲 Download TripBnA App</span>
+        <span style="background:#22c55e; color:#fff; font-size:10px; padding:2px 7px; border-radius:999px; font-weight:700;">FREE PWA</span>
       </a>
 
       <a href="#" onclick="openModal('profileModal'); return false;">👤 View Profile</a>
@@ -3227,24 +3235,109 @@ body { font-family: Arial, sans-serif; margin:0; padding:20px; background:#f0f2f
     </div>
   </div></div>
 
-  <!-- iOS PWA Installation Guide Modal -->
-  <div id="iosInstallModal" class="modal"><div class="panel card" style="max-width:420px; text-align:center;">
-    <button style="float:right" class="ghost" onclick="closeModal('iosInstallModal')">✕</button>
-    <div style="width:56px; height:56px; border-radius:14px; background:#f0fdf4; border:1px solid #bbf7d0; display:inline-flex; align-items:center; justify-content:center; font-size:28px; margin-bottom:10px;">📲</div>
-    <h3 style="margin-top:0; color:#14532d;">Install TripBnA on iOS</h3>
-    <p class="muted" style="font-size:13px; line-height:1.5; text-align:left; margin-bottom:16px;">
-      Install TripBnA on your iPhone or iPad home screen for instant full-screen browsing and offline trip access:
-    </p>
-    <div style="text-align:left; background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:14px; margin-bottom:16px; font-size:13px; line-height:1.6;">
-      <div style="margin-bottom:8px;">
-        <strong>Step 1:</strong> Tap the <strong>Share</strong> button <span style="display:inline-block; padding:1px 6px; background:#e2e8f0; border-radius:4px; font-size:12px;">⎋</span> in Safari’s bottom toolbar.
+  <!-- Dedicated TripBnA Download & Installation Hub Modal -->
+  <div id="downloadAppModal" class="modal"><div class="panel card" style="max-width:540px; width:95%; max-height:92vh; overflow-y:auto; padding:24px 20px; border-radius:20px; box-shadow:0 20px 48px rgba(0,0,0,0.35);">
+    <button style="float:right; font-size:18px; line-height:1;" class="ghost" onclick="closeModal('downloadAppModal')">✕</button>
+    
+    <!-- Header with official brand logo -->
+    <div style="text-align:center; margin-bottom:16px;">
+      <img src="/icons/icon-192.png" alt="TripBnA Logo" style="width:68px; height:68px; border-radius:18px; box-shadow:0 6px 18px rgba(0,0,0,0.18); border:2px solid #00e500; margin-bottom:10px; object-fit:cover;" />
+      <h2 style="margin:0 0 6px 0; color:#14532d; font-size:22px; font-weight:900; letter-spacing:-0.3px;">Download TripBnA App</h2>
+      <p class="muted" style="font-size:13px; margin:0 auto; max-width:420px; line-height:1.5;">
+        Install Tanzania & East Africa’s #1 Travel Super App on your device. 100% Free, instant loading & full offline safari access.
+      </p>
+    </div>
+
+    <!-- 1-Click Instant Action Box -->
+    <div id="pwaDirectInstallBox" style="background:linear-gradient(135deg, #f0fdf4, #dcfce7); border:1.5px solid #86efac; border-radius:14px; padding:16px; margin-bottom:18px; text-align:center;">
+      <div style="font-size:12px; font-weight:700; color:#166534; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:6px;">Direct Installation</div>
+      <button id="btnModalDirectInstall" class="primary" style="background:#15803d; color:#ffffff; font-weight:800; font-size:15px; padding:12px 24px; border-radius:10px; border:none; box-shadow:0 4px 14px rgba(21,128,61,0.35); cursor:pointer; display:inline-flex; align-items:center; gap:8px;" onclick="triggerDirectPWAInstall()">
+        <span>📲 1-Click Install Now</span>
+      </button>
+      <div id="pwaDirectInstallHint" style="font-size:11px; color:#15803d; margin-top:8px;">Instant launch • Zero storage clutter • Free forever</div>
+    </div>
+
+    <!-- Platform Selection Tabs -->
+    <div style="display:flex; gap:6px; margin-bottom:16px; background:#f1f5f9; padding:4px; border-radius:12px; border:1px solid #e2e8f0;">
+      <button id="tabBtnAndroid" class="btn" style="flex:1; padding:8px 4px; font-size:12px; font-weight:800; border-radius:8px; background:#ffffff; color:#0f172a; box-shadow:0 1px 3px rgba(0,0,0,0.1);" onclick="switchDownloadTab('android')">🤖 Android</button>
+      <button id="tabBtnIOS" class="btn" style="flex:1; padding:8px 4px; font-size:12px; font-weight:700; border-radius:8px; background:transparent; color:#64748b;" onclick="switchDownloadTab('ios')">🍏 iPhone/iPad</button>
+      <button id="tabBtnDesktop" class="btn" style="flex:1; padding:8px 4px; font-size:12px; font-weight:700; border-radius:8px; background:transparent; color:#64748b;" onclick="switchDownloadTab('desktop')">💻 PC / Mac</button>
+      <button id="tabBtnQR" class="btn" style="flex:1; padding:8px 4px; font-size:12px; font-weight:700; border-radius:8px; background:transparent; color:#64748b;" onclick="switchDownloadTab('qr')">📷 QR Code</button>
+    </div>
+
+    <!-- Tab 1: Android Instructions -->
+    <div id="tabContentAndroid" style="display:block; background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:16px; margin-bottom:16px; font-size:13px; line-height:1.6;">
+      <div style="font-weight:800; color:#1e293b; margin-bottom:10px; display:flex; align-items:center; gap:6px;">
+        <span>🤖</span> <span>Android (Chrome, Samsung Internet, Edge, Opera)</span>
       </div>
-      <div>
-        <strong>Step 2:</strong> Scroll down and tap <strong style="color:#2e8b57;">➕ Add to Home Screen</strong>, then tap <strong>Add</strong> at top-right.
+      <ol style="margin:0; padding-left:18px; color:#334155;">
+        <li style="margin-bottom:8px;">Tap the <strong>"1-Click Install Now"</strong> button above, OR tap your browser's menu <span style="display:inline-block; padding:1px 6px; background:#e2e8f0; border-radius:4px; font-weight:700;">⋮</span> in the top-right or bottom bar.</li>
+        <li style="margin-bottom:8px;">Select <strong style="color:#15803d;">"Install app"</strong> or <strong>"Add to Home screen"</strong>.</li>
+        <li style="margin-bottom:8px;">Confirm by tapping <strong>"Install"</strong> on the Android system popup.</li>
+        <li>The official <strong>TripBnA</strong> icon will appear on your home screen and app drawer!</li>
+      </ol>
+    </div>
+
+    <!-- Tab 2: iOS Instructions -->
+    <div id="tabContentIOS" style="display:none; background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:16px; margin-bottom:16px; font-size:13px; line-height:1.6;">
+      <div style="font-weight:800; color:#1e293b; margin-bottom:10px; display:flex; align-items:center; gap:6px;">
+        <span>🍏</span> <span>iPhone & iPad (Apple Safari)</span>
+      </div>
+      <ol style="margin:0; padding-left:18px; color:#334155;">
+        <li style="margin-bottom:8px;">Open <strong>tripbna.com</strong> in Apple <strong>Safari</strong> browser.</li>
+        <li style="margin-bottom:8px;">Tap the <strong>Share</strong> button <span style="display:inline-block; padding:2px 8px; background:#e2e8f0; border-radius:4px; font-weight:700;">⎋</span> (square with arrow pointing up) in Safari’s bottom toolbar.</li>
+        <li style="margin-bottom:8px;">Scroll down and tap <strong style="color:#15803d;">➕ Add to Home Screen</strong>.</li>
+        <li>Tap <strong>Add</strong> in the top-right corner. TripBnA is now installed with zero browser bars!</li>
+      </ol>
+    </div>
+
+    <!-- Tab 3: Desktop Instructions -->
+    <div id="tabContentDesktop" style="display:none; background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:16px; margin-bottom:16px; font-size:13px; line-height:1.6;">
+      <div style="font-weight:800; color:#1e293b; margin-bottom:10px; display:flex; align-items:center; gap:6px;">
+        <span>💻</span> <span>Windows, macOS, Chromebook & Linux (Chrome & Edge)</span>
+      </div>
+      <ol style="margin:0; padding-left:18px; color:#334155;">
+        <li style="margin-bottom:8px;">Look at the right side of your browser URL address bar for the <span style="display:inline-block; padding:1px 6px; background:#e2e8f0; border-radius:4px; font-weight:700;">⊕ Install</span> or <span style="display:inline-block; padding:1px 6px; background:#e2e8f0; border-radius:4px; font-weight:700;">⤓</span> icon.</li>
+        <li style="margin-bottom:8px;">Click <strong>"Install TripBnA"</strong>.</li>
+        <li>TripBnA runs in its own dedicated, ultra-fast window on your desktop taskbar / dock!</li>
+      </ol>
+    </div>
+
+    <!-- Tab 4: QR Code -->
+    <div id="tabContentQR" style="display:none; background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:16px; margin-bottom:16px; text-align:center;">
+      <div style="font-weight:800; color:#1e293b; margin-bottom:6px; font-size:14px;">Scan with Your Smartphone Camera</div>
+      <div class="muted" style="font-size:12px; margin-bottom:12px;">Instantly open TripBnA on your mobile device to download and install</div>
+      <div style="display:inline-block; background:#ffffff; padding:12px; border-radius:12px; border:1px solid #cbd5e1; box-shadow:0 4px 12px rgba(0,0,0,0.06);">
+        <img src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=https%3A%2F%2Ftripbna.com%2F" alt="Scan to download TripBnA" style="width:180px; height:180px; display:block;" />
+      </div>
+      <div style="font-size:11px; color:#64748b; margin-top:8px;">Points to https://tripbna.com/</div>
+    </div>
+
+    <!-- Benefits Grid -->
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:18px;">
+      <div style="background:#f1f5f9; padding:10px 12px; border-radius:10px; border:1px solid #e2e8f0;">
+        <div style="font-weight:800; font-size:12px; color:#0f172a; margin-bottom:2px;">⚡ Lightning Fast</div>
+        <div style="font-size:11px; color:#64748b; line-height:1.4;">Instant launch with local caching</div>
+      </div>
+      <div style="background:#f1f5f9; padding:10px 12px; border-radius:10px; border:1px solid #e2e8f0;">
+        <div style="font-weight:800; font-size:12px; color:#0f172a; margin-bottom:2px;">📶 100% Offline Ready</div>
+        <div style="font-size:11px; color:#64748b; line-height:1.4;">Saved trips accessible without signal</div>
+      </div>
+      <div style="background:#f1f5f9; padding:10px 12px; border-radius:10px; border:1px solid #e2e8f0;">
+        <div style="font-weight:800; font-size:12px; color:#0f172a; margin-bottom:2px;">🛡️ Safe & Zero Bloat</div>
+        <div style="font-size:11px; color:#64748b; line-height:1.4;">Takes less than 2MB of phone storage</div>
+      </div>
+      <div style="background:#f1f5f9; padding:10px 12px; border-radius:10px; border:1px solid #e2e8f0;">
+        <div style="font-weight:800; font-size:12px; color:#0f172a; margin-bottom:2px;">🔄 Always Updated</div>
+        <div style="font-size:11px; color:#64748b; line-height:1.4;">Live safari bookings & chat alerts</div>
       </div>
     </div>
-    <button class="primary" style="width:100%; padding:10px; background:#2e8b57;" onclick="closeModal('iosInstallModal')">Got It, Thanks!</button>
+
+    <button class="primary" style="width:100%; padding:11px; background:#2e8b57; font-weight:800; border-radius:10px;" onclick="closeModal('downloadAppModal')">Close</button>
   </div></div>
+
+  <!-- iOS PWA Legacy Modal Anchor (alias) -->
+  <div id="iosInstallModal" style="display:none;"></div>
 
   <div id="signupModal" class="modal"><div class="panel card" style="max-width:460px;">
     <button style="float:right" class="ghost" onclick="closeModal('signupModal')">✕</button>
@@ -15057,15 +15150,105 @@ if (viewMenuBtnEl) {
       const sideLink = document.getElementById('sidebarInstallPWALink');
       const banner = document.getElementById('pwaInstallBanner');
 
-      if (canInstall || isIOSDevice()) {
-        if (topBtn) topBtn.style.display = 'inline-flex';
-        if (sideLink) sideLink.style.display = 'flex';
-        if (banner && !dismissed) banner.style.display = 'flex';
+      // Keep top button and sidebar link available so user always has a place to download
+      if (topBtn) topBtn.style.display = 'inline-flex';
+      if (sideLink) sideLink.style.display = 'flex';
+      if (banner && !dismissed) banner.style.display = 'flex';
+    }
+
+    function openDownloadAppModal() {
+      const modal = document.getElementById('downloadAppModal');
+      if (!modal) return;
+      modal.style.display = 'flex';
+
+      // Auto-detect device and select corresponding tab
+      if (isIOSDevice()) {
+        switchDownloadTab('ios');
+      } else if (/android/i.test(navigator.userAgent || '')) {
+        switchDownloadTab('android');
       } else {
-        if (topBtn) topBtn.style.display = 'none';
-        if (banner) banner.style.display = 'none';
+        switchDownloadTab('desktop');
+      }
+
+      // Update direct install button state
+      const directBtn = document.getElementById('btnModalDirectInstall');
+      const directHint = document.getElementById('pwaDirectInstallHint');
+      if (directBtn) {
+        if (isStandaloneMode) {
+          directBtn.innerHTML = '<span>✅ TripBnA App Already Installed</span>';
+          directBtn.style.background = '#15803d';
+          directBtn.disabled = true;
+          if (directHint) directHint.textContent = 'You are currently using TripBnA in standalone app mode!';
+        } else if (deferredPWAInstallPrompt) {
+          directBtn.innerHTML = '<span>📲 1-Click Install Now (Instant)</span>';
+          directBtn.style.background = '#15803d';
+          directBtn.disabled = false;
+          if (directHint) directHint.textContent = 'Tap to trigger the native browser install prompt!';
+        } else if (isIOSDevice()) {
+          directBtn.innerHTML = '<span>🍏 Follow iPhone Safari Steps Below</span>';
+          directBtn.style.background = '#0284c7';
+          directBtn.disabled = false;
+          if (directHint) directHint.textContent = 'Apple Safari requires tapping Share (⎋) > Add to Home Screen';
+        } else {
+          directBtn.innerHTML = '<span>📲 Install TripBnA App</span>';
+          directBtn.style.background = '#15803d';
+          directBtn.disabled = false;
+          if (directHint) directHint.textContent = 'Tap to install or see browser instructions below';
+        }
       }
     }
+    window.openDownloadAppModal = openDownloadAppModal;
+
+    function switchDownloadTab(tabName) {
+      const tabs = ['android', 'ios', 'desktop', 'qr'];
+      tabs.forEach((t) => {
+        const btn = document.getElementById(`tabBtn${t.charAt(0).toUpperCase() + t.slice(1)}`);
+        const content = document.getElementById(`tabContent${t.charAt(0).toUpperCase() + t.slice(1)}`);
+        if (btn) {
+          if (t === tabName) {
+            btn.style.background = '#ffffff';
+            btn.style.color = '#0f172a';
+            btn.style.fontWeight = '800';
+            btn.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)';
+          } else {
+            btn.style.background = 'transparent';
+            btn.style.color = '#64748b';
+            btn.style.fontWeight = '700';
+            btn.style.boxShadow = 'none';
+          }
+        }
+        if (content) {
+          content.style.display = t === tabName ? 'block' : 'none';
+        }
+      });
+    }
+    window.switchDownloadTab = switchDownloadTab;
+
+    async function triggerDirectPWAInstall() {
+      if (deferredPWAInstallPrompt) {
+        try {
+          await deferredPWAInstallPrompt.prompt();
+          const choice = await deferredPWAInstallPrompt.userChoice;
+          console.log('[TripBnA PWA] Choice:', choice.outcome);
+          if (choice.outcome === 'accepted') {
+            deferredPWAInstallPrompt = null;
+            closeModal('downloadAppModal');
+            if (typeof showToast === 'function') {
+              showToast('🎉 TripBnA is installing on your device!');
+            }
+          }
+        } catch (err) {
+          console.warn('[TripBnA PWA] Prompt failed:', err);
+        }
+      } else if (isIOSDevice()) {
+        switchDownloadTab('ios');
+      } else if (/android/i.test(navigator.userAgent || '')) {
+        switchDownloadTab('android');
+      } else {
+        switchDownloadTab('desktop');
+      }
+    }
+    window.triggerDirectPWAInstall = triggerDirectPWAInstall;
 
     async function handlePWAInstallClick() {
       if (deferredPWAInstallPrompt) {
@@ -15079,11 +15262,10 @@ if (viewMenuBtnEl) {
           }
         } catch (err) {
           console.warn('[TripBnA PWA] Install prompt error:', err);
+          openDownloadAppModal();
         }
-      } else if (isIOSDevice()) {
-        openModal('iosInstallModal');
       } else {
-        alert('To install TripBnA on your browser or device:\n• Chrome/Edge: Click the install icon in the address bar.\n• Mobile browser: Tap menu (⋮) and choose "Add to Home screen" / "Install app".');
+        openDownloadAppModal();
       }
     }
     window.handlePWAInstallClick = handlePWAInstallClick;
