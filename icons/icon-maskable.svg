@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bgGradMask" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#14532d"/>
+      <stop offset="50%" stop-color="#1b5e3a"/>
+      <stop offset="100%" stop-color="#2e8b57"/>
+    </linearGradient>
+    <linearGradient id="sunGradMask" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#fbbf24"/>
+      <stop offset="100%" stop-color="#f59e0b"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Full-bleed background for maskable adaptive icon -->
+  <rect width="512" height="512" fill="url(#bgGradMask)"/>
+
+  <!-- Content group scaled to fit safely within the 80% inner circle (safe zone 50px margins) -->
+  <g transform="translate(51, 51) scale(0.8)">
+    <!-- Subtle circular glow -->
+    <circle cx="256" cy="220" r="150" fill="#ffffff" fill-opacity="0.06"/>
+
+    <!-- Golden African Safari Sun -->
+    <circle cx="256" cy="190" r="76" fill="url(#sunGradMask)"/>
+
+    <!-- Snowcapped Mount Kilimanjaro silhouette -->
+    <path d="M 120 340 L 220 220 L 256 185 L 292 220 L 392 340 Z" fill="#0f3922" opacity="0.95"/>
+    <path d="M 235 204 L 256 185 L 277 204 L 270 216 L 256 210 L 242 216 Z" fill="#ffffff"/>
+
+    <!-- Acacia Tree -->
+    <g transform="translate(295, 235) scale(0.65)" fill="#092615">
+      <path d="M 60 160 C 58 130 52 100 48 70 C 44 45 40 30 35 15 C 38 12 45 25 52 45 C 58 60 62 80 66 100 C 72 75 80 50 92 25 C 95 28 88 48 82 70 C 76 95 72 125 72 160 Z"/>
+      <ellipse cx="30" cy="15" rx="36" ry="9"/>
+      <ellipse cx="60" cy="8" rx="48" ry="11"/>
+      <ellipse cx="95" cy="22" rx="38" ry="8"/>
+      <ellipse cx="62" cy="0" rx="32" ry="7"/>
+    </g>
+
+    <!-- Savanna ground -->
+    <path d="M 0 330 Q 140 300 256 315 T 512 320 L 512 512 L 0 512 Z" fill="#0b2e1a" opacity="0.85"/>
+    <path d="M 0 355 Q 160 335 280 345 T 512 345 L 512 512 L 0 512 Z" fill="#072012"/>
+
+    <!-- Typography: TripBnA -->
+    <text x="256" y="420" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" font-size="54" font-weight="900" fill="#ffffff" text-anchor="middle" letter-spacing="2">
+      Trip<tspan fill="#f59e0b">BnA</tspan>
+    </text>
+    <text x="256" y="454" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" font-size="14" font-weight="700" fill="#94a3b8" text-anchor="middle" letter-spacing="4">
+      EAST AFRICA TRAVEL
+    </text>
+  </g>
+</svg>

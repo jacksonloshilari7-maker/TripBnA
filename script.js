@@ -5,7 +5,8 @@ import {
   signInWithEmailAndPassword,
   signOut,
   onAuthStateChanged,
-  updateProfile
+  updateProfile,
+  sendPasswordResetEmail
 } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-auth.js";
 
 import {
@@ -45,6 +46,7 @@ window.signInWithEmailAndPassword = signInWithEmailAndPassword;
 window.signOut = signOut;
 window.onAuthStateChanged = onAuthStateChanged;
 window.updateProfile = updateProfile;
+window.sendPasswordResetEmail = sendPasswordResetEmail;
 
 // Firestore API
 window.collection = collection;

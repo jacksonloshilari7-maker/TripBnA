@@ -1,0 +1,80 @@
+{
+  "id": "/",
+  "name": "TripBnA - Travel, Safari & Super App",
+  "short_name": "TripBnA",
+  "description": "Tanzania and East Africa travel super-app for safaris, accommodation, dining, transport, and custom itineraries.",
+  "start_url": "/?source=pwa",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "theme_color": "#2e8b57",
+  "background_color": "#ffffff",
+  "lang": "en",
+  "dir": "ltr",
+  "categories": [
+    "travel",
+    "lifestyle",
+    "navigation"
+  ],
+  "icons": [
+    {
+      "src": "/icons/icon-48.png",
+      "sizes": "48x48",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icons/logo.svg",
+      "sizes": "1200x630",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/logo-square.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Explore Accommodations",
+      "short_name": "Stays",
+      "description": "Browse lodges, beach resorts, and safari glamping camps",
+      "url": "/?section=accommodation",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Trip Organiser",
+      "short_name": "Organiser",
+      "description": "Build, plan, and co-pilot your African adventure",
+      "url": "/?section=organiser",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Tripline Feed",
+      "short_name": "Tripline",
+      "description": "Connect with travelers and local hosts in Tanzania",
+      "url": "/?section=tripline",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
+    }
+  ]
+}

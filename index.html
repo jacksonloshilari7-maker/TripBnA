@@ -4,11 +4,103 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=5,viewport-fit=cover" />
 
   <title>TripBnA — Travel Made Easy | Tanzania & East Africa</title>
+  <meta name="description" content="TripBnA makes travel easy with transport, accommodation, food and trip planning in Tanzania and East Africa. Discover, plan and book your trip in one place.">
+  <link rel="canonical" href="https://tripbna.com/" />
 
-<meta name="description" content="TripBnA makes travel easy with transport, accommodation, food and trip planning in Tanzania and East Africa. Discover, plan and book your trip in one place.">
+  <!-- Google Search Favicons & Icons (Per Google Search Central Guidelines) -->
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico" />
+  <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+  <link rel="icon" type="image/png" sizes="48x48" href="/icons/icon-48.png" />
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon.png" />
+  <link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192.png" />
+  <link rel="icon" type="image/png" sizes="512x512" href="/icons/icon-512.png" />
+  <link rel="icon" type="image/svg+xml" href="/icons/logo-square.svg" />
+  <link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon.png" />
+
+  <!-- Search Engine Image Indexing & Open Graph (Google, Bing, Facebook, WhatsApp, LinkedIn) -->
+  <link rel="image_src" href="/logo.png" />
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="TripBnA" />
+  <meta property="og:title" content="TripBnA — Travel Made Easy | Tanzania & East Africa" />
+  <meta property="og:description" content="TripBnA makes travel easy with transport, accommodation, food and trip planning in Tanzania and East Africa. Discover, plan and book your trip in one place." />
+  <meta property="og:url" content="https://tripbna.com/" />
+  <meta property="og:image" content="/logo.png" />
+  <meta property="og:image:secure_url" content="/logo.png" />
+  <meta property="og:image:type" content="image/png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:image:alt" content="TripBnA.com Official Brand Logo" />
+
+  <!-- Twitter / X Card Meta Tags -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="TripBnA — Travel Made Easy | Tanzania & East Africa" />
+  <meta name="twitter:description" content="TripBnA makes travel easy with transport, accommodation, food and trip planning in Tanzania and East Africa. Discover, plan and book your trip in one place." />
+  <meta name="twitter:image" content="/logo.png" />
+  <meta name="twitter:image:alt" content="TripBnA.com Official Brand Logo" />
+
+  <!-- Google Search Console & Search Engine Logo Structured Data (JSON-LD) -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "TravelAgency",
+        "@id": "https://tripbna.com/#organization",
+        "name": "TripBnA",
+        "legalName": "TripBnA.com",
+        "alternateName": ["TripBnA Tanzania", "TripBnA East Africa", "TripBnA Safaris"],
+        "url": "https://tripbna.com/",
+        "logo": {
+          "@type": "ImageObject",
+          "@id": "https://tripbna.com/#logo",
+          "url": "https://tripbna.com/logo.png",
+          "contentUrl": "https://tripbna.com/logo.png",
+          "caption": "TripBnA.com Official Brand Logo",
+          "width": "1200",
+          "height": "630"
+        },
+        "image": "https://tripbna.com/logo.png",
+        "description": "Tanzania and East Africa travel super-app for safaris, accommodation, dining, transport, and custom itineraries.",
+        "email": "jacksonloshilari7@gmail.com",
+        "telephone": "+255755000000",
+        "priceRange": "$$",
+        "address": {
+          "@type": "PostalAddress",
+          "addressLocality": "Arusha",
+          "addressRegion": "Arusha",
+          "addressCountry": "TZ"
+        },
+        "sameAs": [
+          "https://tripbna.com"
+        ]
+      },
+      {
+        "@type": "WebSite",
+        "@id": "https://tripbna.com/#website",
+        "url": "https://tripbna.com/",
+        "name": "TripBnA",
+        "description": "TripBnA makes travel easy with transport, accommodation, food and trip planning in Tanzania and East Africa.",
+        "publisher": {
+          "@id": "https://tripbna.com/#organization"
+        },
+        "inLanguage": "en-US"
+      }
+    ]
+  }
+  </script>
+
+  <!-- Progressive Web App (PWA) Manifest & Capabilities -->
+  <link rel="manifest" href="/manifest.webmanifest" />
+  <meta name="theme-color" content="#00e500" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="TripBnA" />
+  <meta name="application-name" content="TripBnA" />
+  <meta name="msapplication-TileColor" content="#00e500" />
 
   <!-- Replace with your PayPal client id (sandbox or live) -->
   <script src="https://www.paypal.com/sdk/js?client-id=REPLACE_WITH_PAYPAL_CLIENT_ID&currency=USD"></script>
@@ -18,47 +110,90 @@
   <style>
     /* ---------- Reset & base ---------- */
     * { box-sizing: border-box; }
-    html,body { height:100%;
-       margin:0; font-family:Inter, Roboto, Arial, sans-serif; 
-       background:#f2f6f8; color:#222; 
-     color:inherit; text-decoration:none; }
+    html {
+      overflow-x: hidden;
+      -webkit-text-size-adjust: 100%;
+    }
+    body {
+      min-height: 100%;
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      background: #f2f6f8;
+      color: #222;
+      overflow-x: hidden;
+      width: 100%;
+      position: relative;
+    }
+    img, video { max-width: 100%; height: auto; }
+    button, input, select, textarea { font-family: inherit; }
+    button, a, input, select, .btn { touch-action: manipulation; }
 
-    /* ---------- Top nav (three buttons) ---------- */
+    /* ---------- Top nav (three buttons + PWA) ---------- */
     .topbar {
-      position:sticky;
-      top:0;
-      z-index:1100;
-      background:linear-gradient(180deg,#fff,#f8fbfc);
-      border-bottom:1px solid #e6eef2;
-      display:flex;
-      justify-content:center;
-      padding:10px;
-      box-shadow:0 2px 8px rgba(0,0,0,0.03);
+      position: sticky;
+      top: 0;
+      z-index: 1100;
+      background: linear-gradient(180deg, #fff, #f8fbfc);
+      border-bottom: 1px solid #e6eef2;
+      display: flex;
+      justify-content: center;
+      padding: 10px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+      width: 100%;
     }
     .topbar .btn-row {
-      width:100%;
-      max-width:1100px;
-      display:flex;
-      gap:12px;
-      align-items:center;
+      width: 100%;
+      max-width: 1100px;
+      display: flex;
+      gap: 10px;
+      align-items: center;
     }
     .topbar .btn {
-      flex:1;
-      padding:12px 16px;
-      border-radius:8px;
-      border:1px solid #cfe7dd;
-      background:#2e8b57;
-      color:#fff;
-      font-weight:700;
-      text-align:center;
-      cursor:pointer;
-      user-select:none;
+      flex: 1;
+      min-height: 44px;
+      padding: 10px 14px;
+      border-radius: 8px;
+      border: 1px solid #cfe7dd;
+      background: #2e8b57;
+      color: #fff;
+      font-weight: 700;
+      text-align: center;
+      cursor: pointer;
+      user-select: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      transition: background 0.2s ease, transform 0.1s ease;
     }
-    .topbar .btn:active { transform:translateY(1px); }
+    .topbar .btn:active { transform: translateY(1px); }
     .topbar .btn.secondary {
-      background:#fff;
-      color:#2e8b57;
-      border:1px solid #2e8b57;
+      background: #fff;
+      color: #2e8b57;
+      border: 1px solid #2e8b57;
+    }
+
+    @media (max-width: 768px) {
+      .topbar {
+        padding: 6px 8px;
+      }
+      .topbar .btn-row {
+        gap: 6px;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+        padding-bottom: 2px;
+      }
+      .topbar .btn-row::-webkit-scrollbar {
+        display: none;
+      }
+      .topbar .btn {
+        flex: 0 0 auto;
+        padding: 8px 12px;
+        font-size: 12px;
+        white-space: nowrap;
+        min-height: 40px;
+      }
     }
 
     /* ---------- Layout ---------- */
@@ -1990,11 +2125,34 @@ body { font-family: Arial, sans-serif; margin:0; padding:20px; background:#f0f2f
   <!-- TOP NAV: Buttons in one row at top -->
   <div class="topbar" role="navigation">
     <div class="btn-row">
+      <a href="/" style="display:inline-flex; align-items:center; text-decoration:none; margin-right:8px; flex-shrink:0;" title="TripBnA.com — Home">
+        <img src="/logo.png" alt="TripBnA.com" itemprop="logo" style="height:34px; width:auto; max-width:120px; object-fit:contain; border-radius:4px; box-shadow:0 2px 6px rgba(0,0,0,0.12);" />
+      </a>
       <button id="navTransport" class="btn" onclick="openSection('transport')">TRANSPORT</button>
       <button id="navAccommodation" class="btn" onclick="openSection('accommodation')">ACCOMMODATION</button>
       <button id="navFood" class="btn" onclick="openSection('food')">FOOD</button>
       <button id="navSearch" class="btn" style="background:#0284c7; color:#fff; font-weight:700;" onclick="openSearch()">🔍 SEARCH</button>
+      <button id="navInstallPWA" class="btn" style="background:#16a34a; color:#fff; font-weight:700; display:none; align-items:center; justify-content:center; gap:6px; border:1px solid #15803d; box-shadow:0 2px 8px rgba(22,163,74,0.3); white-space:nowrap;" onclick="handlePWAInstallClick()" title="Install TripBnA App">📲 INSTALL</button>
       <button id="navAdminDashboard" class="btn" style="background:#0f172a; color:#38bdf8; font-weight:800; border:2px solid #0284c7; box-shadow:0 2px 10px rgba(2,132,199,0.35); margin-left:6px; white-space:nowrap; display:none; align-items:center; justify-content:center; gap:6px;" onclick="handleAdminPortalClick()" title="TripBnA Master Admin Portal">🛡️ ADMIN <span id="topAdminPendingBadge" style="background:#f59e0b; color:#0f172a; font-size:11px; padding:2px 7px; border-radius:999px; margin-left:4px; font-weight:800; display:none;">0</span></button>
+    </div>
+  </div>
+
+  <!-- Offline Connectivity Status Toast -->
+  <div id="offlineIndicatorToast" style="display:none; position:fixed; top:70px; left:50%; transform:translateX(-50%); z-index:9999; background:#dc2626; color:#ffffff; padding:10px 20px; border-radius:999px; font-size:13px; font-weight:700; box-shadow:0 6px 20px rgba(0,0,0,0.25); align-items:center; gap:8px;">
+    <span style="font-size:15px;">📶</span>
+    <span id="offlineIndicatorMsg">Offline Mode: Cached content is active. Will auto-sync when online.</span>
+  </div>
+
+  <!-- Floating Install TripBnA Bar (Shown when installable and not in standalone mode) -->
+  <div id="pwaInstallBanner" style="display:none; position:fixed; bottom:20px; right:20px; z-index:2500; background:linear-gradient(135deg, #14532d, #1b5e3a); color:#fff; padding:12px 18px; border-radius:16px; box-shadow:0 12px 32px rgba(0,0,0,0.3); align-items:center; gap:12px; border:1px solid #34d399; max-width:380px;">
+    <img src="/icons/icon-192.png" alt="TripBnA" style="width:42px; height:42px; border-radius:10px; border:1px solid rgba(255,255,255,0.3); object-fit:cover; flex-shrink:0;">
+    <div style="flex:1; min-width:0;">
+      <div style="font-weight:800; font-size:14px; color:#ffffff;">Install TripBnA App</div>
+      <div style="font-size:11px; color:#d1fae5; line-height:1.3;">Fast offline access, fullscreen mode & safari updates.</div>
+    </div>
+    <div style="display:flex; align-items:center; gap:6px; flex-shrink:0;">
+      <button onclick="handlePWAInstallClick()" style="background:#f59e0b; color:#0f172a; border:none; padding:8px 12px; font-size:12px; font-weight:800; border-radius:8px; cursor:pointer; box-shadow:0 2px 6px rgba(0,0,0,0.2);">Install</button>
+      <button onclick="dismissPWABanner()" style="background:transparent; border:none; color:#cbd5e1; font-size:16px; cursor:pointer; padding:4px;">✕</button>
     </div>
   </div>
 
@@ -2771,6 +2929,11 @@ body { font-family: Arial, sans-serif; margin:0; padding:20px; background:#f0f2f
 
   <!-- Sidebar Menu -->
   <div id="sideMenu" class="card" aria-hidden="true">
+    <div style="padding:14px 14px 8px 14px; text-align:center; border-bottom:1px solid #e2e8f0; margin-bottom:10px;">
+      <a href="/" style="display:inline-block;" title="TripBnA.com">
+        <img src="/logo.png" alt="TripBnA.com" style="height:38px; width:auto; max-width:180px; object-fit:contain; border-radius:6px; box-shadow:0 2px 8px rgba(0,0,0,0.1);" />
+      </a>
+    </div>
     <div class="profile">
       <img id="sideMenuAvatar" src="20250306_161449.jpg" alt="profile" style="width:64px;height:64px;border-radius:50%;object-fit:cover;border:2px solid #2e8b57;">
       <div style="font-weight:700; margin-top:6px; font-size:16px;" id="sideMenuName">JACKSON CHARLES</div>
@@ -2783,6 +2946,12 @@ body { font-family: Arial, sans-serif; margin:0; padding:20px; background:#f0f2f
       <a href="#" onclick="handleAdminPortalClick(); return false;" id="sidebarAdminLink" style="display:flex; color:#1e3a8a; background:#e0f2fe; border:1px solid #7dd3fc; border-radius:8px; padding:10px 14px; font-weight:700; margin-bottom:6px; align-items:center; justify-content:space-between;">
         <span>🛡️ TripBnA Admin Dashboard</span>
         <span id="sidebarAdminBadge" style="background:#f59e0b; color:#000; font-size:11px; padding:2px 8px; border-radius:999px; font-weight:800; display:none;">0</span>
+      </a>
+
+      <!-- Install TripBnA Progressive Web App Link -->
+      <a href="#" onclick="handlePWAInstallClick(); return false;" id="sidebarInstallPWALink" style="display:none; color:#15803d; background:#f0fdf4; border:1px solid #bbf7d0; border-radius:8px; padding:10px 14px; font-weight:700; margin-bottom:6px; align-items:center; justify-content:space-between;">
+        <span>📲 Install TripBnA App</span>
+        <span style="background:#22c55e; color:#fff; font-size:10px; padding:2px 7px; border-radius:999px; font-weight:700;">FREE</span>
       </a>
 
       <a href="#" onclick="openModal('profileModal'); return false;">👤 View Profile</a>
@@ -3025,7 +3194,10 @@ body { font-family: Arial, sans-serif; margin:0; padding:20px; background:#f0f2f
       <label style="font-size:12px; font-weight:700;">Email Address</label>
       <input id="loginEmail" type="email" placeholder="you@example.com" class="input" style="width:100%; margin-top:4px; margin-bottom:10px;" />
       
-      <label style="font-size:12px; font-weight:700;">Password</label>
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-top:4px;">
+        <label style="font-size:12px; font-weight:700;">Password</label>
+        <a href="#" onclick="openForgotPassword(); return false;" style="font-size:12px; color:#2e8b57; font-weight:700; text-decoration:none;">Forgot Password?</a>
+      </div>
       <input id="loginPassword" type="password" placeholder="••••••••" class="input" style="width:100%; margin-top:4px; margin-bottom:12px;" />
       
       <button class="primary" style="width:100%; padding:12px;" onclick="handleLogin()">Login to TripBnA</button>
@@ -3033,6 +3205,45 @@ body { font-family: Arial, sans-serif; margin:0; padding:20px; background:#f0f2f
     <div style="margin-top:14px; text-align:center; font-size:13px;" class="muted">
       Don't have an account? <a href="#" onclick="closeModal('loginModal'); openModal('signupModal'); return false;" style="color:#0b84ff; font-weight:700;">Create Account</a>
     </div>
+  </div></div>
+
+  <!-- Password Recovery / Forgot Password Modal -->
+  <div id="forgotPasswordModal" class="modal"><div class="panel card" style="max-width:440px;">
+    <button style="float:right" class="ghost" onclick="closeModal('forgotPasswordModal')">✕</button>
+    <h3 style="margin-top:0; color:#14532d;">🔑 Recover Your Password</h3>
+    <p class="muted" style="font-size:13px; line-height:1.5;">Enter the email address registered with your TripBnA account. We will send you an official Firebase password reset link to recover access.</p>
+    <div style="margin-top:14px;">
+      <label style="font-size:12px; font-weight:700; color:#334155;">Registered Email Address</label>
+      <input id="forgotPasswordEmail" type="email" placeholder="you@example.com" class="input" style="width:100%; margin-top:4px; margin-bottom:10px;" onkeydown="if(event.key==='Enter') handleForgotPassword()" />
+      
+      <div id="forgotPasswordStatus" style="font-size:13px; margin-bottom:12px; display:none; padding:10px 12px; border-radius:8px; line-height:1.4;"></div>
+      
+      <button id="forgotPasswordSubmitBtn" class="primary" style="width:100%; padding:12px; font-weight:700; background:#2e8b57;" onclick="handleForgotPassword()">
+        📧 Send Password Reset Email
+      </button>
+    </div>
+    <div style="margin-top:16px; text-align:center; font-size:13px;" class="muted">
+      Remembered your password? <a href="#" onclick="closeModal('forgotPasswordModal'); openModal('loginModal'); return false;" style="color:#2e8b57; font-weight:700;">Back to Login</a>
+    </div>
+  </div></div>
+
+  <!-- iOS PWA Installation Guide Modal -->
+  <div id="iosInstallModal" class="modal"><div class="panel card" style="max-width:420px; text-align:center;">
+    <button style="float:right" class="ghost" onclick="closeModal('iosInstallModal')">✕</button>
+    <div style="width:56px; height:56px; border-radius:14px; background:#f0fdf4; border:1px solid #bbf7d0; display:inline-flex; align-items:center; justify-content:center; font-size:28px; margin-bottom:10px;">📲</div>
+    <h3 style="margin-top:0; color:#14532d;">Install TripBnA on iOS</h3>
+    <p class="muted" style="font-size:13px; line-height:1.5; text-align:left; margin-bottom:16px;">
+      Install TripBnA on your iPhone or iPad home screen for instant full-screen browsing and offline trip access:
+    </p>
+    <div style="text-align:left; background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:14px; margin-bottom:16px; font-size:13px; line-height:1.6;">
+      <div style="margin-bottom:8px;">
+        <strong>Step 1:</strong> Tap the <strong>Share</strong> button <span style="display:inline-block; padding:1px 6px; background:#e2e8f0; border-radius:4px; font-size:12px;">⎋</span> in Safari’s bottom toolbar.
+      </div>
+      <div>
+        <strong>Step 2:</strong> Scroll down and tap <strong style="color:#2e8b57;">➕ Add to Home Screen</strong>, then tap <strong>Add</strong> at top-right.
+      </div>
+    </div>
+    <button class="primary" style="width:100%; padding:10px; background:#2e8b57;" onclick="closeModal('iosInstallModal')">Got It, Thanks!</button>
   </div></div>
 
   <div id="signupModal" class="modal"><div class="panel card" style="max-width:460px;">
@@ -5165,6 +5376,80 @@ Last Updated: April 2026 | Version 2.0 | TripBnA Platform Policies
     var initialDefaultServices = JSON.parse(JSON.stringify(services));
     window.services = services;
 
+    /* ---------- Section Galleries State & Helper Handlers ---------- */
+    window.galleryTimers = window.galleryTimers || { transport: null, accommodation: null, food: null, Transport: null, Accommodation: null, Food: null };
+    var galleryTimers = window.galleryTimers;
+
+    function approvedImagesByType(type){
+      const list = (typeof window !== 'undefined' && Array.isArray(window.services))
+        ? window.services
+        : (typeof services !== 'undefined' && Array.isArray(services) ? services : []);
+      return list
+        .filter(s => s.status === 'Approved' && (s.type || '').toLowerCase() === (type || '').toLowerCase())
+        .flatMap(s => Array.isArray(s.images) ? s.images : [])
+        .filter(Boolean);
+    }
+
+    function renderGallery(containerId, type){
+      const host = document.getElementById(containerId);
+      if(!host) return;
+      const imgs = approvedImagesByType(type);
+      if(!imgs.length){
+        host.style.display = 'none';
+        host.innerHTML = '';
+        return;
+      }
+
+      host.style.display = 'block';
+      host.innerHTML = `
+        <div class="sliderViewport">
+          <div class="sliderTrack" id="${containerId}_track">
+            ${imgs.map((src)=>`<img class="slideImg" src="${src}" alt="" onclick="openLightbox('${src}')">`).join('')}
+          </div>
+        </div>
+        <div class="sliderNav">
+          <button class="navBtn" type="button" onclick="scrollGallery('${containerId}_track',-1)">Prev</button>
+          <button class="navBtn" type="button" onclick="scrollGallery('${containerId}_track',1)">Next</button>
+        </div>
+      `;
+
+      // auto slide if many images
+      const tKey = (type || '').toLowerCase();
+      window.galleryTimers = window.galleryTimers || {};
+      if(window.galleryTimers[tKey]){ 
+        clearInterval(window.galleryTimers[tKey]); 
+        window.galleryTimers[tKey] = null; 
+      }
+      if(imgs.length > 3){
+        window.galleryTimers[tKey] = setInterval(()=> scrollGallery(`${containerId}_track`, 1), 2600);
+      }
+    }
+
+    function scrollGallery(trackId, dir){
+      const track = document.getElementById(trackId);
+      if(!track) return;
+      const first = track.querySelector('.slideImg');
+      const step = first ? (first.clientWidth + 10) : 240;
+      const maxScroll = track.scrollWidth - track.clientWidth;
+      let next = track.scrollLeft + (dir * step);
+      if(next > maxScroll) next = 0;
+      if(next < 0) next = maxScroll;
+      track.scrollTo({ left: next, behavior:'smooth' });
+    }
+    window.scrollGallery = scrollGallery;
+
+    function renderSectionGallery(sectionName){
+      // hide old tiny slideshows to avoid overlap
+      const tinyIds = ['transportSlideshow','accommodationSlideshow','foodSlideshow'];
+      tinyIds.forEach(id => { const el=document.getElementById(id); if(el) el.style.display='none'; });
+
+      const s = (sectionName || '').toLowerCase();
+      if(s === 'transport') renderGallery('transportGallery', 'Transport');
+      if(s === 'accommodation') renderGallery('accommodationGallery', 'Accommodation');
+      if(s === 'food') renderGallery('foodGallery', 'Food');
+    }
+    window.renderSectionGallery = renderSectionGallery;
+
     // Sections control
     function openSection(name) {
       ['transport','accommodation','food'].forEach(s => {
@@ -5324,6 +5609,111 @@ Last Updated: April 2026 | Version 2.0 | TripBnA Platform Policies
         alert("Login failed: " + message);
       }
     }
+
+    // Password Recovery / Forgot Password functionality
+    function openForgotPassword() {
+      closeModal('loginModal');
+      const loginEmailInput = document.getElementById('loginEmail');
+      const forgotEmailInput = document.getElementById('forgotPasswordEmail');
+      const statusEl = document.getElementById('forgotPasswordStatus');
+      const submitBtn = document.getElementById('forgotPasswordSubmitBtn');
+      if (statusEl) {
+        statusEl.style.display = 'none';
+        statusEl.innerHTML = '';
+      }
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '📧 Send Password Reset Email';
+      }
+      if (forgotEmailInput) {
+        if (loginEmailInput && loginEmailInput.value.trim()) {
+          forgotEmailInput.value = loginEmailInput.value.trim();
+        }
+      }
+      openModal('forgotPasswordModal');
+      setTimeout(() => {
+        if (forgotEmailInput) forgotEmailInput.focus();
+      }, 150);
+    }
+    window.openForgotPassword = openForgotPassword;
+
+    async function handleForgotPassword() {
+      const emailInput = document.getElementById('forgotPasswordEmail');
+      const statusEl = document.getElementById('forgotPasswordStatus');
+      const submitBtn = document.getElementById('forgotPasswordSubmitBtn');
+      
+      const email = emailInput ? emailInput.value.trim() : '';
+      if (!email) {
+        if (statusEl) {
+          statusEl.style.display = 'block';
+          statusEl.style.background = '#fef2f2';
+          statusEl.style.color = '#b91c1c';
+          statusEl.style.border = '1px solid #fecaca';
+          statusEl.innerHTML = '⚠️ Please enter your registered email address.';
+        } else {
+          alert('Please enter your registered email address.');
+        }
+        if (emailInput) emailInput.focus();
+        return;
+      }
+
+      if (!window.auth || !window.sendPasswordResetEmail) {
+        alert('Authentication service is still initializing. Please try again in a few moments.');
+        return;
+      }
+
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '⏳ Sending reset email...';
+      }
+      if (statusEl) {
+        statusEl.style.display = 'none';
+      }
+
+      try {
+        await window.sendPasswordResetEmail(window.auth, email);
+        if (statusEl) {
+          statusEl.style.display = 'block';
+          statusEl.style.background = '#f0fdf4';
+          statusEl.style.color = '#15803d';
+          statusEl.style.border = '1px solid #bbf7d0';
+          statusEl.innerHTML = `✅ <strong>Password Reset Email Sent!</strong><br>We have dispatched a secure recovery link to <strong>${escapeHTML(email)}</strong>.<br>Please check your inbox (and spam/junk folder) and click the link to set a new password.`;
+        }
+        if (typeof showToast === 'function') {
+          showToast('✅ Password reset link sent to ' + email);
+        }
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = '✓ Reset Email Sent';
+        }
+      } catch (error) {
+        console.error("Password reset error:", error);
+        let errorMsg = error.message;
+        if (error.code === 'auth/user-not-found') {
+          errorMsg = 'No registered TripBnA account found with this email address. Please check spelling or create an account.';
+        } else if (error.code === 'auth/invalid-email') {
+          errorMsg = 'Please enter a valid email address format (e.g. name@example.com).';
+        } else if (error.code === 'auth/too-many-requests') {
+          errorMsg = 'Too many requests received. Please wait a few moments before trying again.';
+        } else if (error.code === 'auth/network-request-failed') {
+          errorMsg = 'Network error. Please check your internet connection and try again.';
+        }
+        if (statusEl) {
+          statusEl.style.display = 'block';
+          statusEl.style.background = '#fef2f2';
+          statusEl.style.color = '#b91c1c';
+          statusEl.style.border = '1px solid #fecaca';
+          statusEl.innerHTML = '⚠️ ' + escapeHTML(errorMsg);
+        } else {
+          alert("Password reset failed: " + errorMsg);
+        }
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = '📧 Send Password Reset Email';
+        }
+      }
+    }
+    window.handleForgotPassword = handleForgotPassword;
 
     // Logout functionality
     async function handleLogout() {
@@ -9439,87 +9829,25 @@ Last Updated: April 2026 | Version 2.0 | TripBnA Platform Policies
     populateSlideshow();
 
     // ---------- Lightbox ----------
-    const lightboxEl = document.getElementById('imgLightbox');
-    const lightboxImg = document.getElementById('lightboxImg');
+    function getLightboxElements() {
+      const box = document.getElementById('imgLightbox');
+      const img = document.getElementById('lightboxImg');
+      return { box, img };
+    }
     function openLightbox(src){
-      if(!lightboxEl || !lightboxImg) return;
-      lightboxImg.src = src;
-      lightboxEl.style.display = 'flex';
+      const { box, img } = getLightboxElements();
+      if(!box || !img) return;
+      img.src = src;
+      box.style.display = 'flex';
     }
     function closeLightbox(){
-      if(!lightboxEl || !lightboxImg) return;
-      lightboxImg.src = '';
-      lightboxEl.style.display = 'none';
+      const { box, img } = getLightboxElements();
+      if(!box || !img) return;
+      img.src = '';
+      box.style.display = 'none';
     }
     window.openLightbox = openLightbox;
     window.closeLightbox = closeLightbox;
-
-    // ---------- Section galleries (all provider images, auto-slide) ----------
-    function approvedImagesByType(type){
-      const list = (typeof window !== 'undefined' && Array.isArray(window.services))
-        ? window.services
-        : (typeof services !== 'undefined' && Array.isArray(services) ? services : []);
-      return list
-        .filter(s => s.status === 'Approved' && s.type === type)
-        .flatMap(s => Array.isArray(s.images) ? s.images : [])
-        .filter(Boolean);
-    }
-
-    const galleryTimers = { transport:null, accommodation:null, food:null };
-
-    function renderGallery(containerId, type){
-      const host = document.getElementById(containerId);
-      if(!host) return;
-      const imgs = approvedImagesByType(type);
-      if(!imgs.length){
-        host.style.display = 'none';
-        host.innerHTML = '';
-        return;
-      }
-
-      host.style.display = 'block';
-      host.innerHTML = `
-        <div class="sliderViewport">
-          <div class="sliderTrack" id="${containerId}_track">
-            ${imgs.map((src)=>`<img class="slideImg" src="${src}" alt="" onclick="openLightbox('${src}')">`).join('')}
-          </div>
-        </div>
-        <div class="sliderNav">
-          <button class="navBtn" type="button" onclick="scrollGallery('${containerId}_track',-1)">Prev</button>
-          <button class="navBtn" type="button" onclick="scrollGallery('${containerId}_track',1)">Next</button>
-        </div>
-      `;
-
-      // auto slide if many images
-      if(galleryTimers[type]){ clearInterval(galleryTimers[type]); galleryTimers[type]=null; }
-      if(imgs.length > 3){
-        galleryTimers[type] = setInterval(()=> scrollGallery(`${containerId}_track`, 1), 2600);
-      }
-    }
-
-    function scrollGallery(trackId, dir){
-      const track = document.getElementById(trackId);
-      if(!track) return;
-      const first = track.querySelector('.slideImg');
-      const step = first ? (first.clientWidth + 10) : 240;
-      const maxScroll = track.scrollWidth - track.clientWidth;
-      let next = track.scrollLeft + (dir * step);
-      if(next > maxScroll) next = 0;
-      if(next < 0) next = maxScroll;
-      track.scrollTo({ left: next, behavior:'smooth' });
-    }
-    window.scrollGallery = scrollGallery;
-
-    function renderSectionGallery(sectionName){
-      // hide old tiny slideshows to avoid overlap
-      const tinyIds = ['transportSlideshow','accommodationSlideshow','foodSlideshow'];
-      tinyIds.forEach(id => { const el=document.getElementById(id); if(el) el.style.display='none'; });
-
-      if(sectionName === 'transport') renderGallery('transportGallery', 'Transport');
-      if(sectionName === 'accommodation') renderGallery('accommodationGallery', 'Accommodation');
-      if(sectionName === 'food') renderGallery('foodGallery', 'Food');
-    }
-    window.renderSectionGallery = renderSectionGallery;
 
 
 
@@ -14642,6 +14970,172 @@ if (viewMenuBtnEl) {
       if (typeof updateAIAssistantUI === 'function') updateAIAssistantUI();
       if (typeof refreshAITargetTrips === 'function') refreshAITargetTrips();
     }, 600);
+
+    /* ==========================================================
+       PROGRESSIVE WEB APP (PWA) & SERVICE WORKER CONTROLLER
+       ========================================================== */
+    let deferredPWAInstallPrompt = null;
+    const isStandaloneMode = window.matchMedia('(display-mode: standalone)').matches ||
+      window.navigator.standalone === true ||
+      document.referrer.includes('android-app://') ||
+      window.location.search.includes('source=pwa');
+
+    function isIOSDevice() {
+      return /iphone|ipad|ipod/.test(window.navigator.userAgent.toLowerCase());
+    }
+
+    // Register Service Worker with safe update lifecycle
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js', { scope: '/' })
+          .then((registration) => {
+            console.log('[TripBnA PWA] Service worker active, scope:', registration.scope);
+
+            // Listen for new version found
+            registration.addEventListener('updatefound', () => {
+              const newWorker = registration.installing;
+              if (newWorker) {
+                newWorker.addEventListener('statechange', () => {
+                  if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                    console.log('[TripBnA PWA] New update available, auto-activating...');
+                    newWorker.postMessage({ type: 'SKIP_WAITING' });
+                    if (typeof showToast === 'function') {
+                      showToast('⚡ TripBnA updated to latest version!');
+                    }
+                  }
+                });
+              }
+            });
+          })
+          .catch((err) => {
+            console.warn('[TripBnA PWA] Service worker registration notice:', err);
+          });
+      });
+
+      // Reload page once when new service worker takes over control
+      let refreshing = false;
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        if (!refreshing) {
+          refreshing = true;
+          console.log('[TripBnA PWA] Controller changed, updating view.');
+          window.location.reload();
+        }
+      });
+    }
+
+    // Handle BeforeInstallPrompt event (Chrome, Android, Edge, Desktop)
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPWAInstallPrompt = e;
+      console.log('[TripBnA PWA] beforeinstallprompt captured');
+      updatePWAInstallUI(true);
+    });
+
+    // App installed event
+    window.addEventListener('appinstalled', () => {
+      console.log('[TripBnA PWA] App installed successfully');
+      deferredPWAInstallPrompt = null;
+      updatePWAInstallUI(false);
+      if (typeof showToast === 'function') {
+        showToast('🎉 TripBnA installed successfully! Enjoy your safari & travel planning.');
+      }
+    });
+
+    function updatePWAInstallUI(canInstall) {
+      if (isStandaloneMode) {
+        const topBtn = document.getElementById('navInstallPWA');
+        if (topBtn) topBtn.style.display = 'none';
+        const sideLink = document.getElementById('sidebarInstallPWALink');
+        if (sideLink) sideLink.style.display = 'none';
+        const banner = document.getElementById('pwaInstallBanner');
+        if (banner) banner.style.display = 'none';
+        return;
+      }
+
+      const dismissed = sessionStorage.getItem('tripbna_pwa_dismissed');
+      const topBtn = document.getElementById('navInstallPWA');
+      const sideLink = document.getElementById('sidebarInstallPWALink');
+      const banner = document.getElementById('pwaInstallBanner');
+
+      if (canInstall || isIOSDevice()) {
+        if (topBtn) topBtn.style.display = 'inline-flex';
+        if (sideLink) sideLink.style.display = 'flex';
+        if (banner && !dismissed) banner.style.display = 'flex';
+      } else {
+        if (topBtn) topBtn.style.display = 'none';
+        if (banner) banner.style.display = 'none';
+      }
+    }
+
+    async function handlePWAInstallClick() {
+      if (deferredPWAInstallPrompt) {
+        try {
+          await deferredPWAInstallPrompt.prompt();
+          const choiceResult = await deferredPWAInstallPrompt.userChoice;
+          console.log('[TripBnA PWA] Install choice:', choiceResult.outcome);
+          if (choiceResult.outcome === 'accepted') {
+            deferredPWAInstallPrompt = null;
+            updatePWAInstallUI(false);
+          }
+        } catch (err) {
+          console.warn('[TripBnA PWA] Install prompt error:', err);
+        }
+      } else if (isIOSDevice()) {
+        openModal('iosInstallModal');
+      } else {
+        alert('To install TripBnA on your browser or device:\n• Chrome/Edge: Click the install icon in the address bar.\n• Mobile browser: Tap menu (⋮) and choose "Add to Home screen" / "Install app".');
+      }
+    }
+    window.handlePWAInstallClick = handlePWAInstallClick;
+
+    function dismissPWABanner() {
+      const banner = document.getElementById('pwaInstallBanner');
+      if (banner) banner.style.display = 'none';
+      sessionStorage.setItem('tripbna_pwa_dismissed', '1');
+    }
+    window.dismissPWABanner = dismissPWABanner;
+
+    // Online / Offline Connectivity Monitor
+    function updateOnlineStatus() {
+      const toast = document.getElementById('offlineIndicatorToast');
+      const msg = document.getElementById('offlineIndicatorMsg');
+      if (!toast) return;
+
+      if (navigator.onLine) {
+        if (toast.style.display !== 'none' && toast.dataset.wasOffline === '1') {
+          toast.style.background = '#15803d';
+          if (msg) msg.textContent = '🟢 Back Online: Reconnected & synced with TripBnA cloud!';
+          toast.dataset.wasOffline = '0';
+          setTimeout(() => {
+            toast.style.display = 'none';
+          }, 3500);
+          if (typeof loadAllDataFromFirebase === 'function') {
+            loadAllDataFromFirebase();
+          }
+        } else {
+          toast.style.display = 'none';
+        }
+      } else {
+        toast.dataset.wasOffline = '1';
+        toast.style.background = '#dc2626';
+        if (msg) msg.textContent = '📶 Offline Mode: Loaded content is available offline. Will auto-sync when online.';
+        toast.style.display = 'inline-flex';
+      }
+    }
+    window.addEventListener('online', updateOnlineStatus);
+    window.addEventListener('offline', updateOnlineStatus);
+
+    // Initial check on load
+    window.addEventListener('DOMContentLoaded', () => {
+      setTimeout(() => {
+        if (!isStandaloneMode) {
+          if (isIOSDevice()) {
+            updatePWAInstallUI(true);
+          }
+        }
+        updateOnlineStatus();
+      }, 500);
+    });
 
 /* End script */
 </script>

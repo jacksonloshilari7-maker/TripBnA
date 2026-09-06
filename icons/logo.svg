@@ -1,0 +1,83 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630">
+  <defs>
+    <!-- Drop shadows for the three brand dots -->
+    <filter id="dotShadow" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="6" stdDeviation="6" flood-color="#000000" flood-opacity="0.25"/>
+    </filter>
+    <filter id="brandGlow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="4" stdDeviation="8" flood-color="#000000" flood-opacity="0.08"/>
+    </filter>
+  </defs>
+
+  <!-- Clean white background -->
+  <rect width="1200" height="630" fill="#ffffff"/>
+
+  <!-- Top bright green horizontal banner (matching user's brand design) -->
+  <rect x="0" y="0" width="1200" height="72" fill="#00e500"/>
+
+  <!-- Bottom bright green horizontal banner (matching user's brand design) -->
+  <rect x="0" y="558" width="1200" height="72" fill="#00e500"/>
+
+  <!-- Main Logo Group -->
+  <g transform="translate(60, 50)">
+    <!-- T: Large Black Serif Letter -->
+    <text x="80" y="320" font-family="'Times New Roman', 'Georgia', 'Playfair Display', serif" font-size="210" font-weight="900" fill="#111111" letter-spacing="-2">T</text>
+
+    <!-- r: Green Bold Letter -->
+    <text x="210" y="320" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Arial Black', Roboto, sans-serif" font-size="190" font-weight="900" fill="#008037">r</text>
+
+    <!-- i: Yellow / Golden Yellow Bold Letter with dot -->
+    <text x="315" y="320" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Arial Black', Roboto, sans-serif" font-size="190" font-weight="900" fill="#f59e0b">i</text>
+
+    <!-- p: Black Lowercase Letter with sweeping tail -->
+    <text x="375" y="320" font-family="'Times New Roman', 'Georgia', 'Playfair Display', serif" font-size="205" font-weight="900" fill="#111111">p</text>
+    
+    <!-- Sweeping swoosh extending from 'p' curving underneath to the left -->
+    <path d="M 400 325 C 385 365 355 405 305 410 C 265 415 220 380 180 340" fill="none" stroke="#111111" stroke-width="9" stroke-linecap="round"/>
+
+    <!-- Three brand dots/spheres ascending beneath Trip (Black, Green, Yellow) with white rings -->
+    <!-- Dot 1: Black -->
+    <g filter="url(#dotShadow)">
+      <circle cx="85" cy="425" r="40" fill="#ffffff"/>
+      <circle cx="85" cy="425" r="34" fill="#111111"/>
+      <circle cx="75" cy="415" r="8" fill="#ffffff" fill-opacity="0.15"/>
+    </g>
+
+    <!-- Dot 2: Green -->
+    <g filter="url(#dotShadow)">
+      <circle cx="190" cy="432" r="34" fill="#ffffff"/>
+      <circle cx="190" cy="432" r="28" fill="#008037"/>
+      <circle cx="182" cy="424" r="7" fill="#ffffff" fill-opacity="0.25"/>
+    </g>
+
+    <!-- Dot 3: Yellow/Gold -->
+    <g filter="url(#dotShadow)">
+      <circle cx="280" cy="412" r="28" fill="#ffffff"/>
+      <circle cx="280" cy="412" r="22" fill="#f59e0b"/>
+      <circle cx="274" cy="406" r="5" fill="#ffffff" fill-opacity="0.3"/>
+    </g>
+
+    <!-- B: Large Bold Green Letter -->
+    <text x="475" y="320" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Arial Black', Roboto, sans-serif" font-size="220" font-weight="900" fill="#008037">B</text>
+
+    <!-- n: Yellow / Gold Lowercase Letter -->
+    <text x="640" y="320" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Arial Black', Roboto, sans-serif" font-size="190" font-weight="900" fill="#f59e0b">n</text>
+
+    <!-- A: Large Black Serif Capital Letter -->
+    <text x="750" y="320" font-family="'Times New Roman', 'Georgia', 'Playfair Display', serif" font-size="235" font-weight="900" fill="#111111">A</text>
+
+    <!-- .com: Black Bold Lowercase Domain -->
+    <text x="945" y="320" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Arial Black', Roboto, sans-serif" font-size="95" font-weight="900" fill="#111111">.com</text>
+
+    <!-- Double Underline Stripes under BnA (Green, Yellow, Black) -->
+    <!-- Top Stripe -->
+    <rect x="450" y="340" width="165" height="10" fill="#008037" rx="3"/>
+    <rect x="620" y="340" width="125" height="10" fill="#f59e0b" rx="3"/>
+    <rect x="750" y="340" width="200" height="10" fill="#111111" rx="3"/>
+
+    <!-- Bottom Stripe -->
+    <rect x="450" y="362" width="165" height="10" fill="#008037" rx="3"/>
+    <rect x="620" y="362" width="125" height="10" fill="#f59e0b" rx="3"/>
+    <rect x="750" y="362" width="200" height="10" fill="#111111" rx="3"/>
+  </g>
+</svg>

@@ -1,0 +1,10 @@
+User-agent: *
+Allow: /
+Allow: /logo.png
+Allow: /og-image.png
+Allow: /favicon.ico
+Allow: /icons/
+Allow: /manifest.webmanifest
+Allow: /sw.js
+
+Sitemap: https://tripbna.com/sitemap.xml
