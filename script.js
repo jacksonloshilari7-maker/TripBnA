@@ -25,6 +25,7 @@ import {
   onSnapshot,
   arrayUnion,
   arrayRemove,
+  increment,
   limit
 } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-firestore.js";
 
@@ -64,6 +65,7 @@ window.orderBy = orderBy;
 window.onSnapshot = onSnapshot;
 window.arrayUnion = arrayUnion;
 window.arrayRemove = arrayRemove;
+window.increment = increment;
 window.limit = limit;
 
 // Storage API

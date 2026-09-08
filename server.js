@@ -92,11 +92,20 @@ app.post('/api/ai/trip-plan', async (req, res) => {
       travelStyle = 'Safari & Nature',
       travelers = 2,
       preferences = '',
+      notes = '',
+      existingSchedule = '',
+      existingItinerary = '',
       linkTransport = true,
       linkAccommodation = true,
       linkFood = true,
-      targetTripTitle = ''
+      targetTripTitle = '',
+      tripTitle = ''
     } = req.body || {};
+
+    const effectiveTitle = targetTripTitle || tripTitle || '';
+    const effectiveNotes = [preferences, notes].filter(Boolean).join('. ');
+    const effectiveExisting = existingSchedule || existingItinerary || '';
+    const parsedDays = Math.min(Math.max(Number(days) || 3, 1), 14);
 
     const ai = getAI();
     if (ai) {
@@ -106,22 +115,26 @@ app.post('/api/ai/trip-plan', async (req, res) => {
         linkFood ? 'Include specific meal recommendations: breakfast, lunch spots, dinner, and authentic Swahili dishes (e.g. Nyama Choma, Coconut Fish Curry, Ugali, Zanzibar Pilau).' : 'Keep meals simple.'
       ].join(' ');
 
+      const itineraryContextNotice = effectiveExisting
+        ? `\nEXISTING TRIP ITINERARY CONTEXT:\n"""\n${effectiveExisting}\n"""\nCRITICAL DIRECTIVE: You MUST draft the schedule directly based on, expanding upon, and enhancing this existing trip itinerary. Retain its core stops, destinations, and activities while adding detailed morning, afternoon, evening activities, pickup logistics, meal highlights, and accommodation stops.`
+        : '';
+
       const prompt = `You are the specialized AI Trip Organiser Co-Pilot for TripBnA (Tanzania & East Africa Travel Platform).
-Your goal is to build an actionable, realistic, and highly organized ${days}-day itinerary for a Trip Organiser.
-Trip: "${targetTripTitle || destination} Adventure"
+Your goal is to build an actionable, realistic, and highly organized ${parsedDays}-day itinerary for a Trip Organiser.
+Trip: "${effectiveTitle || destination} Adventure"
 Destination: ${destination}
-Duration: ${days} Days
+Duration: ${parsedDays} Days
 Travelers: ${travelers} people
 Budget Level: ${budget}
 Travel Style: ${travelStyle}
-Special Instructions / Preferences: ${preferences || 'None'}
+Special Instructions / Preferences: ${effectiveNotes || 'None'}${itineraryContextNotice}
 Service Linking Directive: ${linkingInstructions}
 
 Return a structured JSON object with this EXACT schema:
 {
-  "title": "${targetTripTitle || `${days}-Day ${destination} Expedition`}",
+  "title": "${effectiveTitle || `${parsedDays}-Day ${destination} Expedition`}",
   "destination": "${destination}",
-  "duration": "${days} Days",
+  "duration": "${parsedDays} Days",
   "estCostUsd": 350,
   "estimatedBudgetUSD": "$350 - $650 per traveler",
   "summary": "Engaging 2-3 sentence overview of this trip schedule.",
@@ -180,7 +193,7 @@ Respond ONLY with valid JSON. Do not include markdown code block syntax.`;
     }
 
     // High quality fallback if API key is not configured yet or during spikes
-    const dayCount = Math.min(Math.max(Number(days) || 3, 1), 14);
+    const dayCount = parsedDays;
     const fallbackDays = Array.from({ length: dayCount }).map((_, i) => ({
       day: i + 1,
       title: i === 0 ? `Arrival & Welcome to ${destination}` : i === 1 ? `Signature Wildlife & Safari Circuit` : i === 2 ? `Cultural Village & Scenic Wonders` : `Hidden Gems & Farewell in ${destination}`,
@@ -199,9 +212,9 @@ Respond ONLY with valid JSON. Do not include markdown code block syntax.`;
     }));
 
     const fallbackPlan = {
-      title: targetTripTitle || `${days}-Day Ultimate ${destination} Expedition`,
+      title: effectiveTitle || `${parsedDays}-Day Ultimate ${destination} Expedition`,
       destination: destination,
-      duration: `${days} Days`,
+      duration: `${parsedDays} Days`,
       estCostUsd: budget === 'Luxury' ? 1250 : budget === 'Backpacker' ? 180 : 380,
       estimatedBudgetUSD: budget === 'Luxury' ? '$1,200 - $2,200' : budget === 'Backpacker' ? '$180 - $450' : '$350 - $750',
       summary: `A carefully designed adventure across ${destination}, balancing comfort, wildlife spectacles, and authentic local cuisine. Tailored for ${travelStyle.toLowerCase()} travelers.`,
