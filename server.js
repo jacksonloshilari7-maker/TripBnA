@@ -82,15 +82,17 @@ function getAI() {
   return aiClient;
 }
 
-// AI Trip Planner endpoint
+// AI Trip Planner endpoint - Strictly using Approved Services & Budget Comparisons
 app.post('/api/ai/trip-plan', async (req, res) => {
   try {
     const {
       destination = 'Tanzania',
       days = 3,
-      budget = 'Moderate',
-      travelStyle = 'Safari & Nature',
       travelers = 2,
+      startDate = '',
+      endDate = '',
+      estimatedBudget = 500,
+      currency = 'USD',
       preferences = '',
       notes = '',
       existingSchedule = '',
@@ -99,151 +101,376 @@ app.post('/api/ai/trip-plan', async (req, res) => {
       linkAccommodation = true,
       linkFood = true,
       targetTripTitle = '',
-      tripTitle = ''
+      tripTitle = '',
+      approvedServices = [],
+      manuallySelectedServices = []
     } = req.body || {};
 
     const effectiveTitle = targetTripTitle || tripTitle || '';
     const effectiveNotes = [preferences, notes].filter(Boolean).join('. ');
     const effectiveExisting = existingSchedule || existingItinerary || '';
     const parsedDays = Math.min(Math.max(Number(days) || 3, 1), 14);
+    const parsedTravelers = Math.max(Number(travelers) || 2, 1);
+    const budgetNum = Math.max(Number(estimatedBudget) || 0, 0);
+    const curr = currency || 'USD';
 
+    // 1. Strictly sanitize and filter approved services (NEVER use unapproved services)
+    const rawServices = Array.isArray(approvedServices) ? approvedServices : [];
+    const validApproved = rawServices.filter(s => {
+      if (!s) return false;
+      const st = String(s.status || '').toLowerCase();
+      return st === 'approved' || s.approved === true;
+    });
+
+    const matchDest = (s) => {
+      if (!destination || destination.toLowerCase() === 'tanzania') return true;
+      const p = String(s.place || s.location || s.destination || '').toLowerCase();
+      const d = destination.toLowerCase();
+      return p.includes(d) || d.includes(p);
+    };
+
+    // Filter by category and location match
+    const filterCategory = (type) => {
+      const typeLower = type.toLowerCase();
+      const inType = validApproved.filter(s => String(s.type || '').toLowerCase() === typeLower);
+      const inDest = inType.filter(matchDest);
+      return inDest.length ? inDest : inType;
+    };
+
+    const availAcc = filterCategory('Accommodation');
+    const availTrans = filterCategory('Transport');
+    const availFood = filterCategory('Food');
+
+    // Helper to calculate realistic cost for duration and travelers without inventing prices
+    const calcCost = (svc, type) => {
+      if (!svc) return { unitPrice: 0, total: 0, priceUnavailable: true, label: 'Price unavailable' };
+      const rawPrice = Number(svc.price);
+      if (isNaN(rawPrice) || rawPrice <= 0 || svc.price === null || svc.price === undefined || svc.price === '') {
+        return { unitPrice: 0, total: 0, priceUnavailable: true, label: 'Price unavailable' };
+      }
+
+      let total = 0;
+      let label = '';
+      if (type === 'Accommodation') {
+        const nights = Math.max(parsedDays - 1, 1);
+        total = rawPrice * nights;
+        label = `$${rawPrice}/night × ${nights} night${nights > 1 ? 's' : ''} = $${total}`;
+      } else if (type === 'Transport') {
+        const pMethod = (svc.pricingMethod || svc.priceUnit || '').toLowerCase();
+        if (pMethod.includes('seat')) {
+          total = rawPrice * parsedTravelers;
+          label = `$${rawPrice}/seat × ${parsedTravelers} traveler${parsedTravelers > 1 ? 's' : ''} = $${total}`;
+        } else if (pMethod.includes('day')) {
+          total = rawPrice * parsedDays;
+          label = `$${rawPrice}/day × ${parsedDays} day${parsedDays > 1 ? 's' : ''} = $${total}`;
+        } else if (pMethod.includes('trip') || pMethod.includes('ride')) {
+          total = rawPrice;
+          label = `$${rawPrice} (${svc.pricingMethod || 'Per ride/trip'}) = $${total}`;
+        } else {
+          total = rawPrice * parsedDays;
+          label = `$${rawPrice}/day × ${parsedDays} day${parsedDays > 1 ? 's' : ''} = $${total}`;
+        }
+      } else if (type === 'Food') {
+        // Per meal or per day per traveler
+        total = rawPrice * parsedTravelers * parsedDays;
+        label = `$${rawPrice}/day/traveler × ${parsedTravelers} traveler${parsedTravelers > 1 ? 's' : ''} × ${parsedDays} day${parsedDays > 1 ? 's' : ''} = $${total}`;
+      }
+      return { unitPrice: rawPrice, total, priceUnavailable: false, label };
+    };
+
+    // Build price comparison options (Option A, Option B, Option C)
+    const buildCategoryComparison = (categoryName, list, isLinked, manualSelected) => {
+      if (!isLinked) {
+        return {
+          category: categoryName,
+          status: 'unlinked',
+          notice: `${categoryName} unlinked by organiser preference.`,
+          options: [],
+          selected: null
+        };
+      }
+
+      if (!list || list.length === 0) {
+        return {
+          category: categoryName,
+          status: 'no_approved_services',
+          notice: `No approved ${categoryName} services found for ${destination}. The AI will not invent fake businesses or prices.`,
+          options: [],
+          selected: null
+        };
+      }
+
+      // Check if organizer manually selected a service
+      let manual = null;
+      if (manualSelected && manualSelected.length) {
+        manual = manualSelected.find(m => String(m.type || '').toLowerCase() === categoryName.toLowerCase());
+      }
+
+      // Sort by price ascending
+      const sorted = [...list].sort((a, b) => {
+        const pA = (a.price !== null && a.price !== undefined && !isNaN(Number(a.price))) ? Number(a.price) : 999999;
+        const pB = (b.price !== null && b.price !== undefined && !isNaN(Number(b.price))) ? Number(b.price) : 999999;
+        return pA - pB;
+      });
+
+      const options = sorted.slice(0, 3).map((s, idx) => {
+        const costInfo = calcCost(s, categoryName);
+        const optLetter = idx === 0 ? 'Option A' : idx === 1 ? 'Option B' : 'Option C';
+        const numPrice = costInfo.priceUnavailable ? null : costInfo.unitPrice;
+        return {
+          letter: optLetter,
+          id: s.id || '',
+          name: s.name || '',
+          price: numPrice,
+          unitPrice: costInfo.priceUnavailable ? 'Price unavailable' : costInfo.unitPrice,
+          totalCost: costInfo.priceUnavailable ? 0 : costInfo.total,
+          costLabel: costInfo.label,
+          priceUnavailable: costInfo.priceUnavailable,
+          isManual: manual && manual.id === s.id,
+          details: s.details || s.description || ''
+        };
+      });
+
+      // Default selection: manual if chosen, otherwise lowest cost option
+      let selected = options[0] || null;
+      if (manual) {
+        const foundManualInOpts = options.find(o => o.id === manual.id);
+        if (foundManualInOpts) {
+          selected = foundManualInOpts;
+        } else {
+          const costInfo = calcCost(manual, categoryName);
+          const numPrice = costInfo.priceUnavailable ? null : costInfo.unitPrice;
+          selected = {
+            letter: 'Manual Selected',
+            id: manual.id || '',
+            name: manual.name || '',
+            price: numPrice,
+            unitPrice: costInfo.priceUnavailable ? 'Price unavailable' : costInfo.unitPrice,
+            totalCost: costInfo.priceUnavailable ? 0 : costInfo.total,
+            costLabel: costInfo.label,
+            priceUnavailable: costInfo.priceUnavailable,
+            isManual: true,
+            details: manual.details || ''
+          };
+          options.unshift(selected);
+        }
+      }
+
+      return {
+        category: categoryName,
+        status: 'available',
+        notice: null,
+        options,
+        selected
+      };
+    };
+
+    const compAcc = buildCategoryComparison('Accommodation', availAcc, linkAccommodation, manuallySelectedServices);
+    const compTrans = buildCategoryComparison('Transport', availTrans, linkTransport, manuallySelectedServices);
+    const compFood = buildCategoryComparison('Food', availFood, linkFood, manuallySelectedServices);
+
+    // Calculate budget sum
+    const totalCostSelected = 
+      (compAcc.selected ? compAcc.selected.totalCost : 0) +
+      (compTrans.selected ? compTrans.selected.totalCost : 0) +
+      (compFood.selected ? compFood.selected.totalCost : 0);
+
+    const isWithinBudget = totalCostSelected <= budgetNum || budgetNum === 0;
+    const remainingBudget = Math.max(budgetNum - totalCostSelected, 0);
+    const budgetDeficit = Math.max(totalCostSelected - budgetNum, 0);
+
+    // Prepare alternatives if budget is insufficient
+    const budgetAlternatives = [];
+    if (!isWithinBudget) {
+      if (compAcc.options.length > 1 && compAcc.selected && compAcc.selected.letter !== 'Option A') {
+        const cheaperAcc = compAcc.options[0];
+        budgetAlternatives.push({
+          category: 'Accommodation',
+          text: `Switch to ${cheaperAcc.name} (${cheaperAcc.costLabel}) to save $${compAcc.selected.totalCost - cheaperAcc.totalCost}`,
+          serviceId: cheaperAcc.id
+        });
+      }
+      if (compTrans.options.length > 1 && compTrans.selected && compTrans.selected.letter !== 'Option A') {
+        const cheaperTrans = compTrans.options[0];
+        budgetAlternatives.push({
+          category: 'Transport',
+          text: `Switch to ${cheaperTrans.name} (${cheaperTrans.costLabel}) to save $${compTrans.selected.totalCost - cheaperTrans.totalCost}`,
+          serviceId: cheaperTrans.id
+        });
+      }
+      if (compFood.options.length > 1 && compFood.selected && compFood.selected.letter !== 'Option A') {
+        const cheaperFood = compFood.options[0];
+        budgetAlternatives.push({
+          category: 'Food',
+          text: `Switch to ${cheaperFood.name} (${cheaperFood.costLabel}) to save $${compFood.selected.totalCost - cheaperFood.totalCost}`,
+          serviceId: cheaperFood.id
+        });
+      }
+      if (parsedDays > 2) {
+        budgetAlternatives.push({
+          category: 'Duration',
+          text: `Adjust trip duration from ${parsedDays} days to ${parsedDays - 1} days to lower vehicle and lodge costs.`,
+          serviceId: null
+        });
+      }
+    }
+
+    const priceComparisonSummary = {
+      estimatedBudget: budgetNum,
+      currency: curr,
+      estimatedTotal: totalCostSelected,
+      remainingBudget: remainingBudget,
+      isWithinBudget: isWithinBudget,
+      budgetDeficit: budgetDeficit,
+      budgetNotice: isWithinBudget 
+        ? `✅ Trip fits within estimated budget of ${curr} ${budgetNum}. Remaining budget: ${curr} ${remainingBudget}`
+        : `Your estimated budget is not enough for the current selected services. Deficit: ${curr} ${budgetDeficit}. Review the lower-cost alternatives below.`,
+      categories: {
+        accommodation: compAcc,
+        transport: compTrans,
+        food: compFood
+      },
+      alternatives: budgetAlternatives
+    };
+
+    // Call Gemini with strict prompt constraints
     const ai = getAI();
     if (ai) {
-      const linkingInstructions = [
-        linkTransport ? 'Include specific transport logistics: pickup locations, transfers, and vehicle recommendations (e.g. 4x4 Safari Land Cruiser, airport taxi, ferry).' : 'Keep transport flexible.',
-        linkAccommodation ? 'Include specific accommodation options: overnight lodge/tented camp/hotel recommendations, check-in and check-out advice.' : 'Keep lodging optional.',
-        linkFood ? 'Include specific meal recommendations: breakfast, lunch spots, dinner, and authentic Swahili dishes (e.g. Nyama Choma, Coconut Fish Curry, Ugali, Zanzibar Pilau).' : 'Keep meals simple.'
-      ].join(' ');
-
-      const itineraryContextNotice = effectiveExisting
-        ? `\nEXISTING TRIP ITINERARY CONTEXT:\n"""\n${effectiveExisting}\n"""\nCRITICAL DIRECTIVE: You MUST draft the schedule directly based on, expanding upon, and enhancing this existing trip itinerary. Retain its core stops, destinations, and activities while adding detailed morning, afternoon, evening activities, pickup logistics, meal highlights, and accommodation stops.`
-        : '';
-
       const prompt = `You are the specialized AI Trip Organiser Co-Pilot for TripBnA (Tanzania & East Africa Travel Platform).
-Your goal is to build an actionable, realistic, and highly organized ${parsedDays}-day itinerary for a Trip Organiser.
-Trip: "${effectiveTitle || destination} Adventure"
+Your task is to build a realistic, actionable ${parsedDays}-day itinerary for an Organised Trip.
+
+CRITICAL DIRECTIVES:
+1. ONLY USE REAL APPROVED SERVICES: You are provided with the platform's approved services below. Do NOT invent fake businesses, fake hotel names, fake transport companies, or fake prices.
+2. If a service has 'Price unavailable', do NOT guess a price. Mark it as 'Price unavailable'.
+3. If no approved service is available for a category, state clearly: "No approved [Category] service found for [Destination]".
+4. BUDGET IS PRIMARY CONSTRAINT: Organiser's Estimated Budget is ${curr} ${budgetNum}.
+   Current Selected Services Cost: ${curr} ${totalCostSelected}.
+   Within Budget: ${isWithinBudget}.
+   Deficit: ${budgetDeficit}.
+
+TRIP CONTEXT:
+Trip Title: "${effectiveTitle || destination} Expedition"
 Destination: ${destination}
 Duration: ${parsedDays} Days
-Travelers: ${travelers} people
-Budget Level: ${budget}
-Travel Style: ${travelStyle}
-Special Instructions / Preferences: ${effectiveNotes || 'None'}${itineraryContextNotice}
-Service Linking Directive: ${linkingInstructions}
+Travelers: ${parsedTravelers} people
+Start Date: ${startDate || 'Upcoming'}
+End Date: ${endDate || 'Upcoming'}
+Preferences: ${effectiveNotes || 'None'}
+${effectiveExisting ? `Existing Itinerary: ${effectiveExisting}` : ''}
 
-Return a structured JSON object with this EXACT schema:
+APPROVED SERVICES DATA:
+Accommodation Selected: ${compAcc.selected ? `${compAcc.selected.name} (${compAcc.selected.costLabel})` : compAcc.notice || 'None'}
+Transport Selected: ${compTrans.selected ? `${compTrans.selected.name} (${compTrans.selected.costLabel})` : compTrans.notice || 'None'}
+Food Selected: ${compFood.selected ? `${compFood.selected.name} (${compFood.selected.costLabel})` : compFood.notice || 'None'}
+
+Return a structured JSON object matching this schema:
 {
   "title": "${effectiveTitle || `${parsedDays}-Day ${destination} Expedition`}",
   "destination": "${destination}",
   "duration": "${parsedDays} Days",
-  "estCostUsd": 350,
-  "estimatedBudgetUSD": "$350 - $650 per traveler",
-  "summary": "Engaging 2-3 sentence overview of this trip schedule.",
-  "linkedServices": {
-    "transport": ${linkTransport},
-    "accommodation": ${linkAccommodation},
-    "food": ${linkFood}
-  },
+  "summary": "Engaging 2-3 sentence overview of this schedule.",
   "days": [
     {
       "day": 1,
-      "title": "Arrival & Welcome Exploration",
-      "morning": "Morning schedule & pickup",
-      "afternoon": "Afternoon activity & visit",
+      "title": "Day 1 Title",
+      "morning": "Morning schedule & pickup description",
+      "afternoon": "Afternoon activity",
       "evening": "Sunset activity & dinner",
-      "pickup": "Arrival Airport / Hotel Pickup (4x4 Safari Vehicle)",
+      "pickup": "${compTrans.selected ? compTrans.selected.name : 'Meeting point'}",
+      "stay": "${compAcc.selected ? compAcc.selected.name : 'Lodge stay'}",
+      "meals": "${compFood.selected ? compFood.selected.name : 'Breakfast & dinner'}",
       "checkin": "14:00",
       "checkout": "10:00",
-      "breakfast": "Tropical fruit buffet & spiced Chai",
-      "lunch": "Savannah picnic lunchbox",
-      "dinner": "Swahili barbecue & bush dinner",
-      "stay": "Serengeti Heritage Tented Lodge",
-      "meals": "Breakfast, Picnic Lunch, Welcome Dinner",
-      "activities": "Orientation briefing, panoramic view drive, wildlife spotting."
+      "breakfast": "Breakfast details",
+      "lunch": "Lunch details",
+      "dinner": "Dinner details",
+      "activities": "Activities description"
     }
   ],
-  "recommendedTransport": "Verified 4x4 Safari Land Cruiser with pop-up roof",
-  "recommendedAccommodation": "Luxury eco-lodge or coastal boutique resort",
-  "recommendedFood": "Fresh Swahili grilled seafood, Nyama Choma, Zanzibar spiced rice",
-  "transportTip": "Private safari vehicle included with verified English/Swahili guide",
-  "packingList": ["Binoculars", "Khaki / neutral safari apparel", "Camera with telephoto lens", "Sunscreen & wide hat", "Yellow fever card & repellent"],
-  "insiderTips": ["Carry small cash for guide tipping", "Charge camera batteries overnight at camp solar hubs", "Early sunrise drives provide the best predator sightings"]
+  "packingList": ["Sunscreen", "Safari hat", "Binoculars", "Camera"],
+  "insiderTips": ["Carry small cash for tipping", "Early morning drives give best sightings"]
 }
+Respond ONLY with valid JSON. Do NOT include markdown blocks.`;
 
-Respond ONLY with valid JSON. Do not include markdown code block syntax.`;
+      const candidateModels = ['gemini-2.5-flash', 'gemini-2.5-flash-lite', 'gemini-3.1-flash-lite', 'gemini-3.8-flash'];
+      for (const modelName of candidateModels) {
+        try {
+          const response = await ai.models.generateContent({
+            model: modelName,
+            contents: prompt,
+            config: {
+              responseMimeType: 'application/json'
+            }
+          });
 
-      try {
-        const response = await ai.models.generateContent({
-          model: 'gemini-2.5-flash',
-          contents: prompt,
-          config: {
-            responseMimeType: 'application/json'
+          const responseText = response.text || '';
+          const cleaned = responseText.replace(/^```json\s*/i, '').replace(/\s*```$/, '').trim();
+          const parsed = JSON.parse(cleaned);
+
+          if (parsed && parsed.days && Array.isArray(parsed.days)) {
+            const plan = {
+              ...parsed,
+              budgetComparison: priceComparisonSummary,
+              estCostUsd: totalCostSelected,
+              estimatedBudget: budgetNum,
+              currency: curr,
+              selectedAccommodation: compAcc.selected,
+              selectedTransport: compTrans.selected,
+              selectedFood: compFood.selected
+            };
+            return res.json({ success: true, plan, source: modelName });
           }
-        });
-
-        const responseText = response.text || '';
-        const cleaned = responseText.replace(/^```json\s*/i, '').replace(/\s*```$/, '').trim();
-        const parsed = JSON.parse(cleaned);
-        // Ensure both days and dailyItinerary are available
-        if (parsed.days && !parsed.dailyItinerary) parsed.dailyItinerary = parsed.days;
-        if (parsed.dailyItinerary && !parsed.days) parsed.days = parsed.dailyItinerary;
-        return res.json({ success: true, plan: parsed, source: 'gemini' });
-      } catch (err) {
-        console.warn('Gemini API call or parse failed, falling back to curated plan:', err.message);
+        } catch (err) {
+          console.info(`Model ${modelName} transient issue (${err.message || 'unavailable'}), checking next fallback option...`);
+        }
       }
     }
 
-    // High quality fallback if API key is not configured yet or during spikes
-    const dayCount = parsedDays;
-    const fallbackDays = Array.from({ length: dayCount }).map((_, i) => ({
+    // Deterministic fallback solver using ONLY the real approved services and pricing
+    const fallbackDays = Array.from({ length: parsedDays }).map((_, i) => ({
       day: i + 1,
-      title: i === 0 ? `Arrival & Welcome to ${destination}` : i === 1 ? `Signature Wildlife & Safari Circuit` : i === 2 ? `Cultural Village & Scenic Wonders` : `Hidden Gems & Farewell in ${destination}`,
-      morning: i === 0 ? `Arrival transfer, hotel check-in, and tour briefing with verified guide.` : `Early morning sunrise game drive with prime predator activity.`,
-      afternoon: `Scenic lunch break followed by guided afternoon exploration and viewpoint visit.`,
-      evening: `Sunset sundowner followed by campfire dinner and Swahili hospitality.`,
-      pickup: linkTransport ? `${destination} Central Hotel / Airport Pickup (4x4 Safari Cruiser)` : `${destination} Meeting Point`,
+      title: i === 0 ? `Arrival & Welcome to ${destination}` : i === 1 ? `Signature Wildlife & Safari Circuit` : i === 2 ? `Cultural Discovery & Scenic Wonders` : `Hidden Gems & Farewell in ${destination}`,
+      morning: i === 0 ? `Arrival transfer and tour briefing.` : `Early morning safari drive and wildlife tracking.`,
+      afternoon: `Scenic exploration and viewpoint visit.`,
+      evening: `Sunset views followed by dinner.`,
+      pickup: compTrans.selected ? `${compTrans.selected.name} (${compTrans.selected.place || destination})` : `${destination} Meeting Point`,
+      stay: compAcc.selected ? `${compAcc.selected.name} (${compAcc.selected.place || destination})` : 'Standard eco-lodge stay',
+      meals: compFood.selected ? `${compFood.selected.name}` : 'Breakfast and safari lunch pack included',
       checkin: '14:00',
       checkout: '10:00',
-      breakfast: linkFood ? `Tropical fruit platter, eggs, and freshly brewed Tanzanian coffee` : `Standard breakfast`,
-      lunch: linkFood ? `Bush safari lunchbox with fresh juices and pastries` : `Local lunch`,
-      dinner: linkFood ? (i % 2 === 0 ? `Traditional Nyama Choma with Ugali & Kachumbari` : `Zanzibari Coconut Fish Curry with Spiced Pilau`) : `Dinner at lodge`,
-      stay: linkAccommodation ? `${destination} Safari Eco-Lodge & Glamping Camp` : `${destination} Guest Stay`,
-      meals: linkFood ? `Breakfast, Lunch & Dinner Included` : `Breakfast included`,
-      activities: `Scenic drives, guided wildlife tracking, photo stops, and local cultural interaction.`
+      breakfast: 'Spiced chai & fresh fruit breakfast',
+      lunch: 'Safari picnic lunch box',
+      dinner: compFood.selected ? `${compFood.selected.name}` : 'Local dinner',
+      activities: `Guided excursion in ${destination} exploring highlights and natural landscapes.`
     }));
 
-    const fallbackPlan = {
-      title: effectiveTitle || `${parsedDays}-Day Ultimate ${destination} Expedition`,
+    const deterministicPlan = {
+      title: effectiveTitle || `${parsedDays}-Day ${destination} Expedition`,
       destination: destination,
       duration: `${parsedDays} Days`,
-      estCostUsd: budget === 'Luxury' ? 1250 : budget === 'Backpacker' ? 180 : 380,
-      estimatedBudgetUSD: budget === 'Luxury' ? '$1,200 - $2,200' : budget === 'Backpacker' ? '$180 - $450' : '$350 - $750',
-      summary: `A carefully designed adventure across ${destination}, balancing comfort, wildlife spectacles, and authentic local cuisine. Tailored for ${travelStyle.toLowerCase()} travelers.`,
-      linkedServices: {
-        transport: linkTransport,
-        accommodation: linkAccommodation,
-        food: linkFood
-      },
+      summary: `Carefully calculated trip plan for ${destination} utilizing verified approved services strictly optimized for your ${curr} ${budgetNum} budget.`,
       days: fallbackDays,
       dailyItinerary: fallbackDays,
-      recommendedTransport: linkTransport ? `4x4 Safari Land Cruiser with pop-up roof & certified driver guide` : `Self-arranged or public shuttle`,
-      recommendedAccommodation: linkAccommodation ? `${destination} Savannah Luxury Tented Camp / Eco-Lodge` : `Local standard accommodation`,
-      recommendedFood: linkFood ? `Swahili fish curry, Serengeti bush barbecue, tropical fruit` : `Local dining`,
-      transportTip: `TripBnA verified drivers available with pop-up roof safari jeeps.`,
+      budgetComparison: priceComparisonSummary,
+      estCostUsd: totalCostSelected,
+      estimatedBudget: budgetNum,
+      currency: curr,
+      selectedAccommodation: compAcc.selected,
+      selectedTransport: compTrans.selected,
+      selectedFood: compFood.selected,
       packingList: [
-        'Lightweight neutral safari clothing (khaki, olive, tan)',
-        'Wide-brim hat, polarized sunglasses & SPF 50 sunscreen',
-        'Binoculars and camera with zoom lens',
-        'Insect repellent (DEET 30%+) & anti-malarial medication',
-        'Reusable water bottle & power bank (UK Type G plug)'
+        'Neutral safari apparel (khaki, olive, tan)',
+        'Wide-brim sun hat & UV sunglasses',
+        'Binoculars and telephoto camera',
+        'Insect repellent & refillable water bottle'
       ],
       insiderTips: [
-        `Greet locals with friendly Swahili: "Jambo" (Hello) or "Habari" (How are you).`,
-        `Directly link your itinerary to verified TripBnA transport, accommodation, and food partners for instant confirmation.`,
-        `Early morning game drives starting around 6:00 AM offer the highest chances of seeing lions and leopards on the hunt.`
+        'All included services are verified approved platform partners.',
+        'Early sunrise excursions provide the clearest light and most active wildlife.'
       ]
     };
 
-    return res.json({ success: true, plan: fallbackPlan, source: 'curated' });
+    return res.json({ success: true, plan: deterministicPlan, source: 'curated-approved' });
   } catch (error) {
     console.error('Trip plan generation error:', error);
     res.status(500).json({ success: false, error: error.message || 'Failed to generate trip plan' });
@@ -273,15 +500,20 @@ Instructions:
 3. If they ask about accepting or ignoring an itinerary, explain how to accept to save to their trip or ignore to discard.
 4. Keep advice culturally authentic and practically actionable for East Africa travel.`;
 
-      try {
-        const response = await ai.models.generateContent({
-          model: 'gemini-2.5-flash',
-          contents: prompt
-        });
+      const candidateModels = ['gemini-3.8-flash', 'gemini-3.1-flash-lite', 'gemini-2.5-flash'];
+      for (const modelName of candidateModels) {
+        try {
+          const response = await ai.models.generateContent({
+            model: modelName,
+            contents: prompt
+          });
 
-        return res.json({ success: true, answer: response.text });
-      } catch (err) {
-        console.warn('Gemini trip-assist failed, falling back to canned response:', err.message);
+          if (response && response.text) {
+            return res.json({ success: true, answer: response.text });
+          }
+        } catch (err) {
+          console.info(`Trip assist model ${modelName} transient issue, checking next fallback option...`);
+        }
       }
     }
 

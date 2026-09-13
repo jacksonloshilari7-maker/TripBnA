@@ -50,7 +50,7 @@
         "place": { "type": "string", "description": "Trip destination" },
         "date": { "type": "string", "description": "Trip date" },
         "visitors": { "type": "number", "description": "Number of participants" },
-        "status": { "type": "string", "description": "pending, accepted, rejected" },
+        "status": { "type": "string", "description": "pending, accepted, rejected, left" },
         "createdAt": { "type": "string", "format": "date-time" },
         "respondedAt": { "type": "string", "format": "date-time" }
       },
