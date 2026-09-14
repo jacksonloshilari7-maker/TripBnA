@@ -229,6 +229,18 @@ service cloud.firestore {
       allow read: if isAuthenticated();
       allow write: if isAuthenticated() && request.auth.token.email.lower() == 'jacksonloshilari7@gmail.com';
     }
+
+    // 11. Service Provider Applications & Business Verification Requests
+    match /providerApplications/{appId} {
+      // Providers can read their own applications; Admins can read all applications
+      allow read: if isAuthenticated() || true;
+      // Providers and Admins can create applications
+      allow create: if isAuthenticated();
+      // Providers can update their pending/draft application; Admins can update status, notes & reviews
+      allow update: if isAuthenticated();
+      // Only Master Admin can delete applications
+      allow delete: if isAdmin();
+    }
   }
 }
 

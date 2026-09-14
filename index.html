@@ -365,79 +365,77 @@
     }
     .transport-top-layout {
       display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      gap: 18px;
+      flex-direction: column;
+      width: 100%;
+      box-sizing: border-box;
+      gap: 16px;
+    }
+    .transport-modes-header-bar {
+      width: 100%;
+      box-sizing: border-box;
+      margin-bottom: 4px;
+    }
+    .transport-modes-column-panel {
       width: 100%;
       box-sizing: border-box;
     }
-    .transport-modes-column-panel {
-      display: flex;
-      flex-direction: column;
-      align-items: flex-end;
-      flex-shrink: 0;
-    }
     .transport-modes-grid {
-      display: flex !important;
-      flex-direction: column !important;
-      align-items: flex-end !important;
-      justify-content: flex-start !important;
+      display: grid !important;
+      grid-template-columns: repeat(auto-fit, minmax(min(100%, 92px), 1fr)) !important;
       gap: 8px !important;
+      width: 100% !important;
       box-sizing: border-box !important;
       margin: 0 !important;
+      align-items: stretch !important;
     }
-    @media (max-width: 768px) {
-      .transport-top-layout {
-        flex-direction: column-reverse !important;
-        align-items: stretch !important;
-      }
-      .transport-modes-column-panel {
-        width: 100% !important;
-        align-items: flex-end !important;
-        margin-bottom: 12px !important;
-      }
+    @media (max-width: 640px) {
       .transport-modes-grid {
-        flex-direction: row !important;
-        flex-wrap: wrap !important;
-        justify-content: flex-end !important;
+        grid-template-columns: repeat(auto-fit, minmax(78px, 1fr)) !important;
+        gap: 6px !important;
       }
     }
 
-    /* Uniform Equal-Sized Transport Mode Buttons */
+    /* Uniform Equal-Sized Adaptive Transport Mode Buttons */
     .trans-mode-btn, .trans-mini-btn, .transport-type-btn, .side-trans-btn {
-      display: flex !important;
-      flex-direction: column !important;
-      align-items: center !important;
-      justify-content: center !important;
-      gap: 6px !important;
-      height: 64px !important;
-      min-height: 64px !important;
-      max-height: 64px !important;
-      width: 105px !important;
-      min-width: 105px !important;
-      max-width: 105px !important;
-      padding: 8px 14px !important;
-      border-radius: 12px !important;
-      border: 1.5px solid #cbd5e1 !important;
-      background: #ffffff !important;
-      color: #0f172a !important;
-      font-size: 13px !important;
-      font-weight: 700 !important;
-      cursor: pointer !important;
-      box-sizing: border-box !important;
-      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
-      white-space: nowrap !important;
-      text-align: center !important;
-      user-select: none !important;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.04) !important;
-      flex: 0 0 auto !important;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+      height: auto;
+      min-height: 62px;
+      max-height: none;
+      width: 100%;
+      min-width: 0;
+      max-width: 100%;
+      padding: 8px 6px;
+      border-radius: 12px;
+      border: 1.5px solid #cbd5e1;
+      background: #ffffff;
+      color: #0f172a;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      box-sizing: border-box;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      white-space: nowrap;
+      text-align: center;
+      user-select: none;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+      flex: 1 1 0;
+    }
+    @media (max-width: 640px) {
+      .trans-mode-btn, .trans-mini-btn, .transport-type-btn, .side-trans-btn {
+        min-height: 56px !important;
+        padding: 6px 4px !important;
+      }
     }
     .trans-mode-btn:hover, .trans-mini-btn:hover, .transport-type-btn:hover, .side-trans-btn:hover {
-      border-color: #0284c7 !important;
-      background: #f0f9ff !important;
-      color: #0284c7 !important;
-      transform: translateY(-2px) !important;
-      box-shadow: 0 4px 12px rgba(2,132,199,0.15) !important;
+      border-color: #0284c7;
+      background: #f0f9ff;
+      color: #0284c7;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(2,132,199,0.15);
     }
     .trans-mode-btn:active, .trans-mini-btn:active, .transport-type-btn:active, .side-trans-btn:active {
       transform: translateY(0) !important;
@@ -571,7 +569,10 @@
     }
     .trans-list-card {
       display: flex;
-      flex-direction: row;
+      flex-direction: column;
+      width: 100%;
+      max-width: 100%;
+      box-sizing: border-box;
       background: #ffffff;
       border: 1.5px solid #e2e8f0;
       border-radius: 14px;
@@ -590,9 +591,10 @@
       background: #f8fafc;
     }
     .trans-list-media {
-      width: 320px;
-      min-width: 280px;
-      flex-shrink: 0;
+      width: 100%;
+      min-width: 0;
+      max-width: 100%;
+      box-sizing: border-box;
       background: #0f172a;
       display: flex;
       flex-direction: column;
@@ -601,37 +603,52 @@
     }
     .trans-list-content {
       flex: 1;
-      padding: 16px 20px;
+      width: 100%;
+      max-width: 100%;
+      box-sizing: border-box;
+      padding: 16px;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
       min-width: 0;
     }
     .trans-list-aside {
-      width: 240px;
-      min-width: 220px;
-      flex-shrink: 0;
-      border-left: 1px solid #f1f5f9;
-      padding: 16px 18px;
+      width: 100%;
+      min-width: 0;
+      max-width: 100%;
+      box-sizing: border-box;
+      border-top: 1px solid #f1f5f9;
+      border-left: none;
+      padding: 16px;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
       background: #fafbfc;
     }
-    @media (max-width: 920px) {
+    @media (min-width: 1180px) {
       .trans-list-card {
-        flex-direction: column;
+        flex-direction: row;
+        align-items: stretch;
       }
       .trans-list-media {
-        width: 100%;
+        width: 320px;
+        min-width: 280px;
+        max-width: 340px;
+        flex-shrink: 0;
+      }
+      .trans-list-content {
+        flex: 1;
         min-width: 0;
+        padding: 18px 20px;
       }
       .trans-list-aside {
-        width: 100%;
-        min-width: 0;
-        border-left: none;
-        border-top: 1px solid #f1f5f9;
-        background: #ffffff;
+        width: 250px;
+        min-width: 230px;
+        max-width: 260px;
+        flex-shrink: 0;
+        border-top: none;
+        border-left: 1px solid #f1f5f9;
+        padding: 18px;
       }
     }
 
@@ -1150,6 +1167,24 @@
       margin: 16px auto;
       padding: 0 16px 80px;
       box-sizing: border-box;
+      overflow-x: hidden;
+    }
+    #mainColumn {
+      min-width: 0 !important;
+      max-width: 100% !important;
+      width: 100% !important;
+      box-sizing: border-box !important;
+    }
+    #sideColumn {
+      min-width: 0 !important;
+      max-width: 100% !important;
+      box-sizing: border-box !important;
+    }
+    .card {
+      box-sizing: border-box;
+      max-width: 100%;
+      width: 100%;
+      overflow: hidden;
     }
     .grid {
       display: grid;
@@ -1190,6 +1225,108 @@
         flex: 0 0 auto !important;
         min-width: max-content !important;
         white-space: nowrap !important;
+      }
+      #transportResultsGrid {
+        grid-template-columns: 1fr !important;
+        gap: 14px !important;
+      }
+      .trans-list-card {
+        flex-direction: column !important;
+        width: 100% !important;
+      }
+      .trans-list-media {
+        width: 100% !important;
+        min-width: 0 !important;
+      }
+      .trans-list-aside {
+        width: 100% !important;
+        min-width: 0 !important;
+        border-left: none !important;
+        border-top: 1px solid #f1f5f9 !important;
+      }
+      .transport-top-layout {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 12px !important;
+      }
+      .transport-modes-column-panel {
+        width: 100% !important;
+        align-items: stretch !important;
+      }
+      .transport-modes-grid {
+        display: grid !important;
+        grid-template-columns: repeat(auto-fit, minmax(76px, 1fr)) !important;
+        width: 100% !important;
+        gap: 6px !important;
+      }
+      .trans-mode-btn, .trans-mini-btn, .transport-type-btn, .side-trans-btn {
+        width: 100% !important;
+        min-width: 0 !important;
+        max-width: 100% !important;
+        height: auto !important;
+        min-height: 54px !important;
+        max-height: none !important;
+        padding: 6px 4px !important;
+      }
+      .hub-search-grid {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 10px !important;
+        width: 100% !important;
+      }
+      .hub-field-group, .hub-field-group.flex-2 {
+        width: 100% !important;
+        max-width: 100% !important;
+      }
+      .hub-listings-grid {
+        grid-template-columns: 1fr !important;
+        gap: 14px !important;
+      }
+      .row {
+        flex-direction: column !important;
+        align-items: stretch !important;
+      }
+      .row > div {
+        width: 100% !important;
+      }
+      .food-action-tabs {
+        flex-direction: column !important;
+        gap: 6px !important;
+      }
+      .card-actions-row {
+        flex-direction: column !important;
+      }
+      .btn-book-primary, .btn-view-secondary {
+        width: 100% !important;
+        flex: 1 1 auto !important;
+      }
+      .hub-header {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 10px !important;
+      }
+      .hub-header-badge {
+        justify-content: flex-start !important;
+        width: 100% !important;
+      }
+      .hub-results-meta {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 4px !important;
+      }
+      .hub-chips-scroll {
+        overflow-x: auto !important;
+        white-space: nowrap !important;
+        -webkit-overflow-scrolling: touch !important;
+        scrollbar-width: thin !important;
+      }
+      .table-responsive, .table-container {
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+        max-width: 100% !important;
+      }
+      .jeep-compare-table {
+        min-width: 100% !important;
       }
     }
 
@@ -1408,9 +1545,10 @@
     /* Responsive Grid for Listings */
     .hub-listings-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr));
       gap: 18px;
       width: 100%;
+      max-width: 100%;
       box-sizing: border-box;
     }
     @media (max-width: 640px) {
@@ -1429,6 +1567,10 @@
       overflow: hidden;
       display: flex;
       flex-direction: column;
+      width: 100%;
+      max-width: 100%;
+      box-sizing: border-box;
+      min-width: 0;
       transition: transform 0.2s ease, box-shadow 0.2s ease;
     }
     .service-hub-card:hover {
@@ -1445,6 +1587,7 @@
       flex: 1;
       box-sizing: border-box;
       width: 100%;
+      min-width: 0;
     }
     @media (max-width: 640px) {
       .hub-card-body {
@@ -1481,10 +1624,11 @@
     .hub-book-btn {
       display: inline-flex !important;
       align-items: center !important;
-      justify-content: flex-start !important;
-      text-align: left !important;
-      align-self: flex-start !important;
+      justify-content: center !important;
+      text-align: center !important;
+      align-self: stretch !important;
       box-sizing: border-box !important;
+      width: 100% !important;
       min-height: 42px !important;
       padding: 10px 18px !important;
       font-size: 14px !important;
@@ -1505,7 +1649,8 @@
     }
     @media (max-width: 640px) {
       .hub-book-btn {
-        align-self: flex-start !important;
+        align-self: stretch !important;
+        width: 100% !important;
         font-size: 14px !important;
         padding: 10px 16px !important;
       }
@@ -3616,69 +3761,34 @@ body { font-family: Arial, sans-serif; margin:0; padding:20px; background:#f0f2f
         <!-- TRANSPORT MARKETPLACE -->
         <div id="transport" class="card section">
           <div class="transport-top-layout">
-            <!-- Left Side: Header intro and Adaptive Search Form -->
-            <div class="transport-main-flow" style="flex:1; min-width:0;">
-              <!-- Transport Header Banner: Intro -->
-              <div class="transport-header-banner" style="padding-bottom:12px; margin-bottom:14px; border-bottom:1px solid #f1f5f9;">
-                <div class="transport-header-intro" style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:12px;">
-                  <div>
-                    <h2 style="margin:0 0 4px 0; font-size:22px; color:#0f172a; font-weight:800; display:flex; align-items:center; gap:8px;">
-                      <span>🚗 Transport Marketplace</span>
-                      <span class="badge" style="background:#e0f2fe; color:#0369a1; font-size:12px; font-weight:700; border:1px solid #bae6fd; padding:3px 10px; border-radius:999px;">Tanzania &amp; East Africa</span>
-                    </h2>
-                    <div class="muted" style="font-size:14px; line-height:1.45;">Select your transit mode to view verified fares, schedules, and book instantly:</div>
-                  </div>
-                  <button type="button" class="ghost" onclick="resetTransportFilter()" style="padding:7px 16px; font-weight:700; border-radius:10px; display:inline-flex; align-items:center; gap:6px; font-size:12.5px; color:#0284c7; background:#f0f9ff; border:1.5px solid #bae6fd; cursor:pointer;">
-                    <span>🌐 Show All Transport</span>
-                  </button>
+            <!-- Transport Header Banner: Intro -->
+            <div class="transport-header-banner" style="padding-bottom:10px; margin-bottom:4px; border-bottom:1px solid #f1f5f9; width:100%; box-sizing:border-box;">
+              <div class="transport-header-intro" style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:12px;">
+                <div>
+                  <h2 style="margin:0 0 4px 0; font-size:22px; color:#0f172a; font-weight:800; display:flex; align-items:center; gap:8px;">
+                    <span>🚗 Transport Marketplace</span>
+                    <span class="badge" style="background:#e0f2fe; color:#0369a1; font-size:12px; font-weight:700; border:1px solid #bae6fd; padding:3px 10px; border-radius:999px;">Tanzania &amp; East Africa</span>
+                  </h2>
+                  <div class="muted" style="font-size:14px; line-height:1.45;">Select your transit mode to view verified fares, schedules, and book instantly:</div>
                 </div>
-              </div>
-
-              <!-- Dynamic Search Form Tailored for Selected Transport Type -->
-              <div id="transportDynamicSearchBox" style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:16px; margin:0 0 16px 0;">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:8px;">
-                  <div style="font-weight:800; font-size:14px; color:#1e293b; display:flex; align-items:center; gap:6px;">
-                    <span id="transSearchFormIcon">🔍</span>
-                    <span id="transSearchFormTitle">Search All Transport Across Tanzania</span>
-                  </div>
-                  <span id="transSearchFormTag" style="font-size:11px; font-weight:700; background:#e0f2fe; color:#0369a1; padding:2px 8px; border-radius:6px;">Adaptive Search</span>
-                </div>
-
-                <!-- Dynamic Search Fields Container -->
-                <div id="transDynamicFieldsGrid">
-                  <!-- Rendered dynamically by renderTransportDynamicSearchFields() -->
-                </div>
-
-                <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:12px;">
-                  <button type="button" class="ghost" onclick="resetTransportSearchInputs()" style="font-size:12px; padding:8px 14px;">Clear Fields</button>
-                  <button type="button" class="primary" id="btnExecuteTransSearch" onclick="executeTransportDynamicSearch()" style="background:#0284c7; font-weight:800; padding:8px 20px; font-size:13px; display:inline-flex; align-items:center; gap:6px;">
-                    <span>🔍 Search Transport</span>
-                  </button>
-                </div>
+                <button type="button" class="ghost" onclick="resetTransportFilter()" style="padding:7px 16px; font-weight:700; border-radius:10px; display:inline-flex; align-items:center; gap:6px; font-size:12.5px; color:#0284c7; background:#f0f9ff; border:1.5px solid #bae6fd; cursor:pointer;">
+                  <span>🌐 Show All Transport</span>
+                </button>
               </div>
             </div>
 
-            <!-- Right Side: Column of transport mode buttons from up to down -->
-            <div class="transport-modes-column-panel">
-              <div style="font-size:11px; font-weight:800; color:#64748b; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:8px; text-align:right;">Transit Modes</div>
+            <!-- Transit Modes Bar: Full-Width Adaptive Grid -->
+            <div class="transport-modes-header-bar">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                <div style="font-size:11px; font-weight:800; color:#475569; text-transform:uppercase; letter-spacing:0.5px;">Transit Modes</div>
+                <span class="muted" style="font-size:12px;">Click to filter &amp; search</span>
+              </div>
               <div class="transport-modes-grid" id="transportSelectorGrid">
-                <button type="button" class="trans-mode-btn" id="tBtn_Flight" onclick="selectTransportType('Flight')" title="Flight Flights">
-                  <span class="t-icon">✈️</span>
-                  <span class="t-name">Flight</span>
+                <button type="button" class="trans-mode-btn selected" id="tBtn_All" onclick="resetTransportFilter()" title="All Transport Modes">
+                  <span class="t-icon">🌐</span>
+                  <span class="t-name">All Modes</span>
                 </button>
-                <button type="button" class="trans-mode-btn" id="tBtn_Bus" onclick="selectTransportType('Bus')" title="Bus Coaches">
-                  <span class="t-icon">🚌</span>
-                  <span class="t-name">Bus</span>
-                </button>
-                <button type="button" class="trans-mode-btn" id="tBtn_Jeep" onclick="selectTransportType('Jeep')" title="4x4 Safari Jeeps">
-                  <span class="t-icon">🚙</span>
-                  <span class="t-name">Jeep</span>
-                </button>
-                <button type="button" class="trans-mode-btn" id="tBtn_Bike" onclick="selectTransportType('Bike')" title="Motorbikes & Bodaboda">
-                  <span class="t-icon">🏍️</span>
-                  <span class="t-name">Bike</span>
-                </button>
-                <button type="button" class="trans-mode-btn" id="tBtn_Train" onclick="selectTransportType('Train')" title="SGR Electric Train">
+                <button type="button" class="trans-mode-btn" id="tBtn_Train" onclick="selectTransportType('Train')" title="SGR Electric Train & Express">
                   <span class="t-icon">🚆</span>
                   <span class="t-name">Train</span>
                 </button>
@@ -3686,9 +3796,52 @@ body { font-family: Arial, sans-serif; margin:0; padding:20px; background:#f0f2f
                   <span class="t-icon">🚕</span>
                   <span class="t-name">Taxi</span>
                 </button>
-                <button type="button" class="trans-mode-btn" id="tBtn_Velo" onclick="selectTransportType('Bicycle')" title="Bicycle Rentals">
+                <button type="button" class="trans-mode-btn" id="tBtn_Velo" onclick="selectTransportType('Bicycle')" title="City & Beach Bicycle Rentals">
                   <span class="t-icon">🚲</span>
                   <span class="t-name">Bicycle</span>
+                </button>
+                <button type="button" class="trans-mode-btn" id="tBtn_Jeep" onclick="selectTransportType('Jeep')" title="4x4 Safari Land Cruisers & Jeeps">
+                  <span class="t-icon">🚙</span>
+                  <span class="t-name">Jeep 4x4</span>
+                </button>
+                <button type="button" class="trans-mode-btn" id="tBtn_Bus" onclick="selectTransportType('Bus')" title="Intercity Express Buses">
+                  <span class="t-icon">🚌</span>
+                  <span class="t-name">Bus</span>
+                </button>
+                <button type="button" class="trans-mode-btn" id="tBtn_Flight" onclick="selectTransportType('Flight')" title="Domestic & Bush Flights">
+                  <span class="t-icon">✈️</span>
+                  <span class="t-name">Flight</span>
+                </button>
+                <button type="button" class="trans-mode-btn" id="tBtn_Bike" onclick="selectTransportType('Bike')" title="Motorbikes & Bodaboda">
+                  <span class="t-icon">🏍️</span>
+                  <span class="t-name">Bike</span>
+                </button>
+                <button type="button" class="trans-mode-btn" id="tBtn_Yacht" onclick="selectTransportType('Yacht')" title="Catamarans & Coastal Yachts">
+                  <span class="t-icon">🛥️</span>
+                  <span class="t-name">Yacht</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Dynamic Search Form Tailored for Selected Transport Type -->
+            <div id="transportDynamicSearchBox" style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:16px; margin:0; width:100%; box-sizing:border-box;">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:8px;">
+                <div style="font-weight:800; font-size:14px; color:#1e293b; display:flex; align-items:center; gap:6px;">
+                  <span id="transSearchFormIcon">🔍</span>
+                  <span id="transSearchFormTitle">Search All Transport Across Tanzania</span>
+                </div>
+                <span id="transSearchFormTag" style="font-size:11px; font-weight:700; background:#e0f2fe; color:#0369a1; padding:2px 8px; border-radius:6px;">Adaptive Search</span>
+              </div>
+
+              <!-- Dynamic Search Fields Container -->
+              <div id="transDynamicFieldsGrid">
+                <!-- Rendered dynamically by renderTransportDynamicSearchFields() -->
+              </div>
+
+              <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:12px; flex-wrap:wrap;">
+                <button type="button" class="ghost" onclick="resetTransportSearchInputs()" style="font-size:12px; padding:8px 14px;">Clear Fields</button>
+                <button type="button" class="primary" id="btnExecuteTransSearch" onclick="executeTransportDynamicSearch()" style="background:#0284c7; font-weight:800; padding:8px 20px; font-size:13px; display:inline-flex; align-items:center; gap:6px;">
+                  <span>🔍 Search Transport</span>
                 </button>
               </div>
             </div>
@@ -3708,29 +3861,29 @@ body { font-family: Arial, sans-serif; margin:0; padding:20px; background:#f0f2f
               <button type="button" class="transport-category-pill active" id="transCatPill_all" onclick="selectTransportType('all')">
                 🌐 All Transport (<span id="tNavCount_all">0</span>)
               </button>
-              <button type="button" class="transport-category-pill" id="transCatPill_flight" onclick="selectTransportType('Flight')">
-                ✈️ Flights (<span id="tNavCount_flight">0</span>)
-              </button>
-              <button type="button" class="transport-category-pill" id="transCatPill_bus" onclick="selectTransportType('Bus')">
-                🚌 Buses (<span id="tNavCount_bus">0</span>)
-              </button>
               <button type="button" class="transport-category-pill" id="transCatPill_train" onclick="selectTransportType('Train')">
                 🚆 Trains (<span id="tNavCount_train">0</span>)
-              </button>
-              <button type="button" class="transport-category-pill" id="transCatPill_bike" onclick="selectTransportType('Bike')">
-                🏍️ Bikes (<span id="tNavCount_bike">0</span>)
               </button>
               <button type="button" class="transport-category-pill" id="transCatPill_taxi" onclick="selectTransportType('Taxi')">
                 🚕 Taxis (<span id="tNavCount_taxi">0</span>)
               </button>
+              <button type="button" class="transport-category-pill" id="transCatPill_velo" onclick="selectTransportType('Bicycle')">
+                🚲 Bicycle / Vélo (<span id="tNavCount_velo">0</span>)
+              </button>
               <button type="button" class="transport-category-pill" id="transCatPill_jeep" onclick="selectTransportType('Jeep')">
                 🚙 Jeeps (<span id="tNavCount_jeep">0</span>)
               </button>
+              <button type="button" class="transport-category-pill" id="transCatPill_bus" onclick="selectTransportType('Bus')">
+                🚌 Buses (<span id="tNavCount_bus">0</span>)
+              </button>
+              <button type="button" class="transport-category-pill" id="transCatPill_flight" onclick="selectTransportType('Flight')">
+                ✈️ Flights (<span id="tNavCount_flight">0</span>)
+              </button>
+              <button type="button" class="transport-category-pill" id="transCatPill_bike" onclick="selectTransportType('Bike')">
+                🏍️ Bikes (<span id="tNavCount_bike">0</span>)
+              </button>
               <button type="button" class="transport-category-pill" id="transCatPill_yacht" onclick="selectTransportType('Yacht')">
                 🛥️ Yachts (<span id="tNavCount_yacht">0</span>)
-              </button>
-              <button type="button" class="transport-category-pill" id="transCatPill_velo" onclick="selectTransportType('Velo')">
-                🚲 Vélo (<span id="tNavCount_velo">0</span>)
               </button>
             </div>
 
@@ -3882,7 +4035,7 @@ body { font-family: Arial, sans-serif; margin:0; padding:20px; background:#f0f2f
             </div>
 
             <!-- Dynamic transport services grid -->
-            <div id="transportResultsGrid" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(320px, 1fr)); gap:16px;">
+            <div id="transportResultsGrid" class="hub-listings-grid" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(280px, 1fr)); gap:16px; width:100%; box-sizing:border-box;">
               <!-- Populated by renderTransportSection() -->
             </div>
           </div>
@@ -7937,6 +8090,71 @@ Last Updated: April 2026 | Version 2.0 | TripBnA Platform Policies
         status: "Approved" 
       },
       { 
+        id: 123, 
+        name: "TAZARA Safari & Heritage Passenger Train Express", 
+        type: "Transport", 
+        transportType: "Train",
+        vehicleCategory: "Train",
+        vehicleModel: "TAZARA Mukuba Express (First Class Sleeper & Air-Conditioned Coach)",
+        place: "Dar es Salaam", 
+        coverage: "Dar es Salaam (TAZARA Yombo) ↔ Kisaki (Selous) ↔ Mbeya ↔ Kapiri Mposhi",
+        price: 32, 
+        currency: "USD",
+        pricingMethod: "Per seat/berth",
+        priceUnit: "/ berth",
+        capacity: "4 Berth Compartment / First Class",
+        driverOption: "Driver included",
+        availability: "Departs Tuesdays & Fridays",
+        providerId: "system_prov_train_2",
+        providerName: "Tanzania-Zambia Railway Authority (TAZARA)",
+        providerBusinessName: "TAZARA Safari Heritage Rail",
+        contactPerson: "Kelvin Mwamba",
+        phone: "+255 22 286 0340",
+        whatsapp: "+255 713 400 882",
+        email: "reservations.tazara@gmail.com",
+        description: "Experience the legendary trans-African railway passing directly through the heart of Nyerere National Park (Selous Game Reserve) with scenic wildlife viewing, dining car service, and sleeper berths.",
+        rating: 4.8,
+        reviewCount: 42,
+        images: [
+          "https://images.unsplash.com/photo-1474487548417-781cb71495f3?auto=format&fit=crop&w=600&q=80",
+          "https://images.unsplash.com/photo-1515162816999-a0c47dc192f7?auto=format&fit=crop&w=600&q=80"
+        ],
+        videos: ["https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4"],
+        status: "Approved" 
+      },
+      { 
+        id: 124, 
+        name: "Zanzibar Island Coastal & Airport Private Taxi Cab", 
+        type: "Transport", 
+        transportType: "Taxi",
+        vehicleCategory: "Taxi",
+        vehicleModel: "Toyota Noah / Voxy Luxury Minivan Taxi (Dual A/C & Wi-Fi)",
+        place: "Zanzibar", 
+        coverage: "Abeid Amani Karume Intl Airport (ZNZ), Stone Town, Nungwi, Kendwa, Paje",
+        price: 30, 
+        currency: "USD",
+        pricingMethod: "Per trip",
+        priceUnit: "/ trip",
+        capacity: "6 Passengers + Luggage",
+        driverOption: "Driver included",
+        availability: "Available 24/7",
+        providerId: "system_prov_taxi_3",
+        providerName: "Zanzibar Express Private Cabs",
+        providerBusinessName: "Zanzibar Express Private Cabs",
+        contactPerson: "Ali Salim",
+        phone: "+255 777 912 344",
+        whatsapp: "+255 777 912 344",
+        email: "zanzibarcabs.express@gmail.com",
+        description: "Door-to-door private airport transfers and island taxi rides across all Zanzibar beach resorts with professional Swahili & English-speaking chauffeur, bottled water, and flight tracking.",
+        rating: 4.9,
+        reviewCount: 56,
+        images: [
+          "https://images.unsplash.com/photo-1549399542-7e3f8b79c341?auto=format&fit=crop&w=600&q=80",
+          "https://images.unsplash.com/photo-1502877338535-766e1452684a?auto=format&fit=crop&w=600&q=80"
+        ],
+        status: "Approved" 
+      },
+      { 
         id: 117, 
         name: "Kibo Expedition 4WD Safari Land Cruiser V8", 
         type: "Transport", 
@@ -10553,6 +10771,16 @@ Last Updated: April 2026 | Version 2.0 | TripBnA Platform Policies
               snapshot.forEach(docSnap => {
                 cloudList.push({ id: docSnap.id, ...docSnap.data() });
               });
+              const existingNames = new Set(cloudList.map(s => String(s.name || '').toLowerCase().trim()));
+              if (typeof initialDefaultServices !== 'undefined' && Array.isArray(initialDefaultServices)) {
+                initialDefaultServices.forEach(defSvc => {
+                  const key = String(defSvc.name || '').toLowerCase().trim();
+                  if (!existingNames.has(key)) {
+                    cloudList.push(defSvc);
+                    existingNames.add(key);
+                  }
+                });
+              }
               services = cloudList;
               window.services = cloudList;
             } else {
@@ -10735,9 +10963,9 @@ Last Updated: April 2026 | Version 2.0 | TripBnA Platform Policies
                   <button type="button" class="ghost hub-rate-btn" style="padding:8px 6px; font-size:12px; font-weight:700; color:#b45309; background:#fef3c7; border:1px solid #fde68a; border-radius:8px;" onclick="openServiceReviewsModal('${s.id}')">⭐ Rate Hotel</button>
                 </div>
 
-                <!-- Left-aligned Book Room Button -->
-                <div style="margin-top:8px; width:100%; display:flex; justify-content:flex-start; box-sizing:border-box;">
-                  <button type="button" class="primary hub-book-btn" style="min-height:42px; padding:10px 18px; font-size:14px; font-weight:800; background:#15803d; color:#ffffff; border:none; border-radius:8px; cursor:pointer; box-shadow:0 3px 10px rgba(21,128,61,0.25); display:inline-flex; align-items:center; justify-content:flex-start; gap:8px;" onclick="bookService('${s.id}')">
+                <!-- Adaptive Full-Width Centered Book Room Button -->
+                <div style="margin-top:8px; width:100%; display:flex; justify-content:center; box-sizing:border-box;">
+                  <button type="button" class="primary hub-book-btn" style="min-height:42px; width:100%; padding:10px 18px; font-size:14px; font-weight:800; background:#15803d; color:#ffffff; border:none; border-radius:8px; cursor:pointer; box-shadow:0 3px 10px rgba(21,128,61,0.25); display:inline-flex; align-items:center; justify-content:center; gap:8px;" onclick="bookService('${s.id}')">
                     <span>🛏️ Book Room</span>
                   </button>
                 </div>
@@ -10873,9 +11101,9 @@ Last Updated: April 2026 | Version 2.0 | TripBnA Platform Policies
                   <button type="button" class="ghost hub-rate-btn" style="padding:8px 6px; font-size:12px; font-weight:700; color:#b45309; background:#fef3c7; border:1px solid #fde68a; border-radius:8px;" onclick="openServiceReviewsModal('${s.id}')">⭐ Rate Spot</button>
                 </div>
 
-                <!-- Left-aligned Order Now Button -->
-                <div style="margin-top:8px; width:100%; display:flex; justify-content:flex-start; box-sizing:border-box;">
-                  <button type="button" class="primary hub-book-btn" style="min-height:42px; padding:10px 18px; font-size:14px; font-weight:800; background:#15803d; color:#ffffff; border:none; border-radius:8px; cursor:pointer; box-shadow:0 3px 10px rgba(21,128,61,0.25); display:inline-flex; align-items:center; justify-content:flex-start; gap:8px;" onclick="bookService('${s.id}')">
+                <!-- Adaptive Full-Width Centered Order Now Button -->
+                <div style="margin-top:8px; width:100%; display:flex; justify-content:center; box-sizing:border-box;">
+                  <button type="button" class="primary hub-book-btn" style="min-height:42px; width:100%; padding:10px 18px; font-size:14px; font-weight:800; background:#15803d; color:#ffffff; border:none; border-radius:8px; cursor:pointer; box-shadow:0 3px 10px rgba(21,128,61,0.25); display:inline-flex; align-items:center; justify-content:center; gap:8px;" onclick="bookService('${s.id}')">
                     <span>🍴 Order Now</span>
                   </button>
                 </div>
@@ -11300,6 +11528,7 @@ Last Updated: April 2026 | Version 2.0 | TripBnA Platform Policies
 
     function resetTransportFilter() {
       window.currentTransportFilter = 'all';
+      window.transportDisplayLimit = 50;
       
       // Clear highlight on cards and highlight 'All Transport'
       document.querySelectorAll('.transport-type-btn, .trans-mini-btn, .trans-mode-btn').forEach(b => b.classList.remove('selected'));
@@ -11328,6 +11557,7 @@ Last Updated: April 2026 | Version 2.0 | TripBnA Platform Policies
         return;
       }
 
+      window.transportDisplayLimit = 50;
       const catNorm = normalizeTransCategory(type);
       window.currentTransportFilter = catNorm;
       selectedTransportTypeData = { 
@@ -11343,12 +11573,36 @@ Last Updated: April 2026 | Version 2.0 | TripBnA Platform Policies
 
       // Highlight matching button in main grid
       document.querySelectorAll('.transport-type-btn, .trans-mini-btn, .trans-mode-btn').forEach(b => b.classList.remove('selected'));
-      const cardEl = document.getElementById(`tBtn_${normCap}`) || (catNorm === 'velo' ? (document.getElementById('tBtn_Velo') || document.getElementById('tBtn_Bicycle')) : null);
+      const btnMap = {
+        'all': 'tBtn_All',
+        'train': 'tBtn_Train',
+        'taxi': 'tBtn_Taxi',
+        'velo': 'tBtn_Velo',
+        'bicycle': 'tBtn_Velo',
+        'jeep': 'tBtn_Jeep',
+        'bus': 'tBtn_Bus',
+        'flight': 'tBtn_Flight',
+        'bike': 'tBtn_Bike',
+        'yacht': 'tBtn_Yacht'
+      };
+      const cardEl = document.getElementById(btnMap[catNorm] || `tBtn_${normCap}`);
       if (cardEl) cardEl.classList.add('selected');
 
       // Highlight category pill
       document.querySelectorAll('.transport-category-pill').forEach(p => p.classList.remove('active'));
-      const pillEl = document.getElementById(`transCatPill_${catNorm}`);
+      const pillMap = {
+        'all': 'transCatPill_all',
+        'train': 'transCatPill_train',
+        'taxi': 'transCatPill_taxi',
+        'velo': 'transCatPill_velo',
+        'bicycle': 'transCatPill_velo',
+        'jeep': 'transCatPill_jeep',
+        'bus': 'transCatPill_bus',
+        'flight': 'transCatPill_flight',
+        'bike': 'transCatPill_bike',
+        'yacht': 'transCatPill_yacht'
+      };
+      const pillEl = document.getElementById(pillMap[catNorm] || `transCatPill_${catNorm}`);
       if (pillEl) pillEl.classList.add('active');
 
       // Update listings title
@@ -11362,9 +11616,9 @@ Last Updated: April 2026 | Version 2.0 | TripBnA Platform Policies
       renderTransportDynamicSearchFields(catNorm);
       renderTransportSection();
 
-      // Scroll to listings grid
+      // Scroll to listings grid gently
       const hub = document.getElementById('transportHub');
-      if (hub) {
+      if (hub && window.innerWidth > 768) {
         hub.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }
     }
@@ -11372,7 +11626,7 @@ Last Updated: April 2026 | Version 2.0 | TripBnA Platform Policies
 
     // Comparison & Pagination State
     window.selectedCompareJeeps = window.selectedCompareJeeps || new Set();
-    window.transportDisplayLimit = window.transportDisplayLimit || 6;
+    window.transportDisplayLimit = 50;
 
     // Helper: Calculate rental days from selected dates or default to 4 days
     function getTransportRentalDays() {
@@ -11574,7 +11828,7 @@ Last Updated: April 2026 | Version 2.0 | TripBnA Platform Policies
       if (document.getElementById('mTransSortInline')) document.getElementById('mTransSortInline').value = 'recommended';
 
       updateActiveFilterCountBadge();
-      window.transportDisplayLimit = 6;
+      window.transportDisplayLimit = 50;
       renderTransportSection();
       showToast("Transport filters reset to default.");
     }
@@ -11582,7 +11836,7 @@ Last Updated: April 2026 | Version 2.0 | TripBnA Platform Policies
 
     // Load More Pagination Handler
     function loadMoreTransportItems() {
-      window.transportDisplayLimit = (window.transportDisplayLimit || 6) + 6;
+      window.transportDisplayLimit = (window.transportDisplayLimit || 50) + 20;
       renderTransportSection();
     }
     window.loadMoreTransportItems = loadMoreTransportItems;
@@ -12279,7 +12533,7 @@ Last Updated: April 2026 | Version 2.0 | TripBnA Platform Policies
           <div style="grid-column: 1/-1; text-align:center; padding:20px 10px; margin-top:8px;">
             <div style="font-size:13px; color:#64748b; margin-bottom:8px;">Showing ${visibleItems.length} of ${filtered.length} verified transport listings</div>
             <button type="button" class="primary" style="background:#0284c7; color:#fff; font-weight:800; font-size:13px; padding:10px 24px; border-radius:8px; border:none; cursor:pointer; box-shadow:0 2px 6px rgba(2,132,199,0.25);" onclick="loadMoreTransportItems()">
-              View More Jeeps (${remaining} remaining) ▾
+              View More Transport Listings (${remaining} remaining) ▾
             </button>
           </div>
         `;
