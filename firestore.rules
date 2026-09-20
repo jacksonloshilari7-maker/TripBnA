@@ -18,19 +18,18 @@ service cloud.firestore {
       );
     }
 
-    // 1. Users collection
+    // 1. Users collection - strictly private to the user themselves and admin
     match /users/{userId} {
-      allow read: if isAuthenticated();
+      allow read: if isOwner(userId) || isAdmin();
       // Users can create and update their own document, but CANNOT escalate to admin role unless already admin
       allow create: if isOwner(userId) && (!('role' in request.resource.data) || request.resource.data.role != 'admin' || isAdmin());
       allow update: if (isOwner(userId) && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['role']) || resource.data.role == request.resource.data.role || isAdmin())) || isAdmin();
       allow delete: if isAdmin();
     }
 
-    // Admins registry
+    // Admins registry - strictly restricted to Master Admin only
     match /admins/{adminId} {
-      allow read: if isAuthenticated();
-      allow write: if isAdmin();
+      allow read, write: if isAdmin();
     }
 
     // 2. Trips collection
@@ -177,10 +176,9 @@ service cloud.firestore {
     }
 
     function isAdmin() {
-      return isAuthenticated() && (
-        request.auth.token.email.lower() == 'jacksonloshilari7@gmail.com' ||
-        exists(/databases/$(database)/documents/admins/$(request.auth.uid))
-      );
+      return isAuthenticated() && 
+        request.auth.token.email != null && 
+        request.auth.token.email.lower() == 'jacksonloshilari7@gmail.com';
     }
 
     function isServiceProvider(serviceData) {
@@ -206,13 +204,17 @@ service cloud.firestore {
       );
 
       // Only the specific service provider who owns this service or Admin can update
-      // Providers cannot self-approve; changes reset to Pending or require Admin
+      // If big changes (name, place, type) are made by provider, status MUST be 'Pending' for Admin approval.
+      // Small changes (availability, daily menu/inventory, pricing, photos) can retain current status.
       allow update: if isAuthenticated() && (
         isAdmin() ||
         (
           isServiceProvider(resource.data) &&
-          (request.resource.data.status == 'Pending' || request.resource.data.status == resource.data.status) &&
-          (!('providerId' in request.resource.data) || request.resource.data.providerId == resource.data.providerId)
+          (!('providerId' in request.resource.data) || request.resource.data.providerId == resource.data.providerId) &&
+          (
+            (request.resource.data.diff(resource.data).affectedKeys().hasAny(['name', 'place', 'type']) && request.resource.data.status == 'Pending') ||
+            (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['name', 'place', 'type']) && (request.resource.data.status == 'Pending' || request.resource.data.status == resource.data.status))
+          )
         ) ||
         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['reviews', 'reviewCount', 'rating'])
       );
@@ -224,10 +226,9 @@ service cloud.firestore {
       );
     }
 
-    // 10. Co-Admins Management (Only Master Admin jacksonloshilari7@gmail.com can manage)
+    // 10. Platform Administration Registry (Restricted to Master Admin jacksonloshilari7@gmail.com)
     match /admins/{adminId} {
-      allow read: if isAuthenticated();
-      allow write: if isAuthenticated() && request.auth.token.email.lower() == 'jacksonloshilari7@gmail.com';
+      allow read, write: if isAdmin();
     }
 
     // 11. Service Provider Applications & Business Verification Requests

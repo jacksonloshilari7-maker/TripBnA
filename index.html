@@ -128,7 +128,7 @@
     button, input, select, textarea { font-family: inherit; }
     button, a, input, select, .btn { touch-action: manipulation; }
 
-    /* ---------- Top nav (three buttons + PWA) ---------- */
+    /* ---------- Top nav (TripBnA icon at top middle + buttons below) ---------- */
     .topbar {
       position: sticky;
       top: 0;
@@ -136,25 +136,55 @@
       background: linear-gradient(180deg, #fff, #f8fbfc);
       border-bottom: 1px solid #e6eef2;
       display: flex;
+      flex-direction: column;
+      align-items: center;
       justify-content: center;
-      padding: 10px;
+      padding: 8px 12px;
       box-shadow: 0 2px 8px rgba(0,0,0,0.03);
       width: 100%;
+      box-sizing: border-box;
+    }
+    .topbar .topbar-logo-block {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      width: 100%;
+      margin-bottom: 6px;
+      text-align: center;
+    }
+    .topbar .topbar-logo-block img {
+      height: 38px;
+      width: auto;
+      max-width: 160px;
+      object-fit: contain;
+      border-radius: 6px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+      transition: transform 0.2s ease;
+    }
+    .topbar .topbar-logo-block a:hover img {
+      transform: scale(1.03);
     }
     .topbar .btn-row {
       width: 100%;
-      max-width: 1200px;
+      max-width: 1280px;
       display: flex;
-      gap: 10px;
+      gap: 8px;
       align-items: center;
       justify-content: flex-start;
+      justify-content: safe center;
       overflow-x: auto;
       -webkit-overflow-scrolling: touch;
-      scrollbar-width: none;
-      padding: 4px 6px;
+      scrollbar-width: thin;
+      scrollbar-color: #cbd5e1 transparent;
+      padding: 4px 8px;
+      scroll-behavior: smooth;
     }
     .topbar .btn-row::-webkit-scrollbar {
-      display: none;
+      height: 4px;
+    }
+    .topbar .btn-row::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 4px;
     }
     .topbar .btn {
       flex: 0 0 auto !important;
@@ -190,15 +220,24 @@
       .topbar {
         padding: 6px 8px;
       }
+      .topbar .topbar-logo-block {
+        margin-bottom: 4px;
+      }
+      .topbar .topbar-logo-block img {
+        height: 32px;
+        max-width: 130px;
+      }
       .topbar .btn-row {
         gap: 6px;
+        justify-content: flex-start !important;
         overflow-x: auto;
         -webkit-overflow-scrolling: touch;
-        scrollbar-width: none;
-        padding-bottom: 2px;
+        scrollbar-width: thin;
+        scrollbar-color: #cbd5e1 transparent;
+        padding-bottom: 4px;
       }
       .topbar .btn-row::-webkit-scrollbar {
-        display: none;
+        height: 3px;
       }
       .topbar .btn {
         flex: 0 0 auto !important;
@@ -1119,20 +1158,41 @@
       backdrop-filter: blur(10px);
       border-bottom: 1px solid #e2e8f0;
       box-shadow: 0 2px 10px rgba(0,0,0,0.04);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+    .topbar .topbar-logo-block {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      width: 100%;
+      margin-bottom: 6px;
+      text-align: center;
     }
     .topbar .btn-row {
       width: 100%;
       max-width: 1280px;
       display: flex;
-      gap: 10px;
+      gap: 8px;
       align-items: center;
       justify-content: flex-start;
+      justify-content: safe center;
       overflow-x: auto;
       -webkit-overflow-scrolling: touch;
-      padding: 3px 6px;
-      scrollbar-width: none;
+      padding: 4px 8px;
+      scrollbar-width: thin;
+      scrollbar-color: #cbd5e1 transparent;
+      scroll-behavior: smooth;
     }
-    .topbar .btn-row::-webkit-scrollbar { display: none; }
+    .topbar .btn-row::-webkit-scrollbar { height: 4px; }
+    .topbar .btn-row::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+    @media (min-width: 992px) {
+      .topbar .btn-row {
+        justify-content: center;
+      }
+    }
     .topbar .btn {
       flex: 0 0 auto !important;
       min-width: max-content !important;
@@ -2913,18 +2973,23 @@ body { font-family: Arial, sans-serif; margin:0; padding:20px; background:#f0f2f
 </head>
 <body>
 
-  <!-- TOP NAV: Buttons in one row at top -->
+  <!-- TOP NAV: TripBnA icon at the top middle of the buttons (in its own separate block) -->
   <div class="topbar" role="navigation">
-    <div class="btn-row">
-      <a href="/" style="display:inline-flex; align-items:center; text-decoration:none; margin-right:8px; flex-shrink:0;" title="TripBnA.com — Home">
-        <img src="/logo.png" alt="TripBnA.com" itemprop="logo" style="height:34px; width:auto; max-width:120px; object-fit:contain; border-radius:4px; box-shadow:0 2px 6px rgba(0,0,0,0.12);" />
+    <!-- Centered TripBnA Icon Block at top middle -->
+    <div class="topbar-logo-block">
+      <a href="/" style="display:inline-flex; align-items:center; justify-content:center; text-decoration:none;" title="TripBnA.com — Home">
+        <img src="/logo.png" alt="TripBnA.com" itemprop="logo" style="height:38px; width:auto; max-width:160px; object-fit:contain; border-radius:6px; box-shadow:0 2px 6px rgba(0,0,0,0.08);" />
       </a>
-      <button id="navTransport" class="btn" onclick="openSection('transport')">TRANSPORT</button>
-      <button id="navAccommodation" class="btn" onclick="openSection('accommodation')">ACCOMMODATION</button>
-      <button id="navFood" class="btn" onclick="openSection('food')">FOOD</button>
-      <button id="navSearch" class="btn" style="background:#0284c7; color:#fff; font-weight:700;" onclick="openSearch()">🔍 SEARCH</button>
-      <button id="navInstallPWA" class="btn" style="background:linear-gradient(135deg, #16a34a, #15803d); color:#fff; font-weight:800; display:inline-flex; align-items:center; justify-content:center; gap:6px; border:1px solid #14532d; box-shadow:0 2px 8px rgba(22,163,74,0.3); white-space:nowrap;" onclick="openDownloadAppModal()" title="Download & Install TripBnA App">📲 DOWNLOAD APP</button>
-      <button id="navAdminDashboard" class="btn" style="background:#0f172a; color:#38bdf8; font-weight:800; border:2px solid #0284c7; box-shadow:0 2px 10px rgba(2,132,199,0.35); margin-left:6px; white-space:nowrap; display:none; align-items:center; justify-content:center; gap:6px;" onclick="handleAdminPortalClick()" title="TripBnA Master Admin Portal">🛡️ ADMIN <span id="topAdminPendingBadge" style="background:#f59e0b; color:#0f172a; font-size:11px; padding:2px 7px; border-radius:999px; margin-left:4px; font-weight:800; display:none;">0</span></button>
+    </div>
+
+    <!-- Separate Buttons Row Block beneath the top middle icon -->
+    <div class="btn-row" id="topNavBtnRow">
+      <button id="navTransport" class="btn active" style="flex-shrink:0 !important; display:inline-flex; align-items:center; gap:6px;" onclick="openSection('transport')"><span>🚗</span> TRANSPORT</button>
+      <button id="navAccommodation" class="btn" style="flex-shrink:0 !important; display:inline-flex; align-items:center; gap:6px;" onclick="openSection('accommodation')"><span>🏨</span> ACCOMMODATION</button>
+      <button id="navFood" class="btn" style="flex-shrink:0 !important; display:inline-flex; align-items:center; gap:6px;" onclick="openSection('food')"><span>🍽️</span> FOOD</button>
+      <button id="navSearch" class="btn" style="background:#0284c7; color:#fff; font-weight:700; flex-shrink:0 !important;" onclick="openSearch()">🔍 SEARCH</button>
+      <button id="navInstallPWA" class="btn" style="background:linear-gradient(135deg, #16a34a, #15803d); color:#fff; font-weight:800; display:inline-flex; align-items:center; justify-content:center; gap:6px; border:1px solid #14532d; box-shadow:0 2px 8px rgba(22,163,74,0.3); white-space:nowrap; flex-shrink:0 !important;" onclick="openDownloadAppModal()" title="Download & Install TripBnA App">📲 DOWNLOAD APP</button>
+      <button id="navAdminDashboard" class="btn" style="background:#0f172a; color:#38bdf8; font-weight:800; border:2px solid #0284c7; box-shadow:0 2px 10px rgba(2,132,199,0.35); margin-left:6px; white-space:nowrap; display:none; align-items:center; justify-content:center; gap:6px; flex-shrink:0 !important;" onclick="handleAdminPortalClick()" title="TripBnA Master Admin Portal">🛡️ ADMIN <span id="topAdminPendingBadge" style="background:#f59e0b; color:#0f172a; font-size:11px; padding:2px 7px; border-radius:999px; margin-left:4px; font-weight:800; display:none;">0</span></button>
     </div>
   </div>
 
@@ -2948,7 +3013,7 @@ body { font-family: Arial, sans-serif; margin:0; padding:20px; background:#f0f2f
   </div>
 
   <!-- Persistent Master Admin Top Bar for Jackson Loshilari -->
-  <div id="adminTopNotificationBar" style="display:none; background:linear-gradient(90deg, #0f172a 0%, #1e293b 50%, #0f172a 100%); color:#f8fafc; padding:10px 18px; border-bottom:2px solid #38bdf8; box-shadow:0 4px 16px rgba(0,0,0,0.3); align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px; z-index:1150; position:sticky; top:58px;">
+  <div id="adminTopNotificationBar" style="display:none; background:linear-gradient(90deg, #0f172a 0%, #1e293b 50%, #0f172a 100%); color:#f8fafc; padding:10px 18px; border-bottom:2px solid #38bdf8; box-shadow:0 4px 16px rgba(0,0,0,0.3); align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px; z-index:1090; position:relative;">
     <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
       <span style="font-size:20px;">🛡️</span>
       <div>
@@ -4321,14 +4386,20 @@ body { font-family: Arial, sans-serif; margin:0; padding:20px; background:#f0f2f
 
         <!-- Search Services Panel (shows approved services) -->
         <div id="searchPanel" class="card" style="margin-top:14px;">
-          <div style="display:flex; justify-content:space-between; align-items:center;">
+          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
             <div>
-              <h3>Search Services</h3>
+              <h3 style="margin:0;">Search Services</h3>
               <div id="searchSummary" class="muted">Showing approved services</div>
             </div>
             <div>
               <input id="searchInputTop" class="input" type="text" placeholder="Search by name or place..." oninput="liveSearch()" />
             </div>
+          </div>
+          <div style="display:flex; gap:6px; margin-top:10px; flex-wrap:wrap;">
+            <button type="button" class="btn" style="font-size:12px; padding:5px 11px; background:#f1f5f9; color:#334155; border:1px solid #cbd5e1; border-radius:6px;" onclick="runSearch('', '')">All</button>
+            <button type="button" class="btn" style="font-size:12px; padding:5px 11px; background:#e0f2fe; color:#0369a1; border:1px solid #bae6fd; border-radius:6px; font-weight:700;" onclick="runSearch('', 'Transport')">🚗 Transport</button>
+            <button type="button" class="btn" style="font-size:12px; padding:5px 11px; background:#f0fdf4; color:#166534; border:1px solid #bbf7d0; border-radius:6px; font-weight:700;" onclick="runSearch('', 'Accommodation')">🏨 Accommodation</button>
+            <button type="button" class="btn" style="font-size:12px; padding:5px 11px; background:#fff7ed; color:#c2410c; border:1px solid #fed7aa; border-radius:6px; font-weight:700;" onclick="runSearch('', 'Food')">🍽️ Food</button>
           </div>
 
           <div id="searchResults"></div>
@@ -4389,14 +4460,31 @@ body { font-family: Arial, sans-serif; margin:0; padding:20px; background:#f0f2f
     </div>
     <div class="profile">
       <img id="sideMenuAvatar" src="20250306_161449.jpg" alt="profile" style="width:64px;height:64px;border-radius:50%;object-fit:cover;border:2px solid #2e8b57;">
-      <div style="font-weight:700; margin-top:6px; font-size:16px;" id="sideMenuName">JACKSON CHARLES</div>
-      <div class="muted" style="font-size:11px;" id="sideMenuEmail">jacksonloshilari7@gmail.com</div>
-      <div id="sideMenuOccupationWrap" style="margin-top:4px;"><span class="chip chip-confirmed" style="font-size:11px; padding:2px 8px;" id="sideMenuOccupation">🧭 Tour Guide</span></div>
+      <div style="font-weight:700; margin-top:6px; font-size:16px;" id="sideMenuName">GUEST TRAVELER</div>
+      <div class="muted" style="font-size:11px;" id="sideMenuEmail">Sign in to access your account</div>
+      <div id="sideMenuOccupationWrap" style="margin-top:4px; display:none;"><span class="chip chip-confirmed" style="font-size:11px; padding:2px 8px;" id="sideMenuOccupation">🧭 Traveler</span></div>
     </div>
 
     <div class="menu-links">
-      <!-- Dedicated Private Admin Dashboard Link -->
-      <a href="#" onclick="handleAdminPortalClick(); return false;" id="sidebarAdminLink" style="display:flex; color:#1e3a8a; background:#e0f2fe; border:1px solid #7dd3fc; border-radius:8px; padding:10px 14px; font-weight:700; margin-bottom:6px; align-items:center; justify-content:space-between;">
+      <!-- Direct Core Section Navigation in Sidebar Menu -->
+      <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:8px; margin-bottom:10px; display:flex; flex-direction:column; gap:6px;">
+        <div style="font-size:11px; font-weight:800; color:#64748b; text-transform:uppercase; letter-spacing:0.5px; padding:2px 4px;">Explore TripBnA</div>
+        <a href="#" onclick="openSection('transport'); const sm=document.getElementById('sideMenu'); if(sm) sm.style.display='none'; return false;" id="sidebarNavTransport" style="display:flex; align-items:center; justify-content:space-between; font-weight:800; color:#0369a1; padding:9px 12px; border-radius:8px; background:#f0f9ff; border:1.5px solid #bae6fd; text-decoration:none; box-shadow:0 1px 3px rgba(2,132,199,0.08);">
+          <span style="display:flex; align-items:center; gap:8px;"><span style="font-size:16px;">🚗</span> Transport Marketplace</span>
+          <span style="font-size:11px; background:#0284c7; color:#fff; padding:2px 7px; border-radius:999px;">FLEET</span>
+        </a>
+        <a href="#" onclick="openSection('accommodation'); const sm=document.getElementById('sideMenu'); if(sm) sm.style.display='none'; return false;" id="sidebarNavAccommodation" style="display:flex; align-items:center; justify-content:space-between; font-weight:800; color:#166534; padding:9px 12px; border-radius:8px; background:#f0fdf4; border:1px solid #bbf7d0; text-decoration:none;">
+          <span style="display:flex; align-items:center; gap:8px;"><span style="font-size:16px;">🏨</span> Accommodation</span>
+          <span style="font-size:11px; background:#16a34a; color:#fff; padding:2px 7px; border-radius:999px;">STAYS</span>
+        </a>
+        <a href="#" onclick="openSection('food'); const sm=document.getElementById('sideMenu'); if(sm) sm.style.display='none'; return false;" id="sidebarNavFood" style="display:flex; align-items:center; justify-content:space-between; font-weight:800; color:#c2410c; padding:9px 12px; border-radius:8px; background:#fff7ed; border:1px solid #fed7aa; text-decoration:none;">
+          <span style="display:flex; align-items:center; gap:8px;"><span style="font-size:16px;">🍽️</span> Food &amp; Dining</span>
+          <span style="font-size:11px; background:#ea580c; color:#fff; padding:2px 7px; border-radius:999px;">CUISINE</span>
+        </a>
+      </div>
+
+      <!-- Dedicated Private Admin Dashboard Link (Hidden by default, shown ONLY for authenticated jacksonloshilari7@gmail.com) -->
+      <a href="#" onclick="handleAdminPortalClick(); return false;" id="sidebarAdminLink" style="display:none; color:#1e3a8a; background:#e0f2fe; border:1px solid #7dd3fc; border-radius:8px; padding:10px 14px; font-weight:700; margin-bottom:6px; align-items:center; justify-content:space-between;">
         <span>🛡️ TripBnA Admin Dashboard</span>
         <span id="sidebarAdminBadge" style="background:#f59e0b; color:#000; font-size:11px; padding:2px 8px; border-radius:999px; font-weight:800; display:none;">0</span>
       </a>
@@ -4482,7 +4570,6 @@ body { font-family: Arial, sans-serif; margin:0; padding:20px; background:#f0f2f
             <option value="prov_food_1" selected>🍽️ Swahili Heritage Dining (Food Provider Only)</option>
             <option value="prov_trans_1">🚗 ABC Executive Taxi &amp; Safari (Transport Provider Only)</option>
             <option value="prov_acc_1">🏨 Serengeti Safari Lodge (Stay Provider Only)</option>
-            <option value="admin">🛡️ Platform Admin (Jackson Loshilari — Sees All)</option>
             <option value="current">👤 Current Signed-in Auth User</option>
           </select>
         </div>
@@ -4746,10 +4833,10 @@ body { font-family: Arial, sans-serif; margin:0; padding:20px; background:#f0f2f
         <input type="file" id="profilePhotoInput" accept="image/*" style="display:none;" onchange="handleProfilePhotoUpload(event)" />
       </div>
       <div style="flex:1; min-width:0;">
-        <div style="font-weight:800; font-size:18px; color:#0f172a;" id="profileModalName">JACKSON CHARLES</div>
-        <div class="muted" id="profileModalEmail" style="font-size:12px; word-break:break-all;">jacksonloshilari7@gmail.com</div>
-        <div style="margin-top:4px;" id="profileModalOccupationWrap"><span class="chip chip-confirmed" id="profileModalRole" style="font-weight:700; font-size:11px;">🧭 Tour Guide</span></div>
-        <div id="profileModalBioDisplay" style="font-size:12px; color:#475569; margin-top:5px; font-style:italic; line-height:1.4;">Passionate Tanzanian travel enthusiast & tourism host.</div>
+        <div style="font-weight:800; font-size:18px; color:#0f172a;" id="profileModalName">Traveler Profile</div>
+        <div class="muted" id="profileModalEmail" style="font-size:12px; word-break:break-all;">Sign in to view your details</div>
+        <div style="margin-top:4px; display:none;" id="profileModalOccupationWrap"><span class="chip chip-confirmed" id="profileModalRole" style="font-weight:700; font-size:11px;">🧭 Traveler</span></div>
+        <div id="profileModalBioDisplay" style="font-size:12px; color:#475569; margin-top:5px; font-style:italic; line-height:1.4;">Explore Tanzania's premier destinations with TripBnA.</div>
         <div style="display:flex; gap:8px; margin-top:8px; flex-wrap:wrap;">
           <button type="button" class="ghost" style="font-size:11px; padding:4px 10px; border-radius:6px; font-weight:700;" onclick="document.getElementById('profilePhotoInput').click()">📸 Upload Photo</button>
           <button type="button" class="ghost" style="font-size:11px; padding:4px 10px; border-radius:6px; color:#dc2626; border-color:#fca5a5;" onclick="removeProfilePhoto()">🗑️ Remove</button>
@@ -5505,7 +5592,174 @@ body { font-family: Arial, sans-serif; margin:0; padding:20px; background:#f0f2f
     </div>
   </div></div>
 
-  <div id="safetyModal" class="modal"><div class="panel card">
+  <!-- Transport Fleet & Availability Modal -->
+  <div id="transportFleetModal" class="modal"><div class="panel card" style="max-width:560px;width:95%;max-height:90vh;overflow-y:auto;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+      <h3 style="margin:0;font-size:18px;color:#0f172a;display:flex;align-items:center;gap:8px;">
+        <span>🚗</span> <span id="tfModalServiceName">Transport Fleet & Availability</span>
+      </h3>
+      <button class="ghost" style="padding:6px 12px;" onclick="closeModal('transportFleetModal')">✕ Close</button>
+    </div>
+    
+    <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:12px 14px;margin-bottom:14px;font-size:12.5px;color:#1e40af;">
+      💡 <strong>Operational Availability:</strong> Daily fleet availability, pricing, driver options, and route notes can be adjusted here and updated live instantly without needing Admin approval. Core verified details (Name & Location) require Admin approval.
+    </div>
+
+    <input type="hidden" id="tfServiceId" />
+
+    <div style="display:flex;flex-direction:column;gap:12px;">
+      <!-- Availability Status Toggle -->
+      <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:12px;">
+        <label style="font-size:13px;font-weight:700;color:#0f172a;display:block;margin-bottom:8px;">Today's Operating & Availability Status</label>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;">
+          <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;padding:6px 12px;border:1.5px solid #86efac;background:#f0fdf4;border-radius:8px;">
+            <input type="radio" name="tfAvailabilityRadio" value="available" checked />
+            <strong style="color:#166534;">🟢 Available Today for Bookings</strong>
+          </label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;padding:6px 12px;border:1.5px solid #fca5a5;background:#fef2f2;border-radius:8px;">
+            <input type="radio" name="tfAvailabilityRadio" value="booked" />
+            <strong style="color:#b91c1c;">🔴 Fully Booked / Off-Duty</strong>
+          </label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;padding:6px 12px;border:1.5px solid #fde68a;background:#fffbeb;border-radius:8px;">
+            <input type="radio" name="tfAvailabilityRadio" value="maintenance" />
+            <strong style="color:#b45309;">🟡 Scheduled Maintenance</strong>
+          </label>
+        </div>
+      </div>
+
+      <div class="row" style="gap:10px;">
+        <div style="flex:1;">
+          <label style="font-size:12px;font-weight:700;display:block;margin-bottom:4px;">Available Vehicles / Fleet Units</label>
+          <input id="tfFleetUnits" type="number" min="0" class="input" style="width:100%;" placeholder="e.g. 3" />
+        </div>
+        <div style="flex:1;">
+          <label style="font-size:12px;font-weight:700;display:block;margin-bottom:4px;">Passenger Capacity Per Vehicle</label>
+          <input id="tfCapacity" class="input" style="width:100%;" placeholder="e.g. 4 Passengers + Luggage" />
+        </div>
+      </div>
+
+      <div class="row" style="gap:10px;">
+        <div style="flex:1;">
+          <label style="font-size:12px;font-weight:700;display:block;margin-bottom:4px;">Rate / Price ($ USD)</label>
+          <input id="tfPrice" type="number" min="0" class="input" style="width:100%;" placeholder="Price" />
+        </div>
+        <div style="flex:1;">
+          <label style="font-size:12px;font-weight:700;display:block;margin-bottom:4px;">Pricing Unit</label>
+          <select id="tfPriceUnit" class="input" style="width:100%;">
+            <option value="/ day">Per day</option>
+            <option value="/ ride">Per ride</option>
+            <option value="/ km">Per km</option>
+            <option value="/ seat">Per seat</option>
+            <option value="/ trip">Per trip</option>
+            <option value="Quote on request">Quote on request</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="row" style="gap:10px;">
+        <div style="flex:1;">
+          <label style="font-size:12px;font-weight:700;display:block;margin-bottom:4px;">Driver Option</label>
+          <select id="tfDriverOption" class="input" style="width:100%;">
+            <option value="Driver included">Professional Driver Included</option>
+            <option value="Self drive available">Self-Drive Allowed</option>
+            <option value="Driver optional">Driver Optional</option>
+          </select>
+        </div>
+        <div style="flex:1;">
+          <label style="font-size:12px;font-weight:700;display:block;margin-bottom:4px;">Operating Coverage / Routes</label>
+          <input id="tfCoverage" class="input" style="width:100%;" placeholder="e.g. Arusha, Kilimanjaro, Moshi" />
+        </div>
+      </div>
+
+      <div>
+        <label style="font-size:12px;font-weight:700;display:block;margin-bottom:4px;">Today's Availability Notice / Special Info for Travelers</label>
+        <textarea id="tfDailyNotice" class="input" style="width:100%;min-height:60px;" placeholder="e.g. Ready for airport pickups 24/7. Clean air-conditioned 4x4 Land Cruisers ready."></textarea>
+      </div>
+    </div>
+
+    <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:16px;">
+      <button class="ghost" onclick="closeModal('transportFleetModal')">Cancel</button>
+      <button class="primary" id="saveTransportFleetBtn" style="background:#0284c7;" onclick="saveTransportFleetFromModal()">💾 Update Fleet & Availability (Live)</button>
+    </div>
+  </div></div>
+
+  <!-- Accommodation Rooms & Availability Modal -->
+  <div id="accommodationRoomsModal" class="modal"><div class="panel card" style="max-width:560px;width:95%;max-height:90vh;overflow-y:auto;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+      <h3 style="margin:0;font-size:18px;color:#0f172a;display:flex;align-items:center;gap:8px;">
+        <span>🏨</span> <span id="accModalServiceName">Rooms, Rates & Availability</span>
+      </h3>
+      <button class="ghost" style="padding:6px 12px;" onclick="closeModal('accommodationRoomsModal')">✕ Close</button>
+    </div>
+    
+    <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:12px 14px;margin-bottom:14px;font-size:12.5px;color:#1e40af;">
+      💡 <strong>Operational Availability:</strong> Daily room availability, vacancy, pricing per night, special offers, and breakfast inclusion can be updated here live instantly without requiring Admin approval.
+    </div>
+
+    <input type="hidden" id="accServiceId" />
+
+    <div style="display:flex;flex-direction:column;gap:12px;">
+      <!-- Availability Status Toggle -->
+      <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:12px;">
+        <label style="font-size:13px;font-weight:700;color:#0f172a;display:block;margin-bottom:8px;">Today's Room Vacancy & Availability</label>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;">
+          <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;padding:6px 12px;border:1.5px solid #86efac;background:#f0fdf4;border-radius:8px;">
+            <input type="radio" name="accAvailabilityRadio" value="available" checked />
+            <strong style="color:#166534;">🟢 Rooms Available for Booking</strong>
+          </label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;padding:6px 12px;border:1.5px solid #fca5a5;background:#fef2f2;border-radius:8px;">
+            <input type="radio" name="accAvailabilityRadio" value="booked" />
+            <strong style="color:#b91c1c;">🔴 Fully Booked / No Vacancy</strong>
+          </label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;padding:6px 12px;border:1.5px solid #fde68a;background:#fffbeb;border-radius:8px;">
+            <input type="radio" name="accAvailabilityRadio" value="renovation" />
+            <strong style="color:#b45309;">🟡 Seasonal / Renovation</strong>
+          </label>
+        </div>
+      </div>
+
+      <div class="row" style="gap:10px;">
+        <div style="flex:1;">
+          <label style="font-size:12px;font-weight:700;display:block;margin-bottom:4px;">Available Room Units Today</label>
+          <input id="accRoomUnits" type="number" min="0" class="input" style="width:100%;" placeholder="e.g. 5" />
+        </div>
+        <div style="flex:1;">
+          <label style="font-size:12px;font-weight:700;display:block;margin-bottom:4px;">Room Type / Category</label>
+          <input id="accRoomType" class="input" style="width:100%;" placeholder="e.g. Deluxe Safari Chalet, Double Room" />
+        </div>
+      </div>
+
+      <div class="row" style="gap:10px;">
+        <div style="flex:1;">
+          <label style="font-size:12px;font-weight:700;display:block;margin-bottom:4px;">Price Per Night ($ USD)</label>
+          <input id="accPrice" type="number" min="0" class="input" style="width:100%;" placeholder="Price" />
+        </div>
+        <div style="flex:1;">
+          <label style="font-size:12px;font-weight:700;display:block;margin-bottom:4px;">Breakfast & Dining</label>
+          <select id="accBreakfast" class="input" style="width:100%;">
+            <option value="Breakfast Included">🍳 Free Breakfast Included</option>
+            <option value="All Meals Included">🍽️ Full Board (All Meals)</option>
+            <option value="Room Only">🛏️ Room Only</option>
+          </select>
+        </div>
+      </div>
+
+      <div>
+        <label style="font-size:12px;font-weight:700;display:block;margin-bottom:4px;">Featured Amenities</label>
+        <input id="accAmenities" class="input" style="width:100%;" placeholder="e.g. WiFi, Hot Shower, Swimming Pool, Balcony View" />
+      </div>
+
+      <div>
+        <label style="font-size:12px;font-weight:700;display:block;margin-bottom:4px;">Today's Special Deal / Discount Offer</label>
+        <input id="accSpecialOffers" class="input" style="width:100%;" placeholder="e.g. 10% discount for 3+ nights stay" />
+      </div>
+    </div>
+
+    <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:16px;">
+      <button class="ghost" onclick="closeModal('accommodationRoomsModal')">Cancel</button>
+      <button class="primary" id="saveAccommodationRoomsBtn" style="background:#7e22ce;" onclick="saveAccommodationRoomsFromModal()">💾 Update Rooms & Availability (Live)</button>
+    </div>
+  </div></div>
     <button style="float:right; padding:8px 16px; background:#2e8b57; color:#fff; border:none; border-radius:6px; cursor:pointer;" onclick="closeModal('safetyModal')">Close</button>
     <h3 style="color:#2e8b57; font-size:24px; margin-bottom:20px;">Safety and Policy</h3>
      
@@ -7028,23 +7282,20 @@ Last Updated: April 2026 | Version 2.0 | TripBnA Platform Policies
             </div>
           </div>
 
-          <!-- Co-Admins Delegation Management -->
+          <!-- Master Admin Access Control Card -->
           <div style="background:#0f172a; border:1px solid #1e293b; border-radius:12px; padding:20px; margin-bottom:16px;">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-              <h4 style="margin:0; font-size:15px; color:#f8fafc;">👥 Appoint & Manage Co-Admins</h4>
-              <span style="background:#1e3a8a; color:#93c5fd; font-size:11px; font-weight:700; padding:2px 8px; border-radius:6px;">Master Admin Authority</span>
+              <h4 style="margin:0; font-size:15px; color:#f8fafc;">🛡️ Sole Master Administrator Access Control</h4>
+              <span style="background:#1e3a8a; color:#93c5fd; font-size:11px; font-weight:700; padding:2px 8px; border-radius:6px;">Strictly Enforced</span>
             </div>
-            <p style="font-size:12px; color:#94a3b8; margin:0 0 14px 0;">The Primary Administrator (<strong style="color:#38bdf8;">jacksonloshilari7@gmail.com</strong>) can appoint trusted team members as Co-Admins or revoke their dashboard access at any time.</p>
+            <p style="font-size:12px; color:#94a3b8; margin:0 0 14px 0;">This Master Admin dashboard is strictly private and locked exclusively to Jackson Loshilari. No secondary admin or co-admin delegation is permitted.</p>
             
-            <div style="display:flex; gap:8px; margin-bottom:14px; flex-wrap:wrap;">
-              <input id="appointAdminEmailInput" class="input" style="flex:2; min-width:220px; background:#1e293b; border:1px solid #334155; color:#fff; padding:8px 12px; border-radius:6px; font-size:13px;" placeholder="Enter email to appoint (e.g. partner@tripbna.com)" />
-              <button type="button" onclick="appointCoAdmin()" style="background:#2563eb; color:#fff; border:none; padding:8px 16px; border-radius:6px; font-weight:700; cursor:pointer; font-size:12px; display:inline-flex; align-items:center; gap:6px;">
-                <span>+</span> Appoint Co-Admin
-              </button>
-            </div>
-
-            <div id="coAdminsListContainer" style="display:flex; flex-direction:column; gap:8px;">
-              <!-- Co-admins dynamically listed here -->
+            <div style="display:flex; align-items:center; gap:12px; background:#1e293b; border:1px solid #334155; border-radius:8px; padding:12px 16px;">
+              <span style="font-size:24px;">👑</span>
+              <div>
+                <div style="font-size:13px; font-weight:800; color:#38bdf8;">jacksonloshilari7@gmail.com</div>
+                <div style="font-size:11px; color:#94a3b8;">Status: Sole Master Administrator • Delegation Disabled • Cloud Firestore Rules Enforced</div>
+              </div>
             </div>
           </div>
         </div>
@@ -8781,6 +9032,28 @@ Last Updated: April 2026 | Version 2.0 | TripBnA Platform Policies
         const btn = document.getElementById(btnId);
         if (btn) btn.classList.toggle('active', name.toLowerCase() === lbl.toLowerCase());
       });
+
+      // Keep topbar scroll position aligned so active button is visible
+      const topRow = document.getElementById('topNavBtnRow') || document.querySelector('.topbar .btn-row');
+      if (topRow) {
+        if (name === 'transport') {
+          topRow.scrollLeft = 0;
+        } else {
+          const activeBtn = document.getElementById(name === 'accommodation' ? 'navAccommodation' : 'navFood');
+          if (activeBtn && typeof activeBtn.scrollIntoView === 'function') {
+            activeBtn.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+          }
+        }
+      }
+
+      // Sync sideMenu links
+      const sideTrans = document.getElementById('sidebarNavTransport');
+      if (sideTrans) sideTrans.style.background = (name === 'transport') ? '#bae6fd' : '#f0f9ff';
+      const sideAcc = document.getElementById('sidebarNavAccommodation');
+      if (sideAcc) sideAcc.style.background = (name === 'accommodation') ? '#bbf7d0' : '#f0fdf4';
+      const sideFood = document.getElementById('sidebarNavFood');
+      if (sideFood) sideFood.style.background = (name === 'food') ? '#fed7aa' : '#fff7ed';
+
       // Scroll to top of layout
       window.scrollTo({top:0, behavior:'smooth'});
 
@@ -9043,11 +9316,16 @@ Last Updated: April 2026 | Version 2.0 | TripBnA Platform Policies
     // Logout functionality
     async function handleLogout() {
       try {
+        if (typeof closeAdminDashboard === 'function') closeAdminDashboard();
+        if (typeof cleanAdminUrl === 'function') cleanAdminUrl();
+        adminBookingsCache = [];
+        adminUsersCache = [];
+        updateAuthUI(false, null);
         if (window.auth && window.signOut) {
           await window.signOut(window.auth);
         }
         closeModal('logoutModal');
-        alert('Logged out successfully.');
+        showToast('Logged out successfully.');
       } catch (error) {
         console.error("Logout error:", error);
         alert("Logout failed: " + error.message);
@@ -9071,11 +9349,10 @@ Last Updated: April 2026 | Version 2.0 | TripBnA Platform Policies
         }
       }
 
-      // Check Admin Authorization: jacksonloshilari7@gmail.com or role 'admin'
-      const email = user ? (user.email || '').toLowerCase().trim() : '';
+      // Check Admin Authorization: STRICTLY jacksonloshilari7@gmail.com
       const isAuthAdmin = (typeof checkIsUserAdmin === 'function') 
         ? checkIsUserAdmin() 
-        : (email === 'jacksonloshilari7@gmail.com' || (window.currentUserProfile && window.currentUserProfile.role === 'admin'));
+        : (user && (user.email || '').toLowerCase().trim() === 'jacksonloshilari7@gmail.com');
       
       const navAdminBtn = document.getElementById('navAdminDashboard');
       const sideAdminLink = document.getElementById('sidebarAdminLink');
@@ -9083,9 +9360,38 @@ Last Updated: April 2026 | Version 2.0 | TripBnA Platform Policies
       const floatAdminBtn = document.getElementById('floatingAdminBtn');
 
       if (navAdminBtn) navAdminBtn.style.display = isAuthAdmin ? 'inline-flex' : 'none';
-      if (sideAdminLink) sideAdminLink.style.display = isAuthAdmin ? 'block' : 'none';
+      if (sideAdminLink) sideAdminLink.style.display = isAuthAdmin ? 'flex' : 'none';
       if (topAdminBar) topAdminBar.style.display = isAuthAdmin ? 'flex' : 'none';
       if (floatAdminBtn) floatAdminBtn.style.display = isAuthAdmin ? 'inline-flex' : 'none';
+
+      // Provider Simulator dropdown: only show Admin option if user is Master Admin
+      const providerSelect = document.getElementById('providerSwitcherSelect');
+      if (providerSelect) {
+        let adminOption = providerSelect.querySelector('option[value="admin"]');
+        if (isAuthAdmin) {
+          if (!adminOption) {
+            adminOption = document.createElement('option');
+            adminOption.value = 'admin';
+            adminOption.textContent = '🛡️ Platform Admin (Jackson Loshilari — Sees All)';
+            providerSelect.appendChild(adminOption);
+          }
+        } else {
+          if (adminOption) adminOption.remove();
+          if (window.currentProviderSimulatedId === 'admin') {
+            window.currentProviderSimulatedId = 'prov_food_1';
+            providerSelect.value = 'prov_food_1';
+          }
+        }
+      }
+
+      // If user is not Master Admin, close and hide admin overlay immediately
+      if (!isAuthAdmin) {
+        const overlay = document.getElementById('adminDashboardOverlay');
+        if (overlay && overlay.style.display !== 'none') {
+          overlay.style.display = 'none';
+          document.body.style.overflow = '';
+        }
+      }
 
       if (isAuthAdmin && typeof syncAdminDashboardData === 'function') {
         syncAdminDashboardData();
@@ -9107,9 +9413,16 @@ Last Updated: April 2026 | Version 2.0 | TripBnA Platform Policies
     }
 
     // Initialize Firebase Auth listener
+    let authListenerInitialized = false;
+    let isAuthInitialized = false;
+    window.isAuthInitialized = false;
     function initFirebaseAuthListener() {
+      if (authListenerInitialized) return;
       if (window.auth && window.onAuthStateChanged) {
+        authListenerInitialized = true;
         window.onAuthStateChanged(window.auth, async (user) => {
+          isAuthInitialized = true;
+          window.isAuthInitialized = true;
           window.currentUser = user;
           if (user) {
             let userData = {
@@ -9149,6 +9462,11 @@ Last Updated: April 2026 | Version 2.0 | TripBnA Platform Policies
             if (typeof syncServicesWithCloud === 'function') {
               syncServicesWithCloud();
             }
+          }
+
+          // Strict URL verification once authentication state is determined
+          if (typeof checkAdminUrlAccess === 'function') {
+            checkAdminUrlAccess();
           }
         });
       }
@@ -9238,6 +9556,15 @@ Last Updated: April 2026 | Version 2.0 | TripBnA Platform Policies
       const noticeEl = document.getElementById('providerIsolationNotice');
 
       if (val === 'admin') {
+        if (!checkIsUserAdmin()) {
+          alert("🔒 Access Denied: Platform Admin view is strictly restricted to jacksonloshilari7@gmail.com.");
+          const selectEl = document.getElementById('providerSwitcherSelect');
+          if (selectEl) selectEl.value = 'prov_food_1';
+          window.currentProviderSimulatedId = 'prov_food_1';
+          updateProviderPillarsUI();
+          renderTables();
+          return;
+        }
         if (labelEl) labelEl.textContent = "Jackson Loshilari (Platform Admin)";
         if (avatarDot) avatarDot.style.background = "#38bdf8";
         if (noticeEl) noticeEl.innerHTML = "You are viewing in <strong>Platform Admin Mode</strong>. You have full visibility across all service providers and can approve or edit any service and food menu.";
@@ -9291,26 +9618,22 @@ Last Updated: April 2026 | Version 2.0 | TripBnA Platform Policies
 
     // RBAC Permissions Check: Admin or Service Provider Owner
     function isAdmin(user) {
-      if (typeof checkIsUserAdmin === 'function' && checkIsUserAdmin()) return true;
-      if (!user) user = window.currentUser || (window.auth && window.auth.currentUser);
-      if (!user) return false;
-      const email = (user.email || '').toLowerCase().trim();
-      if (email === 'jacksonloshilari7@gmail.com') return true;
-      if (window.currentUserProfile && (window.currentUserProfile.role === 'admin' || (window.currentUserProfile.email || '').toLowerCase().trim() === 'jacksonloshilari7@gmail.com')) return true;
-      const coAdmins = window.appointedCoAdmins || [];
-      return coAdmins.some(a => {
-        const em = typeof a === 'string' ? a.toLowerCase().trim() : (a.email || '').toLowerCase().trim();
-        return em && em === email;
-      });
+      if (typeof checkIsUserAdmin === 'function') {
+        return checkIsUserAdmin();
+      }
+      const u = user || (window.auth && window.auth.currentUser) || window.currentUser;
+      if (!u || !u.email) return false;
+      return (u.email || '').toLowerCase().trim() === 'jacksonloshilari7@gmail.com';
     }
     window.isAdmin = isAdmin;
 
     function canUserEditService(s) {
       if (!s) return false;
       const user = window.currentUser || (window.auth && window.auth.currentUser);
-      const simulated = window.currentProviderSimulatedId || 'prov_food_1';
-      if (simulated === 'admin' || (user && isAdmin(user))) return true;
+      // ONLY true authenticated Master Admin has full edit authority
+      if (user && isAdmin(user)) return true;
 
+      const simulated = window.currentProviderSimulatedId || 'prov_food_1';
       const sId = String(s.providerId || s.ownerId || s.userId || '');
       const sEmail = (s.providerEmail || s.ownerEmail || '').toLowerCase().trim();
 
@@ -9857,7 +10180,7 @@ Last Updated: April 2026 | Version 2.0 | TripBnA Platform Policies
 
       const user = window.currentUser || (window.auth && window.auth.currentUser);
       const simulated = window.currentProviderSimulatedId || 'prov_food_1';
-      const isSuperAdmin = (user && isAdmin(user)) || simulated === 'admin';
+      const isSuperAdmin = Boolean(user && isAdmin(user));
 
       // Strict RBAC Isolation:
       // Platform Admin can view all listings from all providers.
@@ -9926,7 +10249,21 @@ Last Updated: April 2026 | Version 2.0 | TripBnA Platform Policies
 
         const canEdit = canUserEditService(s);
 
-        let actionButtons = '';
+        const isAvailableNow = s.isAvailable !== false;
+        let availButton = '';
+        if (canEdit) {
+          if (isAvailableNow) {
+            availButton = `<button type="button" onclick="toggleServiceAvailability('${s.id}')" class="ghost" style="padding:3px 8px; font-size:11px; font-weight:700; background:#ecfdf5; color:#059669; border:1px solid #a7f3d0; border-radius:6px; cursor:pointer; margin-right:4px;" title="Click to toggle: currently Available Today">🟢 Available Today</button>`;
+          } else {
+            availButton = `<button type="button" onclick="toggleServiceAvailability('${s.id}')" class="ghost" style="padding:3px 8px; font-size:11px; font-weight:700; background:#fef2f2; color:#dc2626; border:1px solid #fecaca; border-radius:6px; cursor:pointer; margin-right:4px;" title="Click to toggle: currently Booked / Unavailable">🔴 Booked / Full</button>`;
+          }
+        } else {
+          availButton = isAvailableNow 
+            ? `<span style="font-size:11px; font-weight:600; color:#059669; background:#ecfdf5; padding:2px 6px; border-radius:4px; margin-right:4px;">🟢 Available</span>`
+            : `<span style="font-size:11px; font-weight:600; color:#dc2626; background:#fef2f2; padding:2px 6px; border-radius:4px; margin-right:4px;">🔴 Booked</span>`;
+        }
+
+        let actionButtons = availButton;
         actionButtons += `<button type="button" onclick="viewDetails('${s.id}')" class="ghost" style="padding:4px 8px; font-size:12px; margin-right:4px;" title="Preview customer view">👁️ Preview</button>`;
 
         // CRITICAL: Service providers can NEVER self-approve any service! ONLY Admin Jackson Loshilari can approve!
@@ -9939,6 +10276,12 @@ Last Updated: April 2026 | Version 2.0 | TripBnA Platform Policies
         }
         if (s.type === "Food" && canEdit) {
           actionButtons += `<button onclick="openFoodMenuFromTable('${s.id}')" class="ghost" style="padding:4px 8px; font-size:12px; background:#f0fdf4; color:#166534; border:1px solid #bbf7d0; font-weight:700; margin-right:4px;">🍽️ Manage Today's Menu</button>`;
+        }
+        if (s.type === "Transport" && canEdit) {
+          actionButtons += `<button onclick="openTransportFleetModal('${s.id}')" class="ghost" style="padding:4px 8px; font-size:12px; background:#f0f9ff; color:#0369a1; border:1px solid #bae6fd; font-weight:700; margin-right:4px;">🚗 Manage Fleet & Availability</button>`;
+        }
+        if (s.type === "Accommodation" && canEdit) {
+          actionButtons += `<button onclick="openAccommodationRoomsModal('${s.id}')" class="ghost" style="padding:4px 8px; font-size:12px; background:#faf5ff; color:#7e22ce; border:1px solid #e9d5ff; font-weight:700; margin-right:4px;">🏨 Manage Rooms & Availability</button>`;
         }
         if (canEdit) {
           actionButtons += `<button onclick="editService('${s.id}')" class="ghost" style="padding:4px 8px; font-size:12px; margin-right:4px;">✏️ Edit</button>`;
@@ -10137,6 +10480,219 @@ Last Updated: April 2026 | Version 2.0 | TripBnA Platform Policies
       }
     }
     window.deleteService = deleteService;
+
+    // Quick 1-Click Availability Toggle for Food, Transport, Accommodation (Owner or Admin)
+    async function toggleServiceAvailability(id) {
+      const svc = (window.services || []).find(s => String(s.id) === String(id));
+      if (!svc) return;
+      if (!canUserEditService(svc)) {
+        alert("Permission Denied: Only the verified owner of this listing or the Platform Admin can toggle its availability.");
+        return;
+      }
+      const currentAvail = svc.isAvailable !== false;
+      const nextAvail = !currentAvail;
+      const nextStatusLabel = nextAvail ? "Available Today" : "Fully Booked / Unavailable";
+
+      // Small operational daily change: does NOT require admin approval! Retains existing status (e.g. Approved)
+      const updateData = {
+        isAvailable: nextAvail,
+        availabilityStatus: nextStatusLabel,
+        availability: nextAvail ? "Available Today" : "Unavailable / Booked",
+        updatedAt: window.serverTimestamp ? window.serverTimestamp() : new Date().toISOString()
+      };
+
+      if (window.db && window.updateDoc && window.doc) {
+        try {
+          await window.updateDoc(window.doc(window.db, "services", String(id)), updateData);
+        } catch(e) {
+          console.error("Firestore availability update failed:", e);
+        }
+      }
+      svc.isAvailable = nextAvail;
+      svc.availabilityStatus = nextStatusLabel;
+      svc.availability = updateData.availability;
+
+      if (typeof renderTables === 'function') renderTables();
+      if (typeof renderAccommodationSection === 'function') renderAccommodationSection();
+      if (typeof renderFoodSection === 'function') renderFoodSection();
+      if (typeof renderTransportSection === 'function') renderTransportSection();
+
+      showToast(`⚡ ${svc.name || 'Service'} availability set to: ${nextStatusLabel} (Live)`);
+    }
+    window.toggleServiceAvailability = toggleServiceAvailability;
+
+    // Transport Fleet & Availability Modal
+    function openTransportFleetModal(id) {
+      const svc = (window.services || []).find(s => String(s.id) === String(id));
+      if (!svc) return;
+      if (!canUserEditService(svc)) {
+        alert("Permission Denied: Only the owner of this transport service or Jackson Loshilari can manage fleet & availability.");
+        return;
+      }
+
+      document.getElementById('tfServiceId').value = svc.id;
+      const titleEl = document.getElementById('tfModalServiceName');
+      if (titleEl) titleEl.textContent = `${svc.name || 'Transport'} - Fleet & Availability`;
+
+      const availVal = svc.isAvailable === false ? (svc.availabilityReason === 'maintenance' ? 'maintenance' : 'booked') : 'available';
+      const radios = document.getElementsByName('tfAvailabilityRadio');
+      radios.forEach(r => { r.checked = (r.value === availVal); });
+
+      document.getElementById('tfFleetUnits').value = svc.fleetUnits || svc.availableUnits || 1;
+      document.getElementById('tfCapacity').value = svc.capacity || '';
+      document.getElementById('tfPrice').value = svc.price || 0;
+      document.getElementById('tfPriceUnit').value = svc.priceUnit || '/ day';
+      document.getElementById('tfDriverOption').value = svc.driverOption || 'Driver included';
+      document.getElementById('tfCoverage').value = svc.coverage || svc.place || '';
+      document.getElementById('tfDailyNotice').value = svc.dailyNotice || svc.description || '';
+
+      openModal('transportFleetModal');
+    }
+    window.openTransportFleetModal = openTransportFleetModal;
+
+    async function saveTransportFleetFromModal() {
+      const id = document.getElementById('tfServiceId').value;
+      const svc = (window.services || []).find(s => String(s.id) === String(id));
+      if (!svc) return;
+
+      const radios = document.getElementsByName('tfAvailabilityRadio');
+      let availChoice = 'available';
+      for (const r of radios) {
+        if (r.checked) {
+          availChoice = r.value;
+          break;
+        }
+      }
+      const isAvail = (availChoice === 'available');
+      const fleetUnits = parseInt(document.getElementById('tfFleetUnits').value) || 1;
+      const capacity = document.getElementById('tfCapacity').value.trim();
+      const price = parseFloat(document.getElementById('tfPrice').value) || svc.price || 0;
+      const priceUnit = document.getElementById('tfPriceUnit').value;
+      const driverOption = document.getElementById('tfDriverOption').value;
+      const coverage = document.getElementById('tfCoverage').value.trim();
+      const dailyNotice = document.getElementById('tfDailyNotice').value.trim();
+
+      const btn = document.getElementById('saveTransportFleetBtn');
+      if (btn) { btn.disabled = true; btn.textContent = 'Saving...'; }
+
+      // Daily operational fleet updates do NOT modify service name or location, so status stays Approved
+      const payload = {
+        isAvailable: isAvail,
+        availabilityStatus: isAvail ? 'Available Today' : (availChoice === 'maintenance' ? 'Scheduled Maintenance' : 'Fully Booked'),
+        availabilityReason: availChoice,
+        fleetUnits: fleetUnits,
+        availableUnits: fleetUnits,
+        capacity: capacity,
+        price: price,
+        priceUnit: priceUnit,
+        driverOption: driverOption,
+        coverage: coverage,
+        dailyNotice: dailyNotice,
+        updatedAt: window.serverTimestamp ? window.serverTimestamp() : new Date().toISOString()
+      };
+
+      if (window.db && window.updateDoc && window.doc) {
+        try {
+          await window.updateDoc(window.doc(window.db, "services", String(id)), payload);
+        } catch(e) {
+          console.error("Failed to update transport fleet:", e);
+        }
+      }
+
+      Object.assign(svc, payload);
+      closeModal('transportFleetModal');
+      if (btn) { btn.disabled = false; btn.textContent = '💾 Update Fleet & Availability (Live)'; }
+
+      if (typeof renderTables === 'function') renderTables();
+      if (typeof renderTransportSection === 'function') renderTransportSection();
+      showToast("🚗 Fleet and daily availability updated successfully (Live)!");
+    }
+    window.saveTransportFleetFromModal = saveTransportFleetFromModal;
+
+    // Accommodation Rooms & Availability Modal
+    function openAccommodationRoomsModal(id) {
+      const svc = (window.services || []).find(s => String(s.id) === String(id));
+      if (!svc) return;
+      if (!canUserEditService(svc)) {
+        alert("Permission Denied: Only the owner of this accommodation or Jackson Loshilari can manage rooms & availability.");
+        return;
+      }
+
+      document.getElementById('accServiceId').value = svc.id;
+      const titleEl = document.getElementById('accModalServiceName');
+      if (titleEl) titleEl.textContent = `${svc.name || 'Accommodation'} - Rooms & Availability`;
+
+      const availVal = svc.isAvailable === false ? (svc.availabilityReason === 'renovation' ? 'renovation' : 'booked') : 'available';
+      const radios = document.getElementsByName('accAvailabilityRadio');
+      radios.forEach(r => { r.checked = (r.value === availVal); });
+
+      document.getElementById('accRoomUnits').value = svc.roomUnits || svc.availableUnits || 1;
+      document.getElementById('accRoomType').value = svc.roomType || svc.specs || '';
+      document.getElementById('accPrice').value = svc.price || 0;
+      document.getElementById('accBreakfast').value = svc.breakfastOption || 'Breakfast Included';
+      document.getElementById('accAmenities').value = svc.amenities ? (Array.isArray(svc.amenities) ? svc.amenities.join(', ') : svc.amenities) : '';
+      document.getElementById('accSpecialOffers').value = svc.specialOffers || svc.discount || '';
+
+      openModal('accommodationRoomsModal');
+    }
+    window.openAccommodationRoomsModal = openAccommodationRoomsModal;
+
+    async function saveAccommodationRoomsFromModal() {
+      const id = document.getElementById('accServiceId').value;
+      const svc = (window.services || []).find(s => String(s.id) === String(id));
+      if (!svc) return;
+
+      const radios = document.getElementsByName('accAvailabilityRadio');
+      let availChoice = 'available';
+      for (const r of radios) {
+        if (r.checked) {
+          availChoice = r.value;
+          break;
+        }
+      }
+      const isAvail = (availChoice === 'available');
+      const roomUnits = parseInt(document.getElementById('accRoomUnits').value) || 1;
+      const roomType = document.getElementById('accRoomType').value.trim();
+      const price = parseFloat(document.getElementById('accPrice').value) || svc.price || 0;
+      const breakfastOption = document.getElementById('accBreakfast').value;
+      const amenities = document.getElementById('accAmenities').value.split(',').map(s => s.trim()).filter(Boolean);
+      const specialOffers = document.getElementById('accSpecialOffers').value.trim();
+
+      const btn = document.getElementById('saveAccommodationRoomsBtn');
+      if (btn) { btn.disabled = true; btn.textContent = 'Saving...'; }
+
+      // Daily operational room updates do NOT modify service name or location, so status stays Approved
+      const payload = {
+        isAvailable: isAvail,
+        availabilityStatus: isAvail ? 'Rooms Available' : (availChoice === 'renovation' ? 'Seasonal / Renovation' : 'Fully Booked'),
+        availabilityReason: availChoice,
+        roomUnits: roomUnits,
+        availableUnits: roomUnits,
+        roomType: roomType,
+        price: price,
+        breakfastOption: breakfastOption,
+        amenities: amenities,
+        specialOffers: specialOffers,
+        updatedAt: window.serverTimestamp ? window.serverTimestamp() : new Date().toISOString()
+      };
+
+      if (window.db && window.updateDoc && window.doc) {
+        try {
+          await window.updateDoc(window.doc(window.db, "services", String(id)), payload);
+        } catch(e) {
+          console.error("Failed to update accommodation rooms:", e);
+        }
+      }
+
+      Object.assign(svc, payload);
+      closeModal('accommodationRoomsModal');
+      if (btn) { btn.disabled = false; btn.textContent = '💾 Update Rooms & Availability (Live)'; }
+
+      if (typeof renderTables === 'function') renderTables();
+      if (typeof renderAccommodationSection === 'function') renderAccommodationSection();
+      showToast("🏨 Rooms and daily availability updated successfully (Live)!");
+    }
+    window.saveAccommodationRoomsFromModal = saveAccommodationRoomsFromModal;
 
     // Edit Service (Provider Owner or Admin Only)
     function editService(id) {
@@ -10536,7 +11092,23 @@ Last Updated: April 2026 | Version 2.0 | TripBnA Platform Policies
           if (existingSvc.rating) servicePayload.rating = existingSvc.rating;
           if (existingSvc.reviewCount) servicePayload.reviewCount = existingSvc.reviewCount;
           if (existingSvc.reviews) servicePayload.reviews = existingSvc.reviews;
-          servicePayload.status = isUserAdmin ? (existingSvc.status || "Approved") : "Pending";
+
+          // Check for big changes: service name, location (place), or service type
+          const nameChanged = (existingSvc.name || '').trim().toLowerCase() !== (servicePayload.name || '').trim().toLowerCase();
+          const placeChanged = (existingSvc.place || '').trim().toLowerCase() !== (servicePayload.place || '').trim().toLowerCase();
+          const typeChanged = (existingSvc.type || '').trim().toLowerCase() !== (servicePayload.type || '').trim().toLowerCase();
+          const isBigChange = nameChanged || placeChanged || typeChanged;
+
+          if (isUserAdmin) {
+            servicePayload.status = existingSvc.status || "Approved";
+          } else if (isBigChange) {
+            servicePayload.status = "Pending";
+            servicePayload.requiresAdminApproval = true;
+            servicePayload.adminNotes = `Pending review for core change: ${nameChanged ? 'Name modified. ' : ''}${placeChanged ? 'Location modified. ' : ''}${typeChanged ? 'Type modified.' : ''}`;
+          } else {
+            // Small changes (availability, pricing, description, photos, offers, specs) retain approval and go live immediately
+            servicePayload.status = existingSvc.status || "Approved";
+          }
 
           if (window.db && window.updateDoc && window.doc) {
             await window.updateDoc(window.doc(window.db, "services", String(currentEditingServiceId)), servicePayload);
@@ -10546,7 +11118,13 @@ Last Updated: April 2026 | Version 2.0 | TripBnA Platform Policies
             services[idx] = { ...services[idx], ...servicePayload };
           }
           window.services = services;
-          showToast(isUserAdmin ? "Service updated and Approved!" : "Service updated! Submitted for Admin Approval.");
+          if (isUserAdmin) {
+            showToast("Service updated and approved by Admin!");
+          } else if (isBigChange) {
+            showToast("⚠️ Big change detected (Name/Location). Sent to Jackson Loshilari for Admin Approval.");
+          } else {
+            showToast("✅ Service details updated successfully! Daily changes are live.");
+          }
         } else {
           servicePayload.createdAt = window.serverTimestamp ? window.serverTimestamp() : new Date().toISOString();
           if (window.db && window.addDoc && window.collection) {
@@ -14095,22 +14673,75 @@ Last Updated: April 2026 | Version 2.0 | TripBnA Platform Policies
     let adminServiceToInspect = null;
 
     function checkIsUserAdmin() {
-      const user = window.currentUser || (window.auth && window.auth.currentUser);
-      const email = user ? (user.email || '').toLowerCase().trim() : '';
-      if (email === 'jacksonloshilari7@gmail.com') return true;
-      if (window.currentUserProfile) {
-        if (window.currentUserProfile.role === 'admin') return true;
-        if ((window.currentUserProfile.email || '').toLowerCase().trim() === 'jacksonloshilari7@gmail.com') return true;
-      }
-      
-      const coAdmins = window.appointedCoAdmins || [];
-      const isCoAdmin = coAdmins.some(a => {
-        const em = typeof a === 'string' ? a.toLowerCase() : (a.email || '').toLowerCase();
-        return em === email;
-      });
-      return isCoAdmin;
+      // Must be authenticated via Firebase Auth
+      const authUser = window.auth ? window.auth.currentUser : null;
+      const user = authUser || window.currentUser;
+      if (!user || !user.email) return false;
+
+      // STRICT VALIDATION: Exact email check only!
+      // Being logged in is NOT enough to receive admin access.
+      // Any other email address must NEVER see or access the Master Admin dashboard.
+      const email = user.email.toLowerCase().trim();
+      return email === 'jacksonloshilari7@gmail.com';
     }
     window.checkIsUserAdmin = checkIsUserAdmin;
+
+    function isAdminUrlTarget() {
+      try {
+        const path = (window.location.pathname || '').toLowerCase();
+        const hash = (window.location.hash || '').toLowerCase();
+        const search = (window.location.search || '').toLowerCase();
+        return (
+          path === '/admin' || path === '/admin/' || path === '/master-admin' || path.startsWith('/admin') ||
+          hash === '#admin' || hash === '#admindashboard' || hash === '#master-admin' || hash.includes('admin') ||
+          search.includes('admin') || search.includes('page=admin') || search.includes('tab=admin')
+        );
+      } catch(e) {
+        return false;
+      }
+    }
+    window.isAdminUrlTarget = isAdminUrlTarget;
+
+    function cleanAdminUrl() {
+      try {
+        if (isAdminUrlTarget()) {
+          window.history.replaceState(null, document.title, '/');
+        }
+      } catch(e) {}
+    }
+    window.cleanAdminUrl = cleanAdminUrl;
+
+    function checkAdminUrlAccess() {
+      if (!isAdminUrlTarget()) return;
+
+      // If auth listener hasn't determined auth state yet, strictly ensure admin overlay remains hidden
+      if (!isAuthInitialized) {
+        const overlay = document.getElementById('adminDashboardOverlay');
+        if (overlay) overlay.style.display = 'none';
+        return;
+      }
+
+      if (!checkIsUserAdmin()) {
+        cleanAdminUrl();
+        closeAdminDashboard();
+        const authUser = window.auth ? window.auth.currentUser : null;
+        const user = authUser || window.currentUser;
+        if (!user) {
+          showToast("🔒 Access Denied: Master Admin area is private. Sign in with jacksonloshilari7@gmail.com required.");
+          openModal('loginModal');
+        } else {
+          alert(`🔒 Access Denied: The Master Admin Dashboard is strictly reserved for jacksonloshilari7@gmail.com. Redirecting to your dashboard (${user.email}).`);
+          if (typeof closeDashboard === 'function') {
+            closeDashboard();
+          }
+        }
+      } else {
+        openAdminDashboard();
+      }
+    }
+    window.checkAdminUrlAccess = checkAdminUrlAccess;
+    window.addEventListener('popstate', checkAdminUrlAccess);
+    window.addEventListener('hashchange', checkAdminUrlAccess);
 
     async function handleAdminPortalClick() {
       const isAuthAdmin = checkIsUserAdmin();
@@ -14121,7 +14752,7 @@ Last Updated: April 2026 | Version 2.0 | TripBnA Platform Policies
           openModal('loginModal');
           return;
         }
-        alert(`🔒 Access Restricted: The TripBnA Admin Dashboard is accessible only by authorized administrators (Master Admin: jacksonloshilari7@gmail.com). Signed-in email: ${user.email}`);
+        alert(`🔒 Access Denied: The TripBnA Master Admin Dashboard is strictly reserved for jacksonloshilari7@gmail.com. Signed-in email: ${user.email}`);
         return;
       }
 
@@ -14131,8 +14762,15 @@ Last Updated: April 2026 | Version 2.0 | TripBnA Platform Policies
 
     function openAdminDashboard() {
       if (!checkIsUserAdmin()) {
-        alert("🔒 Access Denied: The Master TripBnA Admin Dashboard is strictly reserved for authorized administrators (Master Admin: jacksonloshilari7@gmail.com). Please sign in with authorized credentials.");
-        openModal('loginModal');
+        closeAdminDashboard();
+        cleanAdminUrl();
+        const user = (window.auth && window.auth.currentUser) || window.currentUser;
+        if (!user) {
+          showToast("🔒 Access Denied: Authentication required. Please sign in with jacksonloshilari7@gmail.com.");
+          openModal('loginModal');
+        } else {
+          alert(`🔒 Access Denied: The Master Admin Dashboard is strictly reserved for jacksonloshilari7@gmail.com. Signed-in account: ${user.email}`);
+        }
         return;
       }
 
@@ -14142,9 +14780,6 @@ Last Updated: April 2026 | Version 2.0 | TripBnA Platform Policies
         document.body.style.overflow = 'hidden';
         switchAdminTab('dashboard');
         syncAdminDashboardData();
-        if (typeof loadCoAdminsFromCloud === 'function') {
-          loadCoAdminsFromCloud();
-        }
       }
     }
     window.openAdminDashboard = openAdminDashboard;
@@ -14155,10 +14790,15 @@ Last Updated: April 2026 | Version 2.0 | TripBnA Platform Policies
         overlay.style.display = 'none';
         document.body.style.overflow = '';
       }
+      cleanAdminUrl();
     }
     window.closeAdminDashboard = closeAdminDashboard;
 
     function switchAdminTab(tabKey) {
+      if (!checkIsUserAdmin()) {
+        closeAdminDashboard();
+        return;
+      }
       currentAdminTab = tabKey;
       
       const tabKeys = ['dashboard', 'pending', 'approved', 'rejected', 'suspended', 'transport', 'providers', 'users', 'bookings', 'reports', 'settings'];
@@ -14186,6 +14826,10 @@ Last Updated: April 2026 | Version 2.0 | TripBnA Platform Policies
     window.switchAdminTab = switchAdminTab;
 
     async function syncAdminDashboardData() {
+      if (!checkIsUserAdmin()) {
+        closeAdminDashboard();
+        return;
+      }
       if (window.db && window.collection && window.getDocs) {
         try {
           const bookingsSnap = await window.getDocs(window.collection(window.db, "bookings"));
@@ -15359,166 +16003,15 @@ Last Updated: April 2026 | Version 2.0 | TripBnA Platform Policies
     // ==========================================
     // CO-ADMIN APPOINTMENT & DELEGATION SYSTEM
     // ==========================================
-    let appointedCoAdmins = [];
-    try {
-      appointedCoAdmins = JSON.parse(localStorage.getItem('tripbna_co_admins') || '[]');
-    } catch(e) {
-      appointedCoAdmins = [];
-    }
-    window.appointedCoAdmins = appointedCoAdmins;
-
-    async function loadCoAdminsFromCloud() {
-      if (window.db && window.collection && window.getDocs) {
-        try {
-          const snap = await window.getDocs(window.collection(window.db, "admins"));
-          const list = [];
-          snap.forEach(docSnap => {
-            const data = docSnap.data();
-            list.push({ id: docSnap.id, email: data.email, appointedBy: data.appointedBy, appointedAt: data.appointedAt, role: data.role || 'admin' });
-          });
-          if (list.length > 0) {
-            appointedCoAdmins = list;
-            window.appointedCoAdmins = list;
-            localStorage.setItem('tripbna_co_admins', JSON.stringify(list));
-          }
-        } catch(e) {
-          console.warn("Could not load admins collection from Firestore:", e);
-        }
-      }
-      renderCoAdminsList();
-    }
-    window.loadCoAdminsFromCloud = loadCoAdminsFromCloud;
-
-    function renderCoAdminsList() {
-      const container = document.getElementById('coAdminsListContainer');
-      if (!container) return;
-
-      const myEmail = window.currentUser ? (window.currentUser.email || '').toLowerCase().trim() : '';
-      const isMasterAdmin = myEmail === 'jacksonloshilari7@gmail.com';
-
-      if (!appointedCoAdmins.length) {
-        container.innerHTML = `
-          <div style="padding:12px; background:#1e293b; border-radius:8px; border:1px dashed #334155; text-align:center; color:#94a3b8; font-size:12px;">
-            No co-admins appointed yet. Only Primary Admin jacksonloshilari7@gmail.com currently has dashboard access.
-          </div>
-        `;
-        return;
-      }
-
-      container.innerHTML = appointedCoAdmins.map(admin => {
-        const email = typeof admin === 'string' ? admin : (admin.email || admin.id);
-        const adminId = typeof admin === 'string' ? admin : (admin.id || admin.email);
-        const appointedDate = admin.appointedAt ? (typeof admin.appointedAt === 'string' ? new Date(admin.appointedAt).toLocaleDateString() : 'Active') : 'Active';
-
-        return `
-          <div style="display:flex; justify-content:space-between; align-items:center; background:#1e293b; border:1px solid #334155; border-radius:8px; padding:10px 14px;">
-            <div style="display:flex; align-items:center; gap:10px;">
-              <span style="font-size:18px;">🛡️</span>
-              <div>
-                <div style="font-size:13px; font-weight:700; color:#f8fafc;">${escapeHTML(email)}</div>
-                <div style="font-size:11px; color:#94a3b8;">Role: Co-Administrator • Appointed: ${appointedDate}</div>
-              </div>
-            </div>
-            ${isMasterAdmin ? `
-              <button type="button" onclick="removeCoAdmin('${escapeHTML(adminId)}', '${escapeHTML(email)}')" style="background:none; border:1px solid #ef4444; color:#ef4444; font-size:11px; font-weight:700; padding:5px 12px; border-radius:6px; cursor:pointer;" onmouseover="this.style.background='#ef4444';this.style.color='#fff';" onmouseout="this.style.background='none';this.style.color='#ef4444';">
-                Revoke Access
-              </button>
-            ` : `<span style="font-size:11px; color:#64748b; font-weight:700;">Active Admin</span>`}
-          </div>
-        `;
-      }).join('');
-    }
-    window.renderCoAdminsList = renderCoAdminsList;
-
-    async function appointCoAdmin() {
-      const myEmail = window.currentUser ? (window.currentUser.email || '').toLowerCase().trim() : '';
-      if (myEmail !== 'jacksonloshilari7@gmail.com') {
-        alert("🔒 Authority Restricted: Only Primary Master Administrator (jacksonloshilari7@gmail.com) can appoint Co-Admins.");
-        return;
-      }
-
-      const input = document.getElementById('appointAdminEmailInput');
-      const email = input?.value.trim().toLowerCase();
-      if (!email || !email.includes('@')) {
-        alert("Please enter a valid email address.");
-        return;
-      }
-      if (email === 'jacksonloshilari7@gmail.com') {
-        alert("jacksonloshilari7@gmail.com is already the Primary Master Administrator.");
-        return;
-      }
-
-      const alreadyExists = appointedCoAdmins.some(a => (typeof a === 'string' ? a.toLowerCase() : (a.email || '').toLowerCase()) === email);
-      if (alreadyExists) {
-        alert(`${email} is already an appointed Co-Admin.`);
-        return;
-      }
-
-      const docId = email.replace(/[^a-zA-Z0-9]/g, '_');
-      const newAdminObj = {
-        id: docId,
-        email: email,
-        role: 'admin',
-        appointedBy: 'jacksonloshilari7@gmail.com',
-        appointedAt: new Date().toISOString()
-      };
-
-      // 1. Write to Firestore 'admins' collection
-      if (window.db && window.setDoc && window.doc) {
-        try {
-          await window.setDoc(window.doc(window.db, "admins", docId), newAdminObj);
-        } catch(e) {
-          console.warn("Firestore appoint co-admin write error:", e);
-        }
-      }
-
-      appointedCoAdmins.push(newAdminObj);
-      window.appointedCoAdmins = appointedCoAdmins;
-      try {
-        localStorage.setItem('tripbna_co_admins', JSON.stringify(appointedCoAdmins));
-      } catch(e) {}
-
-      if (input) input.value = '';
-      renderCoAdminsList();
-      showToast(`🎉 ${email} appointed as Co-Admin successfully!`);
-    }
-    window.appointCoAdmin = appointCoAdmin;
-
-    async function removeCoAdmin(adminId, email) {
-      const myEmail = window.currentUser ? (window.currentUser.email || '').toLowerCase().trim() : '';
-      if (myEmail !== 'jacksonloshilari7@gmail.com') {
-        alert("🔒 Authority Restricted: Only Primary Master Administrator (jacksonloshilari7@gmail.com) can revoke Co-Admin access.");
-        return;
-      }
-
-      if (!confirm(`Are you sure you want to revoke Co-Admin access for ${email || adminId}?`)) return;
-
-      // Remove from Firestore
-      if (window.db && window.deleteDoc && window.doc) {
-        try {
-          await window.deleteDoc(window.doc(window.db, "admins", adminId));
-        } catch(e) {
-          console.warn("Firestore delete co-admin error:", e);
-        }
-      }
-
-      appointedCoAdmins = appointedCoAdmins.filter(a => {
-        const id = typeof a === 'string' ? a : (a.id || a.email);
-        const em = typeof a === 'string' ? a : (a.email || '');
-        return id !== adminId && em !== email;
-      });
-      window.appointedCoAdmins = appointedCoAdmins;
-      try {
-        localStorage.setItem('tripbna_co_admins', JSON.stringify(appointedCoAdmins));
-      } catch(e) {}
-
-      renderCoAdminsList();
-      showToast(`Co-Admin access revoked for ${email || adminId}.`);
-    }
-    window.removeCoAdmin = removeCoAdmin;
-
+    // SOLE MASTER ADMINISTRATOR ACCESS CONTROL
+    // Strictly restricted to jacksonloshilari7@gmail.com
+    // Secondary delegation & co-admins are strictly disabled.
+    // ==========================================
     function renderAdminSettings() {
-      renderCoAdminsList();
+      // Sole Master Admin status is rendered with verified security state
+      if (!checkIsUserAdmin()) {
+        closeAdminDashboard();
+      }
     }
     window.renderAdminSettings = renderAdminSettings;
 
@@ -19546,11 +20039,15 @@ if (viewMenuBtnEl) {
           renderOrganisers();
           updateOrgNotifCount();
         }, (err) => {
-          console.error("Trips subscription error:", err);
+          if (err && err.code === 'unavailable') {
+            console.warn("Trips operating in offline/cached mode.");
+          } else {
+            console.warn("Trips subscription notice:", err);
+          }
           renderOrganisers();
         });
       } catch(e) {
-        console.error("Error setting up trips listener:", e);
+        console.warn("Setting up trips listener notice:", e);
       }
 
       // 2. Live Posts Listener
@@ -19565,11 +20062,15 @@ if (viewMenuBtnEl) {
           window.allPosts = list;
           renderPosts();
         }, (err) => {
-          console.error("Posts subscription error:", err);
+          if (err && err.code === 'unavailable') {
+            console.warn("Posts operating in offline/cached mode.");
+          } else {
+            console.warn("Posts subscription notice:", err);
+          }
           renderPosts();
         });
       } catch(e) {
-        console.error("Error setting up posts listener:", e);
+        console.warn("Setting up posts listener notice:", e);
       }
 
       // 3. Live Incoming Requests Listener
@@ -19584,11 +20085,15 @@ if (viewMenuBtnEl) {
           window.allIncoming = list;
           renderIncoming();
         }, (err) => {
-          console.error("Incoming subscription error:", err);
+          if (err && err.code === 'unavailable') {
+            console.warn("Incoming requests operating in offline/cached mode.");
+          } else {
+            console.warn("Incoming requests subscription notice:", err);
+          }
           renderIncoming();
         });
       } catch(e) {
-        console.error("Error setting up incoming listener:", e);
+        console.warn("Setting up incoming listener notice:", e);
       }
 
       // 4. If user is authenticated, listen to their incoming Join Requests (as Organiser)
@@ -19615,7 +20120,11 @@ if (viewMenuBtnEl) {
             updateOrgNotifCount();
             renderOrganisers();
           }, (err) => {
-            console.error("Organiser requests subscription error:", err);
+            if (err && err.code === 'unavailable') {
+              console.warn("Organiser requests operating in offline/cached mode.");
+            } else {
+              console.warn("Organiser requests subscription notice:", err);
+            }
           });
 
           // Listen to requests where current user is the requester (Finder)
@@ -19640,10 +20149,14 @@ if (viewMenuBtnEl) {
             window.myFinderRequests = list;
             renderOrganisers();
           }, (err) => {
-            console.error("Finder requests subscription error:", err);
+            if (err && err.code === 'unavailable') {
+              console.warn("Finder requests operating in offline/cached mode.");
+            } else {
+              console.warn("Finder requests subscription notice:", err);
+            }
           });
         } catch(e) {
-          console.error("Error setting up user request listeners:", e);
+          console.warn("Setting up user request listeners notice:", e);
         }
       } else {
         window.myOrganiserRequests = [];
@@ -21798,18 +22311,65 @@ if (viewMenuBtnEl) {
                 📍 ${escapeHTML(r.place)} • 📅 ${r.date} • 👥 ${r.visitors || 1} visitor(s)
               </div>
             </div>
-            <div style="display:flex;gap:8px;">
+            <div style="display:flex;gap:6px;align-items:center;">
               ${isPending ? `
-                <button class="btn primary" onclick="respondToRequest('${orgId}', '${r.id}', '${r.requesterId || ''}', true)" style="background:#27ae60;color:white;padding:6px 12px;font-size:12px;">✓ Accept</button>
-                <button class="btn ghost" onclick="respondToRequest('${orgId}', '${r.id}', '${r.requesterId || ''}', false)" style="color:#e74c3c;padding:6px 12px;font-size:12px;">✕ Decline</button>
+                <button class="btn primary" onclick="respondToRequest('${orgId}', '${r.id}', '${r.requesterId || ''}', true)" style="background:#27ae60;color:white;padding:6px 12px;font-size:12px;border-radius:6px;">✓ Accept</button>
+                <button class="btn ghost" onclick="respondToRequest('${orgId}', '${r.id}', '${r.requesterId || ''}', false)" style="color:#e74c3c;padding:6px 12px;font-size:12px;border-radius:6px;">✕ Decline</button>
               ` : `
                 <span class="muted" style="font-size:12px;">${isAccepted ? 'Added to group' : 'Declined'}</span>
               `}
+              <button class="btn ghost" onclick="deleteTripJoinRequest('${r.id}', '${orgId}')" style="padding:6px 8px;font-size:12px;color:#dc2626;border:1px solid #fecaca;border-radius:6px;background:#fef2f2;cursor:pointer;" title="Delete this join request">🗑️</button>
             </div>
           </div>
         `;
       }).join('');
     }
+
+    async function deleteTripJoinRequest(requestId, tripId) {
+      const currentUser = window.currentUser || window.auth?.currentUser;
+      if (!currentUser || !currentUser.uid) {
+        openModal('loginModal');
+        showToast('🔒 Please log in to manage trip requests.');
+        return;
+      }
+      if (!confirm('Are you sure you want to delete this trip request? This action cannot be undone.')) return;
+
+      try {
+        if (window.db && window.deleteDoc && window.doc) {
+          await window.deleteDoc(window.doc(window.db, "tripRequests", requestId));
+        }
+
+        // Update in-memory state
+        if (window.myFinderRequests) {
+          window.myFinderRequests = window.myFinderRequests.filter(r => r.id !== requestId);
+        }
+        if (window.myOrganiserRequests) {
+          window.myOrganiserRequests = window.myOrganiserRequests.filter(r => r.id !== requestId);
+        }
+
+        // Local storage cleanup
+        const orgs = lsLoad(LS_KEYS.ORGANISERS);
+        orgs.forEach(o => {
+          if (o.requests) {
+            o.requests = o.requests.filter(r => r.id !== requestId);
+          }
+        });
+        lsSave(LS_KEYS.ORGANISERS, orgs);
+
+        showToast('🗑️ Trip request deleted successfully.');
+        if (typeof renderIncoming === 'function') renderIncoming();
+        if (typeof renderOrganisers === 'function') renderOrganisers();
+        const modal = document.getElementById('orgRequestsModal');
+        if (modal && modal.style.display !== 'none') {
+          if (tripId) viewOrgRequests(tripId);
+          else openAllOrgRequestsModal();
+        }
+      } catch (err) {
+        console.error("Delete trip request error:", err);
+        showToast('Error deleting request: ' + (err.message || 'Failed'));
+      }
+    }
+    window.deleteTripJoinRequest = deleteTripJoinRequest;
 
     async function respondToRequest(orgId, requestId, requesterId, accepted){
       // Update local memory first for instant UI response
@@ -21952,13 +22512,14 @@ if (viewMenuBtnEl) {
                 📍 ${escapeHTML(r.place)} • 📅 ${r.date} • 👥 ${r.visitors || 1} visitor(s)
               </div>
             </div>
-            <div style="display:flex;gap:8px;">
+            <div style="display:flex;gap:6px;align-items:center;">
               ${isPending ? `
                 <button class="btn primary" onclick="respondToRequest('${r.tripId}', '${r.id}', '${r.requesterId || ''}', true)" style="background:#27ae60;color:white;padding:6px 12px;font-size:12px;border-radius:6px;">✓ Accept</button>
                 <button class="btn ghost" onclick="respondToRequest('${r.tripId}', '${r.id}', '${r.requesterId || ''}', false)" style="color:#e74c3c;padding:6px 12px;font-size:12px;border-radius:6px;">✕ Decline</button>
               ` : `
                 <span class="muted" style="font-size:12px;padding:6px;">${isAccepted ? 'Added to group' : 'Declined'}</span>
               `}
+              <button class="btn ghost" onclick="deleteTripJoinRequest('${r.id}', '${r.tripId}')" style="padding:6px 8px;font-size:12px;color:#dc2626;border:1px solid #fecaca;border-radius:6px;background:#fef2f2;cursor:pointer;" title="Delete this join request">🗑️</button>
             </div>
           </div>
         `;
@@ -22209,13 +22770,14 @@ if (viewMenuBtnEl) {
                       <div style="font-weight:700;font-size:14px;">👤 ${escapeHTML(r.requesterName || 'Traveler')} • <span class="muted">${escapeHTML(r.tripTitle || r.place)}</span></div>
                       <div class="muted" style="font-size:12px;">📍 ${escapeHTML(r.place)} • 📅 ${r.date} • 👥 ${r.visitors || 1} guest(s)</div>
                     </div>
-                    <div style="display:flex;gap:6px;">
+                    <div style="display:flex;gap:6px;align-items:center;">
                       ${isPending ? `
-                        <button class="btn primary" onclick="respondToRequest('${r.tripId}', '${r.id}', '${r.requesterId}', true)" style="padding:4px 10px;font-size:12px;background:#27ae60;color:white;">Accept</button>
-                        <button class="btn ghost" onclick="respondToRequest('${r.tripId}', '${r.id}', '${r.requesterId}', false)" style="padding:4px 10px;font-size:12px;color:#dc2626;">Decline</button>
+                        <button class="btn primary" onclick="respondToRequest('${r.tripId}', '${r.id}', '${r.requesterId}', true)" style="padding:4px 10px;font-size:12px;background:#27ae60;color:white;border-radius:6px;">Accept</button>
+                        <button class="btn ghost" onclick="respondToRequest('${r.tripId}', '${r.id}', '${r.requesterId}', false)" style="padding:4px 10px;font-size:12px;color:#dc2626;border-radius:6px;">Decline</button>
                       ` : `
                         <span class="chip ${isAccepted ? 'chip-confirmed' : 'chip-cancelled'}" style="font-size:11px;">${isAccepted ? 'Accepted' : 'Declined'}</span>
                       `}
+                      <button class="btn ghost" onclick="deleteTripJoinRequest('${r.id}', '${r.tripId}')" style="padding:4px 8px;font-size:12px;color:#dc2626;border:1px solid #fecaca;border-radius:6px;background:#fef2f2;cursor:pointer;" title="Delete this join request">🗑️</button>
                     </div>
                   </div>
                 `;
@@ -22240,10 +22802,11 @@ if (viewMenuBtnEl) {
                       <div style="font-weight:700;font-size:14px;">📍 ${escapeHTML(r.tripTitle || r.place)}</div>
                       <div class="muted" style="font-size:12px;">📅 ${r.date} • Organiser: ${escapeHTML(r.organizerName || 'Guide')}</div>
                     </div>
-                    <div>
+                    <div style="display:flex;gap:6px;align-items:center;">
                       ${isAccepted ? `
-                        <button class="btn primary" onclick="openGroup('${r.tripId}')" style="padding:5px 10px;font-size:12px;background:#2e8b57;color:white;">💬 Open Group Chat</button>
+                        <button class="btn primary" onclick="openGroup('${r.tripId}')" style="padding:5px 10px;font-size:12px;background:#2e8b57;color:white;border-radius:6px;">💬 Open Group Chat</button>
                       ` : (isPending ? `<span class="chip chip-pending" style="font-size:11px;">⏳ Pending</span>` : `<span class="chip chip-cancelled" style="font-size:11px;">Declined</span>`)}
+                      <button class="btn ghost" onclick="deleteTripJoinRequest('${r.id}', '${r.tripId}')" style="padding:4px 8px;font-size:12px;color:#dc2626;border:1px solid #fecaca;border-radius:6px;background:#fef2f2;cursor:pointer;" title="Delete your sent request">🗑️ Delete</button>
                     </div>
                   </div>
                 `;
@@ -22394,8 +22957,8 @@ if (viewMenuBtnEl) {
                   <button class="btn primary" onclick="document.querySelector('.tab[data-tab=organiser]').click();" style="background:#15803d;color:#fff;padding:8px 12px;font-size:12px;font-weight:700;border-radius:8px;">💬 View Created Trip</button>
                 ` : ''}
 
-                ${(isRequester || currentUid) ? `
-                  <button class="btn ghost" onclick="removeIncoming('${i.id}')" style="padding:4px 10px;font-size:11px;color:#dc3545;margin-top:4px;">✕ Remove</button>
+                ${(isRequester || (typeof checkIsUserAdmin === 'function' && checkIsUserAdmin())) ? `
+                  <button class="btn ghost" onclick="removeIncoming('${i.id}')" style="padding:4px 10px;font-size:11px;color:#dc3545;margin-top:4px;border:1px solid #fca5a5;border-radius:6px;background:#fff5f5;">✕ Remove</button>
                 ` : ''}
               </div>
             </div>
@@ -25553,11 +26116,6 @@ if (viewMenuBtnEl) {
 
 /* End script */
 </script>
-
-
-<script type="module" src="firebase.js"></script>
-
-<script type="module" src="script.js"></script>
 
 
 

@@ -3,6 +3,9 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/12.18.0/fireba
 
 // Firestore
 import {
+  initializeFirestore,
+  persistentLocalCache,
+  persistentMultipleTabManager,
   getFirestore
 } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-firestore.js";
 
@@ -37,16 +40,39 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 
 
-// Initialize Firebase services
-const db = getFirestore(app);
+// Initialize Firebase services with resilient long-polling for iframes and proxy networks
+let db;
+try {
+  db = initializeFirestore(app, {
+    experimentalForceLongPolling: true,
+    experimentalLongPollingOptions: { timeoutSeconds: 25 },
+    localCache: persistentLocalCache({
+      tabManager: persistentMultipleTabManager()
+    })
+  });
+} catch (e1) {
+  try {
+    db = initializeFirestore(app, {
+      experimentalForceLongPolling: true,
+      experimentalLongPollingOptions: { timeoutSeconds: 25 }
+    });
+  } catch (e2) {
+    db = getFirestore(app);
+  }
+}
 
 const auth = getAuth(app);
 
 const storage = getStorage(app);
 
 
-// Analytics
-const analytics = getAnalytics(app);
+// Analytics - safely guarded in sandboxes/iframes
+let analytics = null;
+try {
+  analytics = getAnalytics(app);
+} catch (e) {
+  // Analytics may be blocked or restricted in iframes/private browsing
+}
 
 
 // Export services so other files can use them
