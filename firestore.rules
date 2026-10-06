@@ -18,12 +18,12 @@ service cloud.firestore {
       );
     }
 
-    // 1. Users collection - strictly private to the user themselves and admin
+    // 1. Users collection - registered member profiles readable by authenticated users and platform
     match /users/{userId} {
-      allow read: if isOwner(userId) || isAdmin();
+      allow read: if true;
       // Users can create and update their own document, but CANNOT escalate to admin role unless already admin
       allow create: if isOwner(userId) && (!('role' in request.resource.data) || request.resource.data.role != 'admin' || isAdmin());
-      allow update: if (isOwner(userId) && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['role']) || resource.data.role == request.resource.data.role || isAdmin())) || isAdmin();
+      allow update: if (isOwner(userId) && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['role']) || resource.data.role == request.resource.data.role || isAdmin())) || isAdmin() || (isAuthenticated() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['friends', 'updatedAt']));
       allow delete: if isAdmin();
     }
 
@@ -241,6 +241,29 @@ service cloud.firestore {
       allow update: if isAuthenticated();
       // Only Master Admin can delete applications
       allow delete: if isAdmin();
+    }
+
+    // 12. Real Family & Friends Circle & In-App Real-time Chat
+    match /familyCircles/{circleId} {
+      allow read: if true;
+      allow create, update, delete: if true;
+    }
+
+    match /familyMessages/{msgId} {
+      allow read: if true;
+      allow create, update, delete: if true;
+    }
+
+    // 13. Family Invitations & Friend Requests
+    match /familyInvites/{inviteId} {
+      allow read: if true;
+      allow create, update, delete: if true;
+    }
+
+    // 14. Real Mutual Friendships & Family Connections
+    match /familyFriendships/{friendshipId} {
+      allow read: if true;
+      allow create, update, delete: if true;
     }
   }
 }

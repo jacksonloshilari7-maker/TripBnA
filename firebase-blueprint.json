@@ -208,6 +208,55 @@
         "history": { "type": "array", "description": "Audit history trail of submissions and reviews" }
       },
       "required": ["providerId", "businessName", "email", "status"]
+    },
+    "familyCircles": {
+      "title": "FamilyCircle",
+      "description": "User's real family and travel friends circle group.",
+      "type": "object",
+      "properties": {
+        "circleId": { "type": "string" },
+        "ownerId": { "type": "string" },
+        "circleName": { "type": "string" },
+        "members": { "type": "array" },
+        "invites": { "type": "array" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["circleId", "ownerId"]
+    },
+    "familyMessages": {
+      "title": "FamilyMessage",
+      "description": "Real-time communication messages for family and friends circle.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "circleId": { "type": "string" },
+        "senderId": { "type": "string" },
+        "senderName": { "type": "string" },
+        "type": { "type": "string", "description": "text, image, video, file, voice" },
+        "text": { "type": "string" },
+        "mediaUrl": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "circleId", "senderId", "senderName"]
+    },
+    "familyInvites": {
+      "title": "FamilyInvite",
+      "description": "Invitation and mutual friendship requests sent to registered TripBnA members.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "senderId": { "type": "string" },
+        "senderName": { "type": "string" },
+        "senderEmail": { "type": "string" },
+        "senderPhone": { "type": "string" },
+        "receiverId": { "type": "string" },
+        "receiverName": { "type": "string" },
+        "receiverEmail": { "type": "string" },
+        "status": { "type": "string", "description": "pending, accepted, declined" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["senderId", "receiverId", "status"]
     }
   },
   "firestore": {
