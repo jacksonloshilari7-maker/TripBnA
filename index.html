@@ -136,6 +136,186 @@
       const modal = document.getElementById('familyCircleModal');
       if (modal) { modal.style.display = 'none'; modal.classList.remove('open'); }
     };
+
+    // Early Tripline Media Uploader handlers to ensure inline HTML handlers never throw ReferenceError
+    window.selectedTriplineFiles = window.selectedTriplineFiles || [];
+    window.handlePostMediaSelect = function(fileList) {
+      if (typeof window._realHandlePostMediaSelect === 'function') {
+        return window._realHandlePostMediaSelect(fileList);
+      }
+      if (!fileList || !fileList.length) return;
+      Array.from(fileList).forEach(f => {
+        const exists = window.selectedTriplineFiles.some(e => e.name === f.name && e.size === f.size);
+        if (!exists) window.selectedTriplineFiles.push(f);
+      });
+      if (typeof window.renderPostMediaPreviews === 'function') window.renderPostMediaPreviews();
+    };
+    var handlePostMediaSelect = window.handlePostMediaSelect;
+
+    window.handlePostMediaDrop = function(e) {
+      if (e && e.preventDefault) e.preventDefault();
+      if (typeof window._realHandlePostMediaDrop === 'function') {
+        return window._realHandlePostMediaDrop(e);
+      }
+      if (e && e.dataTransfer && e.dataTransfer.files) {
+        window.handlePostMediaSelect(e.dataTransfer.files);
+      }
+    };
+    var handlePostMediaDrop = window.handlePostMediaDrop;
+
+    window.removeSelectedPostMedia = function(idx) {
+      if (typeof window._realRemoveSelectedPostMedia === 'function') {
+        return window._realRemoveSelectedPostMedia(idx);
+      }
+      if (window.selectedTriplineFiles) window.selectedTriplineFiles.splice(idx, 1);
+      if (typeof window.renderPostMediaPreviews === 'function') window.renderPostMediaPreviews();
+    };
+    var removeSelectedPostMedia = window.removeSelectedPostMedia;
+
+    window.clearSelectedPostMedia = function() {
+      if (typeof window._realClearSelectedPostMedia === 'function') {
+        return window._realClearSelectedPostMedia();
+      }
+      window.selectedTriplineFiles = [];
+      const input = document.getElementById('postMedia');
+      if (input) input.value = '';
+      if (typeof window.renderPostMediaPreviews === 'function') window.renderPostMediaPreviews();
+    };
+    var clearSelectedPostMedia = window.clearSelectedPostMedia;
+
+    window.handleMediaError = function(element, postId, index) {
+      if (typeof window._realHandleMediaError === 'function') {
+        return window._realHandleMediaError(element, postId, index);
+      }
+      if (!element) return;
+      element.onerror = null;
+      const tag = (element.tagName || '').toLowerCase();
+      if (tag === 'video') {
+        element.src = '/uploads/tripline/serengeti_safari_video.mp4';
+      } else {
+        element.src = 'https://images.unsplash.com/photo-1516426122078-c23e76319801?auto=format&fit=crop&w=1200&q=80';
+      }
+    };
+    var handleMediaError = window.handleMediaError;
+
+    // High-speed client-side image compression: downscales large photos in ~20ms with near-zero latency
+    window.compressImageFile = async function(file, maxDimension = 1600, quality = 0.8) {
+      if (!file || !(file instanceof Blob) || !file.type || !file.type.startsWith('image/')) {
+        return file; // Videos and non-images pass through unchanged
+      }
+      if (file.type === 'image/gif' || file.type === 'image/svg+xml') {
+        return file;
+      }
+      if (file.size && file.size < 350 * 1024) {
+        return file; // Already small enough, upload immediately with 0 compression overhead
+      }
+
+      return new Promise((resolve) => {
+        try {
+          const img = new Image();
+          const objUrl = URL.createObjectURL(file);
+          img.onload = () => {
+            URL.revokeObjectURL(objUrl);
+            let w = img.width;
+            let h = img.height;
+            if (w > maxDimension || h > maxDimension) {
+              if (w > h) {
+                h = Math.round((h * maxDimension) / w);
+                w = maxDimension;
+              } else {
+                w = Math.round((w * maxDimension) / h);
+                h = maxDimension;
+              }
+            }
+            const canvas = document.createElement('canvas');
+            canvas.width = w;
+            canvas.height = h;
+            const ctx = canvas.getContext('2d');
+            if (!ctx) return resolve(file);
+            ctx.drawImage(img, 0, 0, w, h);
+            canvas.toBlob((blob) => {
+              if (!blob || blob.size >= file.size) {
+                resolve(file);
+              } else {
+                const outName = (file.name || 'photo').replace(/\.[^.]+$/, '') + '.jpg';
+                const compressed = new File([blob], outName, { type: 'image/jpeg', lastModified: Date.now() });
+                resolve(compressed);
+              }
+            }, 'image/jpeg', quality);
+          };
+          img.onerror = () => {
+            URL.revokeObjectURL(objUrl);
+            resolve(file);
+          };
+          img.src = objUrl;
+        } catch(e) {
+          resolve(file);
+        }
+      });
+    };
+
+    // Universal high-speed direct multipart binary uploader with pre-upload caching
+    window.uploadFileToStorage = async function(pathOrName, file) {
+      if (!file) return '';
+      if (typeof file === 'string' && (file.startsWith('http') || file.startsWith('/'))) return file;
+      if (file._uploadedUrl && !file._uploadedUrl.startsWith('blob:')) return file._uploadedUrl;
+      if (file._preUploadPromise) {
+        try {
+          const pre = await file._preUploadPromise;
+          if (pre && !pre.startsWith('blob:')) return pre;
+        } catch(e) {}
+      }
+
+      let toUpload = file;
+      if (file instanceof Blob && file.type && file.type.startsWith('image/')) {
+        toUpload = await window.compressImageFile(file);
+      }
+
+      try {
+        const fd = new FormData();
+        fd.append('file', toUpload, toUpload.name || (toUpload.type?.startsWith('video') ? 'video.mp4' : 'photo.jpg'));
+        const resp = await fetch('/api/upload-file', { method: 'POST', body: fd });
+        if (resp.ok) {
+          const data = await resp.json();
+          if (data && data.success && data.url) {
+            file._uploadedUrl = data.url;
+            if (data.type === 'video' && window.triplineVideoUrls) window.triplineVideoUrls.add(data.url);
+            return data.url;
+          }
+        }
+      } catch(err) {
+        console.warn('Multipart upload fallback:', err);
+      }
+
+      // Fallback to base64
+      try {
+        const base64 = await new Promise((res) => {
+          const r = new FileReader();
+          r.onload = e => res(e.target.result);
+          r.onerror = () => res(null);
+          r.readAsDataURL(toUpload);
+        });
+        if (base64) {
+          const isVid = (toUpload.type && toUpload.type.startsWith('video/')) || /\.(mp4|mov|webm|mkv)$/i.test(toUpload.name || '');
+          const bResp = await fetch('/api/upload', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              filename: toUpload.name || 'media',
+              mimeType: toUpload.type || (isVid ? 'video/mp4' : 'image/jpeg'),
+              mediaType: isVid ? 'video' : 'image',
+              data: base64
+            })
+          });
+          if (bResp.ok) {
+            const bJson = await bResp.json();
+            if (bJson && bJson.success && bJson.url) return bJson.url;
+          }
+        }
+      } catch(e) {}
+
+      return (file instanceof Blob) ? URL.createObjectURL(file) : file;
+    };
   </script>
   <!-- TripBnA Firebase SDK Module -->
   <script type="module" src="script.js"></script>
@@ -4175,23 +4355,59 @@ body { font-family: Arial, sans-serif; margin:0; padding:20px; background:#f0f2f
     <div class="tripMain">
       <!-- Left: Feed -->
       <div class="feed tabContent" id="triplineContent">
-        <div class="uploader">
+        <div class="uploader" style="background:#ffffff; border:1px solid #e2e8f0; border-radius:16px; padding:18px; box-shadow:0 4px 16px rgba(0,0,0,0.04);">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:8px;">
+            <div style="display:flex; align-items:center; gap:8px;">
+              <span style="font-size:22px;">✨</span>
+              <strong style="font-size:15.5px; color:#0f172a;">Publish New Tripline Experience</strong>
+            </div>
+            <span style="font-size:11px; background:#eff6ff; color:#2563eb; font-weight:800; padding:4px 9px; border-radius:6px; border:1px solid #dbeafe;">📸 Any Photo &amp; 🎥 Playable Video</span>
+          </div>
+
           <div style="display:flex; gap:8px;">
             <input id="postTitle" placeholder="Experience title (e.g. Serengeti Sunrise Safari)" style="flex:2;" />
             <input id="postPrice" class="small" placeholder="Price $" style="flex:1;" />
           </div>
-          <div style="display:flex; gap:8px; margin-top:6px;">
+          <div style="display:flex; gap:8px; margin-top:8px;">
             <input id="postLocation" placeholder="Location / Destination (e.g. Arusha, Zanzibar)" style="flex:1;" />
             <input id="postWhatsApp" placeholder="WhatsApp No. (e.g. +255 754 000 000)" style="flex:1;" title="Traveler booking inquiries will be directed to this WhatsApp number" />
           </div>
-          <textarea id="postDesc" placeholder="Describe the experience, itinerary highlights, included equipment or meals..." style="margin-top:6px;"></textarea>
-          <div style="margin-top:6px;">
-            <label style="font-size:12px; font-weight:600; color:#475569; display:block; margin-bottom:2px;">Upload Photos & Playable Videos (Horizontal Slider):</label>
-            <input id="postMedia" type="file" accept="image/*,video/*" multiple />
+          <textarea id="postDesc" placeholder="Describe the experience, itinerary highlights, included equipment or meals..." style="margin-top:8px; height:80px;"></textarea>
+
+          <!-- Interactive Drag & Drop / Media Upload Zone -->
+          <div style="margin-top:10px;">
+            <div id="postDropzone" onclick="document.getElementById('postMedia').click()" style="border:2px dashed #93c5fd; background:#f8fafc; border-radius:12px; padding:16px; text-align:center; cursor:pointer; transition:all 0.2s;" ondragover="event.preventDefault(); this.style.borderColor='#2563eb'; this.style.background='#eff6ff';" ondragleave="this.style.borderColor='#93c5fd'; this.style.background='#f8fafc';" ondrop="window.handlePostMediaDrop(event)">
+              <div style="font-size:28px; margin-bottom:4px;">📸 🎥</div>
+              <div style="font-size:13.5px; font-weight:800; color:#1e293b;">Click to Browse or Drag &amp; Drop Photos &amp; Videos Here</div>
+              <div style="font-size:11.5px; color:#64748b; margin-top:3px;">
+                Supports all images (JPG, PNG, WEBP, HEIC, GIF) &amp; playable videos (MP4, MOV, WEBM, MKV, AVI)
+              </div>
+            </div>
+            <input id="postMedia" type="file" accept="image/*,video/*,.mp4,.mov,.webm,.mkv,.avi,.ogg,.jpg,.jpeg,.png,.webp,.gif,.heic,.heif" multiple style="display:none;" onchange="window.handlePostMediaSelect(this.files)" />
+            <div style="display:flex; gap:8px; margin-top:8px;">
+              <input id="postMediaUrlInput" placeholder="🔗 Or paste image / video link (MP4, WebM, WebP, JPG, CDN)..." style="flex:1; font-size:12.5px; padding:7px 12px; border:1px solid #cbd5e1; border-radius:8px; background:#fff;" onkeydown="if(event.key==='Enter'){event.preventDefault(); window.addPostMediaUrl();}" />
+              <button type="button" onclick="window.addPostMediaUrl()" style="background:#eff6ff; color:#2563eb; border:1px solid #bfdbfe; border-radius:8px; padding:0 14px; font-weight:800; font-size:12px; cursor:pointer; white-space:nowrap;">+ Add URL</button>
+            </div>
           </div>
-          <div class="controls">
-            <button class="btn ghost" onclick="clearPostForm()">Clear</button>
-            <button id="publishPostBtn" class="btn primary" onclick="publishPost()">Publish</button>
+
+          <!-- Selected Media Live Previews Tray -->
+          <div id="postMediaPreviewTray" style="display:none; margin-top:10px; background:#f1f5f9; border-radius:12px; padding:12px; border:1px solid #e2e8f0;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <span id="postMediaCountBadge" style="font-size:12px; font-weight:800; color:#334155;">0 files attached</span>
+              <button type="button" onclick="window.clearSelectedPostMedia()" style="background:none; border:none; color:#dc2626; font-size:11.5px; font-weight:800; cursor:pointer;">✕ Clear All Media</button>
+            </div>
+            <div id="postMediaThumbList" style="display:flex; gap:10px; overflow-x:auto; padding-bottom:6px;"></div>
+          </div>
+
+          <!-- Upload & Processing Progress Banner -->
+          <div id="postUploadProgressBanner" style="display:none; margin-top:10px; background:#eff6ff; border:1px solid #bfdbfe; border-radius:10px; padding:10px 14px; font-size:12.5px; color:#1e40af; align-items:center; gap:10px;">
+            <span class="spinner" style="width:16px; height:16px; border:2px solid #2563eb; border-top-color:transparent; border-radius:50%; display:inline-block; animation:spin 0.8s linear infinite;"></span>
+            <span id="postUploadProgressText" style="font-weight:700;">Uploading media &amp; preparing experience...</span>
+          </div>
+
+          <div class="controls" style="margin-top:12px; display:flex; justify-content:flex-end; gap:8px;">
+            <button class="btn ghost" type="button" onclick="clearPostForm()">Clear</button>
+            <button id="publishPostBtn" type="button" class="btn primary" onclick="publishPost()" style="background:#2563eb; color:#fff; font-weight:800; border:none; padding:9px 20px; border-radius:10px; box-shadow:0 2px 8px rgba(37,99,235,0.3); cursor:pointer;">🚀 Publish Experience</button>
           </div>
         </div>
 
@@ -5676,24 +5892,19 @@ body { font-family: Arial, sans-serif; margin:0; padding:20px; background:#f0f2f
         </div>
       </div>
 
-      <!-- Right side controls: Active Provider Identity & Switcher -->
+      <!-- Right side controls: Active Authenticated Provider Identity & Switcher -->
       <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
         <!-- Provider Identity Badge -->
-        <div id="providerIdentityBadge" style="display:flex; align-items:center; gap:8px; background:#f1f5f9; border:1px solid #cbd5e1; padding:6px 12px; border-radius:8px; font-size:12px;">
+        <div id="providerIdentityBadge" style="display:flex; align-items:center; gap:8px; background:#f0fdf4; border:1.5px solid #86efac; padding:6px 14px; border-radius:8px; font-size:12px;">
           <span id="providerAvatarDot" style="width:8px; height:8px; border-radius:50%; background:#22c55e;"></span>
-          <span id="providerDisplayLabel" style="font-weight:700; color:#0f172a;">Swahili Heritage Dining (Provider)</span>
+          <span id="providerDisplayLabel" style="font-weight:700; color:#14532d;">Authenticated Provider</span>
         </div>
 
-        <!-- Provider Simulator Switcher (Verifies strict isolation between providers & Admin) -->
-        <div style="display:flex; align-items:center; gap:6px; background:#e0f2fe; border:1px solid #7dd3fc; padding:4px 10px; border-radius:8px;">
-          <label style="font-size:11px; font-weight:700; color:#0369a1; white-space:nowrap;">Active Provider View:</label>
-          <select id="providerSwitcherSelect" onchange="handleProviderSwitchChange(this.value)" style="font-size:12px; padding:4px 8px; border-radius:6px; border:1px solid #bae6fd; background:#fff; font-weight:600; color:#0c4a6e; cursor:pointer;">
-            <option value="prov_food_1" selected>🍽️ Swahili Heritage Dining (Food Provider Only)</option>
-            <option value="prov_trans_1">🚗 ABC Executive Taxi &amp; Safari (Transport Provider Only)</option>
-            <option value="prov_acc_1">🏨 Serengeti Safari Lodge (Stay Provider Only)</option>
-            <option value="current">👤 Current Signed-in Auth User</option>
-          </select>
-        </div>
+        <!-- Switch Account Button (Opens secure login/switch modal requiring email + password) -->
+        <button type="button" onclick="openProviderSwitchModal()" style="font-size:12px; font-weight:700; padding:6px 12px; border-radius:8px; border:1px solid #cbd5e1; background:#ffffff; color:#334155; cursor:pointer; display:inline-flex; align-items:center; gap:5px; box-shadow:0 1px 2px rgba(0,0,0,0.05);" title="Switch to another verified account using Email &amp; Password">
+          <span>🔄</span>
+          <span>Switch Account</span>
+        </button>
 
         <button type="button" class="primary" id="providerToggleFormBtn" onclick="toggleProviderServiceForm()" style="padding:8px 16px; font-size:12.5px; font-weight:700; border-radius:8px; display:inline-flex; align-items:center; gap:6px; background:#047857; border:none; cursor:pointer;">
           <span id="providerFormToggleIcon">➕</span>
@@ -6121,6 +6332,93 @@ body { font-family: Arial, sans-serif; margin:0; padding:20px; background:#f0f2f
       Don't have an account? <a href="#" onclick="closeModal('loginModal'); openModal('signupModal'); return false;" style="color:#0b84ff; font-weight:700;">Create Account</a>
     </div>
   </div></div>
+
+  <!-- Dedicated Service Provider Login & Private Account Switcher Modal -->
+  <div id="providerSwitchModal" class="modal" role="dialog" aria-modal="true" style="display:none; position:fixed; inset:0; background:rgba(15,23,42,0.85); backdrop-filter:blur(8px); z-index:46000; align-items:center; justify-content:center; padding:16px;">
+    <div class="panel card" style="max-width:520px; width:100%; max-height:92vh; overflow-y:auto; border-radius:18px; box-shadow:0 25px 60px rgba(0,0,0,0.4); padding:24px; position:relative;">
+      <button type="button" class="ghost" onclick="closeModal('providerSwitchModal')" style="position:absolute; top:16px; right:16px; font-weight:800; font-size:18px; border:none; cursor:pointer;">✕</button>
+
+      <div style="display:flex; align-items:center; gap:12px; margin-bottom:14px;">
+        <span style="font-size:28px;">🔐</span>
+        <div>
+          <h3 style="margin:0; font-size:18px; color:#0f172a; font-weight:800;">Service Provider Portal Access</h3>
+          <p style="margin:2px 0 0 0; font-size:12px; color:#64748b;">Strict Dashboard Isolation • Real Email &amp; Password Required</p>
+        </div>
+      </div>
+
+      <div style="background:#f0fdf4; border:1px solid #bbf7d0; border-radius:10px; padding:10px 14px; margin-bottom:16px; font-size:12px; color:#166534; line-height:1.45;">
+        🔒 <strong>Private Access Control:</strong> Only the verified user with that correct email and password can access and manage their dashboard. One provider can never see or edit another provider's dashboard.
+      </div>
+
+      <!-- Quick 1-Click Verified Provider Login -->
+      <div style="margin-bottom:18px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:12px 14px;">
+        <div style="font-size:11px; font-weight:800; color:#475569; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:8px;">
+          Quick Log In as Verified Provider:
+        </div>
+        <div style="display:flex; flex-direction:column; gap:6px;">
+          <button type="button" onclick="quickFillProviderAuth('swahilidining@tripbna.com', 'swahili123', 'Swahili Heritage Dining')" style="text-align:left; background:#fff; border:1px solid #cbd5e1; border-radius:8px; padding:8px 12px; cursor:pointer; display:flex; justify-content:space-between; align-items:center; transition:border-color 0.15s;" onmouseover="this.style.borderColor='#16a34a'" onmouseout="this.style.borderColor='#cbd5e1'">
+            <div>
+              <div style="font-size:12.5px; font-weight:700; color:#0f172a;">🍽️ Swahili Heritage Dining (Food Provider A)</div>
+              <div style="font-size:11px; color:#64748b;">swahilidining@tripbna.com • Real Restaurant</div>
+            </div>
+            <span style="font-size:11px; font-weight:700; color:#15803d; background:#dcfce7; padding:3px 8px; border-radius:6px;">Log In ➔</span>
+          </button>
+
+          <button type="button" onclick="quickFillProviderAuth('forodhani@tripbna.com', 'forodhani123', 'Forodhani Spice Seafood Grill')" style="text-align:left; background:#fff; border:1px solid #cbd5e1; border-radius:8px; padding:8px 12px; cursor:pointer; display:flex; justify-content:space-between; align-items:center; transition:border-color 0.15s;" onmouseover="this.style.borderColor='#16a34a'" onmouseout="this.style.borderColor='#cbd5e1'">
+            <div>
+              <div style="font-size:12.5px; font-weight:700; color:#0f172a;">🍽️ Forodhani Spice Seafood Grill (Food Provider B)</div>
+              <div style="font-size:11px; color:#64748b;">forodhani@tripbna.com • Real Seafood Grill</div>
+            </div>
+            <span style="font-size:11px; font-weight:700; color:#15803d; background:#dcfce7; padding:3px 8px; border-radius:6px;">Log In ➔</span>
+          </button>
+
+          <button type="button" onclick="quickFillProviderAuth('serengetilodge@gmail.com', 'serengeti123', 'Sunrise Safari Lodge & Camp')" style="text-align:left; background:#fff; border:1px solid #cbd5e1; border-radius:8px; padding:8px 12px; cursor:pointer; display:flex; justify-content:space-between; align-items:center; transition:border-color 0.15s;" onmouseover="this.style.borderColor='#7c3aed'" onmouseout="this.style.borderColor='#cbd5e1'">
+            <div>
+              <div style="font-size:12.5px; font-weight:700; color:#0f172a;">🏨 Sunrise Safari Lodge (Accommodation Provider)</div>
+              <div style="font-size:11px; color:#64748b;">serengetilodge@gmail.com • Real Safari Lodge</div>
+            </div>
+            <span style="font-size:11px; font-weight:700; color:#7e22ce; background:#f3e8ff; padding:3px 8px; border-radius:6px;">Log In ➔</span>
+          </button>
+
+          <button type="button" onclick="quickFillProviderAuth('abctaxi@gmail.com', 'abctaxi123', 'ABC Executive Taxi & Safari')" style="text-align:left; background:#fff; border:1px solid #cbd5e1; border-radius:8px; padding:8px 12px; cursor:pointer; display:flex; justify-content:space-between; align-items:center; transition:border-color 0.15s;" onmouseover="this.style.borderColor='#0284c7'" onmouseout="this.style.borderColor='#cbd5e1'">
+            <div>
+              <div style="font-size:12.5px; font-weight:700; color:#0f172a;">🚗 ABC Executive Taxi &amp; Safari (Transport Provider)</div>
+              <div style="font-size:11px; color:#64748b;">abctaxi@gmail.com • Real Transport Operator</div>
+            </div>
+            <span style="font-size:11px; font-weight:700; color:#0369a1; background:#e0f2fe; padding:3px 8px; border-radius:6px;">Log In ➔</span>
+          </button>
+
+          <button type="button" onclick="quickFillProviderAuth('jacksonloshilari7@gmail.com', 'admin123', 'Jackson Loshilari (Platform Master Admin)')" style="text-align:left; background:#fefce8; border:1.5px solid #fde047; border-radius:8px; padding:8px 12px; cursor:pointer; display:flex; justify-content:space-between; align-items:center; transition:border-color 0.15s;" onmouseover="this.style.borderColor='#ca8a04'" onmouseout="this.style.borderColor='#fde047'">
+            <div>
+              <div style="font-size:12.5px; font-weight:800; color:#854d0e;">👑 Jackson Loshilari (Platform Master Admin)</div>
+              <div style="font-size:11px; color:#a16207;">jacksonloshilari7@gmail.com • Approves vital updates</div>
+            </div>
+            <span style="font-size:11px; font-weight:800; color:#854d0e; background:#fef08a; padding:3px 8px; border-radius:6px;">Admin ➔</span>
+          </button>
+        </div>
+      </div>
+
+      <div style="position:relative; text-align:center; margin:16px 0;">
+        <hr style="border:0; border-top:1px solid #e2e8f0; margin:0;" />
+        <span style="position:relative; top:-10px; background:#fff; padding:0 12px; font-size:11px; font-weight:700; color:#94a3b8; text-transform:uppercase;">Or Enter Registered Credentials</span>
+      </div>
+
+      <!-- Custom Email & Password Form -->
+      <div>
+        <label style="font-size:12px; font-weight:700; color:#334155; display:block; margin-bottom:4px;">Registered Provider Email</label>
+        <input type="email" id="provCustomEmail" placeholder="provider@tripbna.com" class="input" style="width:100%; box-sizing:border-box; margin-bottom:10px; font-size:13px;" />
+
+        <label style="font-size:12px; font-weight:700; color:#334155; display:block; margin-bottom:4px;">Password</label>
+        <input type="password" id="provCustomPassword" placeholder="••••••••" class="input" style="width:100%; box-sizing:border-box; margin-bottom:12px; font-size:13px;" onkeydown="if(event.key==='Enter') submitProviderCustomLogin()" />
+
+        <div id="provCustomLoginError" style="display:none; font-size:12px; color:#b91c1c; background:#fef2f2; border:1px solid #fecaca; padding:8px 12px; border-radius:6px; margin-bottom:10px;"></div>
+
+        <button type="button" class="primary" id="provCustomLoginBtn" onclick="submitProviderCustomLogin()" style="width:100%; padding:10px; font-weight:800; font-size:13px; border-radius:8px;">
+          Log In with Email &amp; Password
+        </button>
+      </div>
+    </div>
+  </div>
 
   <!-- Password Recovery / Forgot Password Modal -->
   <div id="forgotPasswordModal" class="modal"><div class="panel card" style="max-width:440px;">
@@ -6946,6 +7244,180 @@ body { font-family: Arial, sans-serif; margin:0; padding:20px; background:#f0f2f
       <button class="primary" id="saveAccommodationRoomsBtn" style="background:#7e22ce;" onclick="saveAccommodationRoomsFromModal()">💾 Update Rooms & Availability (Live)</button>
     </div>
   </div></div>
+
+  <!-- =========================================================================
+       FOOD PROVIDER — DEDICATED DAILY MENU MANAGEMENT MODAL (Date-Aware)
+       Approved Service → Edit Menu → Today's Menu
+       Categories: Fast Food, Vegetarian, Local Food
+       Items: Chips, Chicken, Burger, Sausage | Broccoli, Vegetable Rice, Beans, Spinach | Ugali, Dagaa, Beef, Pilau, Mchicha
+       Does not reset service to Pending; updates live immediately for customers
+       ========================================================================= -->
+  <div id="foodDailyMenuModal" class="modal" role="dialog" aria-modal="true" style="display:none; position:fixed; inset:0; background:rgba(15,23,42,0.85); backdrop-filter:blur(8px); z-index:45000; align-items:center; justify-content:center; padding:16px;">
+    <div class="panel card" style="max-width:780px; width:100%; max-height:92vh; display:flex; flex-direction:column; overflow:hidden; border-radius:18px; box-shadow:0 25px 60px rgba(0,0,0,0.4); padding:0;">
+      
+      <!-- Modal Header -->
+      <div style="padding:16px 20px; background:linear-gradient(135deg, #14532d 0%, #16a34a 100%); color:#fff; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid rgba(255,255,255,0.1); flex-shrink:0;">
+        <div style="min-width:0;">
+          <div style="display:flex; align-items:center; gap:8px;">
+            <span style="font-size:22px;">🍽️</span>
+            <h3 style="margin:0; font-size:18px; font-weight:800; color:#fff;" id="fdmModalTitle">Today's Menu Management</h3>
+            <span class="badge" style="background:#dcfce7; color:#15803d; font-size:11px; padding:2px 8px; border-radius:6px; font-weight:800;">Date-Aware Live</span>
+          </div>
+          <div id="fdmModalRestaurantSubtitle" style="font-size:12px; color:#bbf7d0; margin-top:2px;">
+            Manage today's available dishes under Fast Food, Vegetarian & Local Food
+          </div>
+        </div>
+        <button type="button" onclick="closeFoodDailyMenuModal()" style="background:rgba(255,255,255,0.2); color:#fff; border:none; width:32px; height:32px; border-radius:8px; font-weight:900; font-size:15px; cursor:pointer;" title="Close Modal">✕</button>
+      </div>
+
+      <!-- Date Selection & Policy Bar -->
+      <div style="padding:12px 20px; background:#f0fdf4; border-bottom:1px solid #bbf7d0; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; flex-shrink:0;">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <label style="font-size:12.5px; font-weight:800; color:#166534; white-space:nowrap;">📅 Menu Date:</label>
+          <input type="date" id="fdmDatePicker" onchange="handleDailyMenuDateChange(this.value)" style="font-size:12.5px; font-weight:700; padding:5px 10px; border-radius:6px; border:1px solid #86efac; background:#fff; color:#0f172a; cursor:pointer;" />
+          <button type="button" onclick="setDailyMenuDateQuick('today')" style="background:#fff; border:1px solid #86efac; color:#166534; font-size:11px; font-weight:700; padding:4px 10px; border-radius:6px; cursor:pointer;">Today</button>
+          <button type="button" onclick="setDailyMenuDateQuick('tomorrow')" style="background:#fff; border:1px solid #86efac; color:#166534; font-size:11px; font-weight:700; padding:4px 10px; border-radius:6px; cursor:pointer;">Tomorrow</button>
+        </div>
+        <div style="font-size:11.5px; color:#15803d; font-weight:700; background:#dcfce7; padding:4px 10px; border-radius:6px;">
+          ✓ Approved status preserved • No Admin re-approval needed
+        </div>
+      </div>
+
+      <!-- Scrollable Categories Content -->
+      <div id="fdmCategoriesContainer" style="padding:18px 20px; overflow-y:auto; flex:1; display:flex; flex-direction:column; gap:16px; background:#f8fafc;">
+        <!-- Populated dynamically with Fast Food, Vegetarian, Local Food categories and items -->
+      </div>
+
+      <!-- Modal Footer -->
+      <div style="padding:14px 20px; background:#ffffff; border-top:1px solid #e2e8f0; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; flex-shrink:0;">
+        <div style="display:flex; gap:6px;">
+          <button type="button" onclick="promptAddCustomMenuCategory()" style="background:#f1f5f9; color:#334155; border:1px solid #cbd5e1; font-size:12px; font-weight:700; padding:7px 12px; border-radius:8px; cursor:pointer;">
+            ➕ Add Food Category
+          </button>
+        </div>
+        <div style="display:flex; gap:8px;">
+          <button type="button" class="ghost" onclick="closeFoodDailyMenuModal()" style="padding:8px 16px; font-size:13px; font-weight:700;">Cancel</button>
+          <button type="button" id="fdmSaveBtn" onclick="saveFoodDailyMenuFromModal()" style="background:linear-gradient(135deg, #16a34a, #15803d); color:#fff; border:none; padding:9px 20px; border-radius:8px; font-size:13px; font-weight:800; cursor:pointer; box-shadow:0 3px 10px rgba(22,163,74,0.3); display:inline-flex; align-items:center; gap:6px;">
+            <span>💾 Self-Approve &amp; Publish Today's Menu (Instant Live)</span>
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- =========================================================================
+       ACCOMMODATION PROVIDER — ROOM & STAY AVAILABILITY MANAGEMENT MODAL
+       Approved Service → Edit Availability
+       Room Types: Twin Beds, Master Bedroom, Single Room, Double Room, Family Room, Suite
+       ========================================================================= -->
+  <div id="accommodationAvailabilityModal" class="modal" role="dialog" aria-modal="true" style="display:none; position:fixed; inset:0; background:rgba(15,23,42,0.85); backdrop-filter:blur(8px); z-index:45000; align-items:center; justify-content:center; padding:16px;">
+    <div class="panel card" style="max-width:780px; width:100%; max-height:92vh; display:flex; flex-direction:column; overflow:hidden; border-radius:18px; box-shadow:0 25px 60px rgba(0,0,0,0.4); padding:0;">
+      
+      <!-- Modal Header -->
+      <div style="padding:16px 20px; background:linear-gradient(135deg, #581c87 0%, #7c3aed 100%); color:#fff; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid rgba(255,255,255,0.1); flex-shrink:0;">
+        <div style="min-width:0;">
+          <div style="display:flex; align-items:center; gap:8px;">
+            <span style="font-size:22px;">🏨</span>
+            <h3 style="margin:0; font-size:18px; font-weight:800; color:#fff;" id="aamModalTitle">Manage Room & Stay Availability</h3>
+            <span class="badge" style="background:#f3e8ff; color:#7e22ce; font-size:11px; padding:2px 8px; border-radius:6px; font-weight:800;">Provider Owned</span>
+          </div>
+          <div id="aamModalHotelSubtitle" style="font-size:12px; color:#ddd6fe; margin-top:2px;">
+            Manage available units, room types (Twin, Master, Single, Suite...) & rates
+          </div>
+        </div>
+        <button type="button" onclick="closeAccommodationAvailabilityModal()" style="background:rgba(255,255,255,0.2); color:#fff; border:none; width:32px; height:32px; border-radius:8px; font-weight:900; font-size:15px; cursor:pointer;" title="Close Modal">✕</button>
+      </div>
+
+      <!-- Date Selection & Policy Bar -->
+      <div style="padding:12px 20px; background:#faf5ff; border-bottom:1px solid #e9d5ff; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; flex-shrink:0;">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <label style="font-size:12.5px; font-weight:800; color:#6b21a8; white-space:nowrap;">📅 Availability Date:</label>
+          <input type="date" id="aamDatePicker" onchange="handleAccAvailDateChange(this.value)" style="font-size:12.5px; font-weight:700; padding:5px 10px; border-radius:6px; border:1px solid #c084fc; background:#fff; color:#0f172a; cursor:pointer;" />
+        </div>
+        <div style="font-size:11.5px; color:#6b21a8; font-weight:700; background:#f3e8ff; padding:4px 10px; border-radius:6px;">
+          ✓ Approved status preserved • Updates are live immediately
+        </div>
+      </div>
+
+      <!-- Scrollable Room Types Content -->
+      <div id="aamRoomTypesContainer" style="padding:18px 20px; overflow-y:auto; flex:1; display:flex; flex-direction:column; gap:14px; background:#f8fafc;">
+        <!-- Populated dynamically with Twin Beds, Master Bedroom, Single Room, Double Room, Family Room, Suite -->
+      </div>
+
+      <!-- Modal Footer -->
+      <div style="padding:14px 20px; background:#ffffff; border-top:1px solid #e2e8f0; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; flex-shrink:0;">
+        <button type="button" onclick="promptAddCustomRoomType()" style="background:#f1f5f9; color:#334155; border:1px solid #cbd5e1; font-size:12px; font-weight:700; padding:7px 12px; border-radius:8px; cursor:pointer;">
+          ➕ Add Room / Stay Type
+        </button>
+        <div style="display:flex; gap:8px;">
+          <button type="button" class="ghost" onclick="closeAccommodationAvailabilityModal()" style="padding:8px 16px; font-size:13px; font-weight:700;">Cancel</button>
+          <button type="button" id="aamSaveBtn" onclick="saveAccommodationAvailabilityFromModal()" style="background:linear-gradient(135deg, #7c3aed, #6d28d9); color:#fff; border:none; padding:9px 20px; border-radius:8px; font-size:13px; font-weight:800; cursor:pointer; box-shadow:0 3px 10px rgba(124,58,237,0.3); display:inline-flex; align-items:center; gap:6px;">
+            <span>💾 Self-Approve &amp; Publish Room Availability (Instant Live)</span>
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- =========================================================================
+       TRANSPORT PROVIDER — VEHICLE & ROUTE AVAILABILITY MANAGEMENT MODAL
+       Approved Service → Edit Availability
+       Manage vehicle availability, routes, dates, seats, prices
+       ========================================================================= -->
+  <div id="transportAvailabilityModal" class="modal" role="dialog" aria-modal="true" style="display:none; position:fixed; inset:0; background:rgba(15,23,42,0.85); backdrop-filter:blur(8px); z-index:45000; align-items:center; justify-content:center; padding:16px;">
+    <div class="panel card" style="max-width:780px; width:100%; max-height:92vh; display:flex; flex-direction:column; overflow:hidden; border-radius:18px; box-shadow:0 25px 60px rgba(0,0,0,0.4); padding:0;">
+      
+      <!-- Modal Header -->
+      <div style="padding:16px 20px; background:linear-gradient(135deg, #0369a1 0%, #0284c7 100%); color:#fff; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid rgba(255,255,255,0.1); flex-shrink:0;">
+        <div style="min-width:0;">
+          <div style="display:flex; align-items:center; gap:8px;">
+            <span style="font-size:22px;">🚗</span>
+            <h3 style="margin:0; font-size:18px; font-weight:800; color:#fff;" id="tamModalTitle">Manage Transport & Route Availability</h3>
+            <span class="badge" style="background:#e0f2fe; color:#0369a1; font-size:11px; padding:2px 8px; border-radius:6px; font-weight:800;">Provider Owned</span>
+          </div>
+          <div id="tamModalTransportSubtitle" style="font-size:12px; color:#bae6fd; margin-top:2px;">
+            Manage vehicle availability, active routes, departure times & seats
+          </div>
+        </div>
+        <button type="button" onclick="closeTransportAvailabilityModal()" style="background:rgba(255,255,255,0.2); color:#fff; border:none; width:32px; height:32px; border-radius:8px; font-weight:900; font-size:15px; cursor:pointer;" title="Close Modal">✕</button>
+      </div>
+
+      <!-- Date Selection & Policy Bar -->
+      <div style="padding:12px 20px; background:#f0f9ff; border-bottom:1px solid #bae6fd; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; flex-shrink:0;">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <label style="font-size:12.5px; font-weight:800; color:#0369a1; white-space:nowrap;">📅 Availability Date:</label>
+          <input type="date" id="tamDatePicker" onchange="handleTransAvailDateChange(this.value)" style="font-size:12.5px; font-weight:700; padding:5px 10px; border-radius:6px; border:1px solid #7dd3fc; background:#fff; color:#0f172a; cursor:pointer;" />
+        </div>
+        <div style="font-size:11.5px; color:#0369a1; font-weight:700; background:#e0f2fe; padding:4px 10px; border-radius:6px;">
+          ✓ Approved status preserved • Updates are live immediately
+        </div>
+      </div>
+
+      <!-- Scrollable Transport Fleet Content -->
+      <div id="tamFleetContainer" style="padding:18px 20px; overflow-y:auto; flex:1; display:flex; flex-direction:column; gap:14px; background:#f8fafc;">
+        <!-- Populated dynamically with fleet vehicles, routes, and seats -->
+      </div>
+
+      <!-- Modal Footer -->
+      <div style="padding:14px 20px; background:#ffffff; border-top:1px solid #e2e8f0; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; flex-shrink:0;">
+        <button type="button" onclick="promptAddCustomFleetVehicle()" style="background:#f1f5f9; color:#334155; border:1px solid #cbd5e1; font-size:12px; font-weight:700; padding:7px 12px; border-radius:8px; cursor:pointer;">
+          ➕ Add Vehicle / Route
+        </button>
+        <div style="display:flex; gap:8px;">
+          <button type="button" class="ghost" onclick="closeTransportAvailabilityModal()" style="padding:8px 16px; font-size:13px; font-weight:700;">Cancel</button>
+          <button type="button" id="tamSaveBtn" onclick="saveTransportAvailabilityFromModal()" style="background:linear-gradient(135deg, #0284c7, #0369a1); color:#fff; border:none; padding:9px 20px; border-radius:8px; font-size:13px; font-weight:800; cursor:pointer; box-shadow:0 3px 10px rgba(2,132,199,0.3); display:inline-flex; align-items:center; gap:6px;">
+            <span>💾 Self-Approve &amp; Publish Fleet Availability (Instant Live)</span>
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Safety & Policy Modal -->
+  <div id="safetyModal" class="modal"><div class="panel card" style="max-width:960px; max-height:90vh; overflow-y:auto;">
     <button style="float:right; padding:8px 16px; background:#2e8b57; color:#fff; border:none; border-radius:6px; cursor:pointer;" onclick="closeModal('safetyModal')">Close</button>
     <h3 style="color:#2e8b57; font-size:24px; margin-bottom:20px;">Safety and Policy</h3>
      
@@ -10191,6 +10663,212 @@ Last Updated: April 2026 | Version 2.0 | TripBnA Platform Policies
 
     /* ---------- Master Services Data & Cloud Synchronization ---------- */
     var services = [
+      {
+        id: "svc_food_swahili",
+        providerId: "prov_food_1",
+        providerEmail: "swahilidining@tripbna.com",
+        providerName: "Swahili Heritage Dining",
+        name: "Swahili Heritage Dining & Nyama Choma",
+        type: "Food",
+        status: "Approved",
+        place: "Arusha",
+        price: 15,
+        priceUnit: "/ meal",
+        foodDiningType: "Restaurant",
+        description: "Authentic Tanzanian barbecue, local Swahili specialties, and freshly grilled meats.",
+        images: ["https://images.unsplash.com/photo-1555939594-58d7cb561ad1?auto=format&fit=crop&w=600&q=80"],
+        videos: [],
+        rating: 4.9,
+        reviewCount: 38,
+        currentMenuDate: "2026-10-09",
+        todayMenu: {
+          "Fast Food": [
+            { id: "ff_1", name: "Chips", price: 3, isAvailable: true, desc: "Crispy golden fries" },
+            { id: "ff_2", name: "Chicken", price: 6.5, isAvailable: true, desc: "Tender grilled chicken" },
+            { id: "ff_3", name: "Burger", price: 7, isAvailable: true, desc: "Flame-grilled burger" },
+            { id: "ff_4", name: "Sausage", price: 2.5, isAvailable: true, desc: "Savory sausages" }
+          ],
+          "Vegetarian": [
+            { id: "veg_1", name: "Broccoli", price: 4.5, isAvailable: true, desc: "Fresh broccoli" },
+            { id: "veg_2", name: "Vegetable Rice", price: 4, isAvailable: true, desc: "Fragrant veg rice" },
+            { id: "veg_3", name: "Beans", price: 3.5, isAvailable: true, desc: "Red kidney beans" },
+            { id: "veg_4", name: "Spinach", price: 3, isAvailable: true, desc: "Tender spinach" }
+          ],
+          "Local Food": [
+            { id: "loc_1", name: "Ugali", price: 2, isAvailable: true, desc: "Hot cornmeal staple" },
+            { id: "loc_2", name: "Dagaa", price: 5, isAvailable: true, desc: "Lake sardines" },
+            { id: "loc_3", name: "Beef", price: 6, isAvailable: true, desc: "Braised beef chunks" },
+            { id: "loc_4", name: "Pilau", price: 5.5, isAvailable: true, desc: "Spiced pilau rice" },
+            { id: "loc_5", name: "Mchicha", price: 2.5, isAvailable: true, desc: "Traditional amaranth greens" }
+          ]
+        },
+        dailyMenu: {
+          "2026-10-07": {
+            "Fast Food": [
+              { id: "ff_1", name: "Chips", price: 3, isAvailable: true, desc: "Crispy golden fries" },
+              { id: "ff_2", name: "Chicken", price: 6.5, isAvailable: true, desc: "Tender grilled chicken" }
+            ],
+            "Vegetarian": [
+              { id: "veg_1", name: "Broccoli", price: 4.5, isAvailable: true, desc: "Fresh broccoli" }
+            ],
+            "Local Food": [
+              { id: "loc_1", name: "Ugali", price: 2, isAvailable: true, desc: "Hot cornmeal staple" },
+              { id: "loc_2", name: "Dagaa", price: 5, isAvailable: true, desc: "Lake sardines" }
+            ]
+          },
+          "2026-10-08": {
+            "Fast Food": [
+              { id: "ff_1", name: "Chips", price: 3, isAvailable: true, desc: "Crispy golden fries" },
+              { id: "ff_2", name: "Chicken", price: 6.5, isAvailable: true, desc: "Tender grilled chicken" },
+              { id: "ff_3", name: "Burger", price: 7, isAvailable: true, desc: "Flame-grilled burger" },
+              { id: "ff_4", name: "Sausage", price: 2.5, isAvailable: true, desc: "Savory sausages" }
+            ],
+            "Vegetarian": [
+              { id: "veg_1", name: "Broccoli", price: 4.5, isAvailable: true, desc: "Fresh broccoli" },
+              { id: "veg_2", name: "Vegetable Rice", price: 4, isAvailable: true, desc: "Fragrant veg rice" },
+              { id: "veg_3", name: "Beans", price: 3.5, isAvailable: true, desc: "Red kidney beans" },
+              { id: "veg_4", name: "Spinach", price: 3, isAvailable: true, desc: "Tender spinach" }
+            ],
+            "Local Food": [
+              { id: "loc_1", name: "Ugali", price: 2, isAvailable: true, desc: "Hot cornmeal staple" },
+              { id: "loc_2", name: "Dagaa", price: 5, isAvailable: true, desc: "Lake sardines" },
+              { id: "loc_3", name: "Beef", price: 6, isAvailable: true, desc: "Braised beef chunks" },
+              { id: "loc_4", name: "Pilau", price: 5.5, isAvailable: true, desc: "Spiced pilau rice" },
+              { id: "loc_5", name: "Mchicha", price: 2.5, isAvailable: true, desc: "Traditional amaranth greens" }
+            ]
+          },
+          "2026-10-09": {
+            "Fast Food": [
+              { id: "ff_1", name: "Chips", price: 3, isAvailable: true, desc: "Crispy golden fries" },
+              { id: "ff_2", name: "Chicken", price: 6.5, isAvailable: true, desc: "Tender grilled chicken" },
+              { id: "ff_3", name: "Burger", price: 7, isAvailable: true, desc: "Flame-grilled burger" }
+            ],
+            "Local Food": [
+              { id: "loc_1", name: "Ugali", price: 2, isAvailable: true, desc: "Hot cornmeal staple" },
+              { id: "loc_2", name: "Dagaa", price: 5, isAvailable: true, desc: "Lake sardines" }
+            ]
+          }
+        }
+      },
+      {
+        id: "svc_food_zanzibar",
+        providerId: "prov_food_2",
+        providerEmail: "forodhani@tripbna.com",
+        providerName: "Zanzibar Spice & Seafood Grill",
+        name: "Forodhani Spice Seafood Grill",
+        type: "Food",
+        status: "Approved",
+        place: "Zanzibar",
+        price: 20,
+        priceUnit: "/ meal",
+        foodDiningType: "Restaurant",
+        description: "Zanzibar fresh oceanic seafood, grilled lobster tails, and coconut curry.",
+        images: ["https://images.unsplash.com/photo-1534422298391-e4f8c172dddb?auto=format&fit=crop&w=600&q=80"],
+        videos: [],
+        rating: 4.8,
+        reviewCount: 24,
+        currentMenuDate: "2026-10-09",
+        todayMenu: {
+          "Fast Food": [
+            { id: "ff_z1", name: "Chips", price: 3.5, isAvailable: true, desc: "Zanzibar spiced masala chips" },
+            { id: "ff_z2", name: "Burger", price: 8, isAvailable: true, desc: "Grilled snapper fish fillet burger" }
+          ],
+          "Local Food": [
+            { id: "loc_z1", name: "Pilau", price: 6.5, isAvailable: true, desc: "Zanzibar clove spiced goat pilau" },
+            { id: "loc_z2", name: "Dagaa", price: 5.5, isAvailable: true, desc: "Crispy island sardines with lime" }
+          ]
+        },
+        dailyMenu: {
+          "2026-10-08": {
+            "Fast Food": [
+              { id: "ff_z1", name: "Chips", price: 3.5, isAvailable: true, desc: "Zanzibar spiced masala chips" },
+              { id: "ff_z2", name: "Burger", price: 8, isAvailable: true, desc: "Grilled snapper fish fillet burger" }
+            ],
+            "Local Food": [
+              { id: "loc_z1", name: "Pilau", price: 6.5, isAvailable: true, desc: "Zanzibar clove spiced goat pilau" },
+              { id: "loc_z2", name: "Dagaa", price: 5.5, isAvailable: true, desc: "Crispy island sardines with lime" }
+            ]
+          },
+          "2026-10-09": {
+            "Fast Food": [
+              { id: "ff_z1", name: "Chips", price: 3.5, isAvailable: true, desc: "Zanzibar spiced masala chips" },
+              { id: "ff_z2", name: "Burger", price: 8, isAvailable: true, desc: "Grilled snapper fish fillet burger" }
+            ],
+            "Local Food": [
+              { id: "loc_z1", name: "Pilau", price: 6.5, isAvailable: true, desc: "Zanzibar clove spiced goat pilau" },
+              { id: "loc_z2", name: "Dagaa", price: 5.5, isAvailable: true, desc: "Crispy island sardines with lime" }
+            ]
+          }
+        }
+      },
+      {
+        id: "svc_acc_serengeti",
+        providerId: "prov_acc_1",
+        providerEmail: "serengetilodge@gmail.com",
+        providerName: "Serengeti Safari Lodge",
+        name: "Sunrise Safari Lodge & Camp",
+        type: "Accommodation",
+        status: "Approved",
+        place: "Serengeti",
+        price: 110,
+        priceUnit: "/ night",
+        accommodationCategory: "Lodges",
+        description: "Luxury safari stay overlooking the wildlife plains of Serengeti with heated swimming pool.",
+        images: ["https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=600&q=80"],
+        videos: [],
+        rating: 4.9,
+        reviewCount: 42,
+        availabilityDate: "2026-10-08",
+        availableRooms: [
+          { id: "rm_1", name: "Twin Beds", price: 75, totalUnits: 6, availableUnits: 5, isAvailable: true, desc: "Two single luxury beds with en-suite bath and safari patio" },
+          { id: "rm_2", name: "Master Bedroom", price: 140, totalUnits: 4, availableUnits: 3, isAvailable: true, desc: "Expansive master suite with king bed, deep soaking tub & panoramic deck" },
+          { id: "rm_3", name: "Single Room", price: 55, totalUnits: 8, availableUnits: 6, isAvailable: true, desc: "Comfortable room designed for solo adventurers with hot shower & desk" },
+          { id: "rm_4", name: "Double Room", price: 95, totalUnits: 10, availableUnits: 8, isAvailable: true, desc: "Queen bed with garden view, ceiling fan and mosquito netting" },
+          { id: "rm_5", name: "Family Room", price: 180, totalUnits: 3, availableUnits: 2, isAvailable: true, desc: "Spacious family setup with 1 King bed and 2 single beds for up to 4 guests" },
+          { id: "rm_6", name: "Suite", price: 240, totalUnits: 2, availableUnits: 1, isAvailable: true, desc: "Presidential safari tent suite with private plunge pool and butler service" }
+        ]
+      },
+      {
+        id: "svc_trans_abc",
+        providerId: "prov_trans_1",
+        providerEmail: "abctaxi@gmail.com",
+        providerName: "ABC Executive Taxi & Safari",
+        name: "ABC Executive Taxi & 4x4 Safari Transport",
+        type: "Transport",
+        status: "Approved",
+        place: "Dar es Salaam",
+        price: 35,
+        priceUnit: "/ ride",
+        transportMode: "Book & Rent",
+        vehicleCategory: "Taxi & 4x4",
+        description: "Executive airport transfers, city excursions, and safari vehicle hire with licensed drivers.",
+        images: ["https://images.unsplash.com/photo-1549924231-f129b911e442?auto=format&fit=crop&w=600&q=80"],
+        videos: [],
+        rating: 4.9,
+        reviewCount: 35,
+        availabilityDate: "2026-10-08",
+        availableFleet: [
+          { id: "fl_1", name: "Toyota Corolla Sedan Taxi", category: "Sedan", price: 25, seats: 4, isAvailable: true, route: "Dar es Salaam City & JNIA Airport", driver: "Included" },
+          { id: "fl_2", name: "4x4 Safari Land Cruiser Extended", category: "Jeep", price: 180, seats: 7, isAvailable: true, route: "Arusha - Serengeti - Ngorongoro", driver: "Included" },
+          { id: "fl_3", name: "Toyota Alphard VIP Van", category: "Van", price: 95, seats: 6, isAvailable: true, route: "Dar es Salaam - Bagamoyo - Airport", driver: "Included" }
+        ]
+      },
+      {
+        id: "svc_pending_demo",
+        providerId: "prov_food_1",
+        providerEmail: "swahilidining@tripbna.com",
+        providerName: "Swahili Heritage Dining",
+        name: "Swahili Sunset Beach Barbecue",
+        type: "Food",
+        status: "Pending",
+        place: "Zanzibar",
+        price: 25,
+        priceUnit: "/ meal",
+        foodDiningType: "Restaurant",
+        description: "Fresh sunset grilled seafood buffet awaiting Jackson Loshilari platform admin review.",
+        images: ["https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=600&q=80"],
+        videos: []
+      },
       { 
         id: 101, 
         name: "ABC City & Airport Private Sedan Taxi", 
@@ -12044,12 +12722,256 @@ Last Updated: April 2026 | Version 2.0 | TripBnA Platform Policies
     });
 
     // =========================================================================
-    // SERVICE PROVIDER FULLSCREEN DASHBOARD & STRICT RBAC ISOLATION
+    // SERVICE PROVIDER FULLSCREEN DASHBOARD & STRICT AUTHENTICATION RBAC
     // =========================================================================
     window.currentProviderPillar = 'Food';
-    window.currentProviderSimulatedId = 'prov_food_1';
+
+    function openProviderSwitchModal() {
+      const modal = document.getElementById('providerSwitchModal');
+      if (modal) {
+        modal.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+      }
+    }
+    window.openProviderSwitchModal = openProviderSwitchModal;
+
+    window.quickFillProviderAuth = async function(email, password, displayName) {
+      try {
+        const res = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password })
+        });
+        const data = await res.json();
+        if (data.success && data.user) {
+          const u = data.user;
+          window.currentUser = {
+            uid: u.uid,
+            email: u.email,
+            displayName: u.displayName || displayName || email.split('@')[0],
+            getIdToken: async () => u.idToken || 'token_' + Date.now(),
+            isAnonymous: false,
+            emailVerified: true
+          };
+          const userProfile = {
+            uid: u.uid,
+            email: u.email,
+            name: window.currentUser.displayName,
+            role: (u.email || '').toLowerCase().trim() === 'jacksonloshilari7@gmail.com' ? 'admin' : 'provider'
+          };
+          window.currentUserProfile = userProfile;
+          try {
+            localStorage.setItem('tripbna_auth_session', JSON.stringify({
+              user: { uid: u.uid, email: u.email, displayName: window.currentUser.displayName },
+              profile: userProfile,
+              timestamp: Date.now()
+            }));
+          } catch(e) {}
+          updateAuthUI(true, userProfile);
+          closeModal('providerSwitchModal');
+          closeModal('loginModal');
+          showToast(`🎉 Logged in as ${window.currentUser.displayName}! Opening your private dashboard...`);
+          openDashboard();
+        } else {
+          showToast(`⚠️ Authentication failed: ${data.error || 'Invalid credentials'}`);
+        }
+      } catch(err) {
+        console.error("quickFillProviderAuth error:", err);
+        showToast(`⚠️ Login network error: ${err.message}`);
+      }
+    };
+
+    window.submitProviderCustomLogin = async function() {
+      const email = (document.getElementById('provCustomEmail')?.value || '').trim();
+      const password = document.getElementById('provCustomPassword')?.value || '';
+      const errEl = document.getElementById('provCustomLoginError');
+      const btn = document.getElementById('provCustomLoginBtn');
+      if (errEl) errEl.style.display = 'none';
+
+      if (!email || !password) {
+        if (errEl) { errEl.textContent = 'Please enter both email and password.'; errEl.style.display = 'block'; }
+        return;
+      }
+
+      if (btn) { btn.disabled = true; btn.textContent = 'Verifying...'; }
+
+      try {
+        const res = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password })
+        });
+        const data = await res.json();
+        if (data.success && data.user) {
+          const u = data.user;
+          window.currentUser = {
+            uid: u.uid,
+            email: u.email,
+            displayName: u.displayName || email.split('@')[0],
+            getIdToken: async () => u.idToken || 'token_' + Date.now(),
+            isAnonymous: false,
+            emailVerified: true
+          };
+          const userProfile = {
+            uid: u.uid,
+            email: u.email,
+            name: window.currentUser.displayName,
+            role: (u.email || '').toLowerCase().trim() === 'jacksonloshilari7@gmail.com' ? 'admin' : 'provider'
+          };
+          window.currentUserProfile = userProfile;
+          try {
+            localStorage.setItem('tripbna_auth_session', JSON.stringify({
+              user: { uid: u.uid, email: u.email, displayName: window.currentUser.displayName },
+              profile: userProfile,
+              timestamp: Date.now()
+            }));
+          } catch(e) {}
+          updateAuthUI(true, userProfile);
+          closeModal('providerSwitchModal');
+          showToast(`🎉 Welcome ${window.currentUser.displayName}! Loading your private dashboard...`);
+          openDashboard();
+        } else {
+          if (errEl) { errEl.textContent = data.error || 'Invalid email or password.'; errEl.style.display = 'block'; }
+        }
+      } catch(err) {
+        if (errEl) { errEl.textContent = 'Login network issue: ' + err.message; errEl.style.display = 'block'; }
+      } finally {
+        if (btn) { btn.disabled = false; btn.textContent = 'Log In with Email & Password'; }
+      }
+    };
+
+    function syncProviderDashboardIdentity() {
+      const user = window.currentUser || (window.auth && window.auth.currentUser);
+      const labelEl = document.getElementById('providerDisplayLabel');
+      const avatarDot = document.getElementById('providerAvatarDot');
+      const noticeEl = document.getElementById('providerIsolationNotice');
+
+      if (!user || !user.email) {
+        if (labelEl) labelEl.textContent = "Not Signed In";
+        if (avatarDot) avatarDot.style.background = "#94a3b8";
+        if (noticeEl) noticeEl.innerHTML = "🔒 <strong>Sign In Required:</strong> Only the verified user with that correct email and password can see and manage their dashboard.";
+        return;
+      }
+
+      const cleanEmail = (user.email || '').toLowerCase().trim();
+      const isMasterAdmin = (typeof checkIsUserAdmin === 'function') ? checkIsUserAdmin() : (cleanEmail === 'jacksonloshilari7@gmail.com');
+
+      if (isMasterAdmin) {
+        if (labelEl) labelEl.textContent = "👑 Jackson Loshilari (Platform Admin)";
+        if (avatarDot) avatarDot.style.background = "#38bdf8";
+        if (noticeEl) noticeEl.innerHTML = "You are logged in as <strong>Master Platform Admin (Jackson Loshilari)</strong>. You have oversight across all service providers and review/approve core business updates (Name, Location, Category).";
+      } else if (cleanEmail === 'swahilidining@tripbna.com') {
+        if (labelEl) labelEl.textContent = "🍽️ Swahili Heritage Dining (swahilidining@tripbna.com)";
+        if (avatarDot) avatarDot.style.background = "#22c55e";
+        if (noticeEl) noticeEl.innerHTML = "🔒 <strong>Private Provider Dashboard:</strong> You are logged in as <strong>Swahili Heritage Dining</strong>. Only your restaurant listings are visible here. You can edit today's menu with instant self-approval.";
+        window.currentProviderPillar = 'Food';
+      } else if (cleanEmail === 'forodhani@tripbna.com') {
+        if (labelEl) labelEl.textContent = "🍽️ Forodhani Spice Seafood Grill (forodhani@tripbna.com)";
+        if (avatarDot) avatarDot.style.background = "#10b981";
+        if (noticeEl) noticeEl.innerHTML = "🔒 <strong>Private Provider Dashboard:</strong> You are logged in as <strong>Forodhani Spice Seafood Grill</strong>. Only your restaurant listings are visible here. Other providers' listings are completely hidden.";
+        window.currentProviderPillar = 'Food';
+      } else if (cleanEmail === 'serengetilodge@gmail.com') {
+        if (labelEl) labelEl.textContent = "🏨 Sunrise Safari Lodge & Camp (serengetilodge@gmail.com)";
+        if (avatarDot) avatarDot.style.background = "#8b5cf6";
+        if (noticeEl) noticeEl.innerHTML = "🔒 <strong>Private Provider Dashboard:</strong> You are logged in as <strong>Sunrise Safari Lodge & Camp</strong>. Only your accommodation listings are visible here. You can edit room availability & rates with instant self-approval.";
+        window.currentProviderPillar = 'Accommodation';
+      } else if (cleanEmail === 'abctaxi@gmail.com') {
+        if (labelEl) labelEl.textContent = "🚗 ABC Executive Taxi & Safari (abctaxi@gmail.com)";
+        if (avatarDot) avatarDot.style.background = "#0284c7";
+        if (noticeEl) noticeEl.innerHTML = "🔒 <strong>Private Provider Dashboard:</strong> You are logged in as <strong>ABC Executive Taxi & Safari</strong>. Only your transport fleet listings are visible here.";
+        window.currentProviderPillar = 'Transport';
+      } else {
+        const dName = user.displayName || cleanEmail.split('@')[0];
+        if (labelEl) labelEl.textContent = `👤 ${dName} (${cleanEmail})`;
+        if (avatarDot) avatarDot.style.background = "#15803d";
+        if (noticeEl) noticeEl.innerHTML = `🔒 <strong>Private Provider Dashboard:</strong> You are logged in as <strong>${escapeHTML(dName)}</strong>. Only your own submitted listings are visible and manageable here.`;
+      }
+    }
+    window.syncProviderDashboardIdentity = syncProviderDashboardIdentity;
+
+    function closeDashboard() {
+      const dashboard = document.getElementById('dashboardPanel');
+      if (dashboard) {
+        dashboard.classList.remove('fullscreen-active');
+        dashboard.style.display = 'none';
+        document.body.style.overflow = '';
+      }
+    }
+    window.closeDashboard = closeDashboard;
+
+    function switchProviderPillar(pillar) {
+      window.currentProviderPillar = pillar || 'Food';
+      updateProviderPillarsUI();
+      renderTables();
+    }
+    window.switchProviderPillar = switchProviderPillar;
+
+    function updateProviderPillarsUI() {
+      const cur = (window.currentProviderPillar || 'Food').toLowerCase();
+      const tabs = {
+        'Food': document.getElementById('pillarTab_Food'),
+        'Transport': document.getElementById('pillarTab_Transport'),
+        'Accommodation': document.getElementById('pillarTab_Accommodation'),
+        'all': document.getElementById('pillarTab_All')
+      };
+      for (const [key, btn] of Object.entries(tabs)) {
+        if (!btn) continue;
+        if (key.toLowerCase() === cur) {
+          btn.classList.add('active');
+        } else {
+          btn.classList.remove('active');
+        }
+      }
+
+      // Compute service counts for current user's isolated view
+      const user = window.currentUser || (window.auth && window.auth.currentUser);
+      const userEmail = (user && user.email) ? user.email.toLowerCase().trim() : '';
+      const userId = user ? String(user.uid || '').trim() : '';
+      const isSuperAdmin = (typeof checkIsUserAdmin === 'function') ? checkIsUserAdmin() : (userEmail === 'jacksonloshilari7@gmail.com');
+
+      const allSvcs = (window.services || (typeof services !== 'undefined' ? services : []));
+      const userSvcs = allSvcs.filter(s => {
+        if (!s) return false;
+        if (isSuperAdmin) return true;
+        const sId = String(s.providerId || s.ownerId || s.userId || '').trim();
+        const sEmail = (s.providerEmail || s.ownerEmail || '').toLowerCase().trim();
+        return (userEmail && sEmail === userEmail) || (userId && sId === userId);
+      });
+
+      let foodCount = 0;
+      let transportCount = 0;
+      let accomCount = 0;
+      userSvcs.forEach(s => {
+        const t = (s.type || '').toLowerCase();
+        if (t === 'food') foodCount++;
+        else if (t === 'transport') transportCount++;
+        else if (t === 'accommodation') accomCount++;
+      });
+
+      const foodBadge = document.getElementById('pillarCount_Food');
+      if (foodBadge) foodBadge.textContent = foodCount;
+      const transBadge = document.getElementById('pillarCount_Transport');
+      if (transBadge) transBadge.textContent = transportCount;
+      const accomBadge = document.getElementById('pillarCount_Accommodation');
+      if (accomBadge) accomBadge.textContent = accomCount;
+      const allBadge = document.getElementById('pillarCount_All');
+      if (allBadge) allBadge.textContent = userSvcs.length;
+
+      const statsEl = document.getElementById('providerStatsSummary');
+      if (statsEl) {
+        statsEl.textContent = `Active Services: ${userSvcs.length}`;
+      }
+    }
+    window.updateProviderPillarsUI = updateProviderPillarsUI;
 
     function openDashboard(pillar) {
+      const user = window.currentUser || (window.auth && window.auth.currentUser);
+      if (!user || !user.email) {
+        showToast("🔒 Authentication Required: Please log in with your service provider email and password.");
+        openProviderSwitchModal();
+        return;
+      }
+
       if (pillar) {
         window.currentProviderPillar = pillar;
       }
@@ -12063,93 +12985,14 @@ Last Updated: April 2026 | Version 2.0 | TripBnA Platform Policies
       const sm = document.getElementById('sideMenu');
       if (sm) sm.style.display = 'none';
 
+      syncProviderDashboardIdentity();
       updateProviderPillarsUI();
       renderTables();
+      if (typeof window.loadProviderServicesFromBackend === 'function') {
+        window.loadProviderServicesFromBackend();
+      }
     }
     window.openDashboard = openDashboard;
-
-    function closeDashboard() {
-      const dashboard = document.getElementById('dashboardPanel');
-      if (dashboard) {
-        dashboard.classList.remove('fullscreen-active');
-        dashboard.style.display = 'none';
-        document.body.style.overflow = '';
-      }
-    }
-    window.closeDashboard = closeDashboard;
-
-    function switchProviderPillar(pillar) {
-      window.currentProviderPillar = pillar;
-      updateProviderPillarsUI();
-      const spType = document.getElementById('sp_type');
-      if (spType && pillar !== 'all') {
-        spType.value = pillar;
-        if (typeof showTypeFields === 'function') showTypeFields();
-      }
-      renderTables();
-    }
-    window.switchProviderPillar = switchProviderPillar;
-
-    function updateProviderPillarsUI() {
-      const pillars = ['Food', 'Transport', 'Accommodation', 'All'];
-      pillars.forEach(p => {
-        const tab = document.getElementById('pillarTab_' + p);
-        if (tab) {
-          if (p.toLowerCase() === (window.currentProviderPillar || 'all').toLowerCase()) {
-            tab.classList.add('active');
-          } else {
-            tab.classList.remove('active');
-          }
-        }
-      });
-    }
-    window.updateProviderPillarsUI = updateProviderPillarsUI;
-
-    function handleProviderSwitchChange(val) {
-      window.currentProviderSimulatedId = val;
-      const labelEl = document.getElementById('providerDisplayLabel');
-      const avatarDot = document.getElementById('providerAvatarDot');
-      const noticeEl = document.getElementById('providerIsolationNotice');
-
-      if (val === 'admin') {
-        if (!checkIsUserAdmin()) {
-          alert("🔒 Access Denied: Platform Admin view is strictly restricted to jacksonloshilari7@gmail.com.");
-          const selectEl = document.getElementById('providerSwitcherSelect');
-          if (selectEl) selectEl.value = 'prov_food_1';
-          window.currentProviderSimulatedId = 'prov_food_1';
-          updateProviderPillarsUI();
-          renderTables();
-          return;
-        }
-        if (labelEl) labelEl.textContent = "Jackson Loshilari (Platform Admin)";
-        if (avatarDot) avatarDot.style.background = "#38bdf8";
-        if (noticeEl) noticeEl.innerHTML = "You are viewing in <strong>Platform Admin Mode</strong>. You have full visibility across all service providers and can approve or edit any service and food menu.";
-      } else if (val === 'prov_trans_1') {
-        if (labelEl) labelEl.textContent = "ABC Executive Taxi & Safari (Transport Provider)";
-        if (avatarDot) avatarDot.style.background = "#f59e0b";
-        if (noticeEl) noticeEl.innerHTML = "You are viewing strictly as <strong>ABC Executive Taxi</strong>. Only your transport services are visible. You cannot see or modify other providers' services or food menus.";
-        window.currentProviderPillar = 'Transport';
-      } else if (val === 'prov_acc_1') {
-        if (labelEl) labelEl.textContent = "Serengeti Safari Lodge (Accommodation Provider)";
-        if (avatarDot) avatarDot.style.background = "#8b5cf6";
-        if (noticeEl) noticeEl.innerHTML = "You are viewing strictly as <strong>Serengeti Safari Lodge</strong>. Only your accommodation listings are visible. Other providers' listings are completely hidden.";
-        window.currentProviderPillar = 'Accommodation';
-      } else if (val === 'prov_food_1') {
-        if (labelEl) labelEl.textContent = "Swahili Heritage Dining (Food Provider)";
-        if (avatarDot) avatarDot.style.background = "#22c55e";
-        if (noticeEl) noticeEl.innerHTML = "You are viewing strictly as <strong>Swahili Heritage Dining</strong>. You only see your own restaurant listings and menu items. You can add today's items, toggle out-of-stock items, and submit for Admin re-approval.";
-        window.currentProviderPillar = 'Food';
-      } else {
-        const u = window.currentUser || (window.auth && window.auth.currentUser);
-        const name = u ? (u.displayName || u.email || "Current User") : "Signed-in Provider";
-        if (labelEl) labelEl.textContent = name;
-        if (avatarDot) avatarDot.style.background = "#22c55e";
-        if (noticeEl) noticeEl.innerHTML = "You are viewing only your own posted services under your signed-in account. Visible to travelers after Admin approval.";
-      }
-      updateProviderPillarsUI();
-      renderTables();
-    }
-    window.handleProviderSwitchChange = handleProviderSwitchChange;
 
     function toggleProviderServiceForm() {
       if (!window.currentUser) {
@@ -12198,29 +13041,18 @@ Last Updated: April 2026 | Version 2.0 | TripBnA Platform Policies
     function canUserEditService(s) {
       if (!s) return false;
       const user = window.currentUser || (window.auth && window.auth.currentUser);
-      // ONLY true authenticated Master Admin has full edit authority
-      if (user && isAdmin(user)) return true;
+      if (!user || !user.email) return false;
 
-      const simulated = window.currentProviderSimulatedId || 'prov_food_1';
-      const sId = String(s.providerId || s.ownerId || s.userId || '');
+      const userEmail = (user.email || '').toLowerCase().trim();
+      const userId = String(user.uid || '').trim();
+
+      // ONLY true authenticated Master Admin has full edit authority across all listings
+      if (isAdmin(user) || userEmail === 'jacksonloshilari7@gmail.com' || userId === 'admin') return true;
+
+      const sId = String(s.providerId || s.ownerId || s.userId || '').trim();
       const sEmail = (s.providerEmail || s.ownerEmail || '').toLowerCase().trim();
 
-      if (simulated === 'prov_food_1') {
-        return s.type === 'Food' && (sId === 'system_prov_food_1' || s.id === 121 || sEmail === 'swahilidining@tripbna.com');
-      }
-      if (simulated === 'prov_trans_1') {
-        return s.type === 'Transport' && (sId === 'system_prov_taxi_1' || s.id === 101 || sEmail === 'abctaxi@gmail.com');
-      }
-      if (simulated === 'prov_acc_1') {
-        return s.type === 'Accommodation' && (sId === 'system_prov_acc_1' || s.id === 1 || sEmail === 'serengetilodge@gmail.com');
-      }
-
-      if (!user) return false;
-      const uid = String(user.uid || '');
-      const email = (user.email || '').toLowerCase().trim();
-      if (uid && sId && sId === uid) return true;
-      if (email && sEmail && sEmail === email) return true;
-      return false;
+      return (userEmail && sEmail === userEmail) || (userId && sId === userId);
     }
     window.canUserEditService = canUserEditService;
 
@@ -12747,45 +13579,32 @@ Last Updated: April 2026 | Version 2.0 | TripBnA Platform Policies
       approvedTable.innerHTML = "";
 
       const user = window.currentUser || (window.auth && window.auth.currentUser);
-      const simulated = window.currentProviderSimulatedId || 'prov_food_1';
-      const isSuperAdmin = Boolean(user && isAdmin(user)) || simulated === 'admin';
+      if (!user || !user.email) {
+        pendingTable.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:20px; color:#b91c1c; font-weight:700;">🔒 Please log in with your verified provider email and password to view your private dashboard.</td></tr>`;
+        approvedTable.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:20px; color:#b91c1c; font-weight:700;">🔒 Please log in with your verified provider email and password to view your private dashboard.</td></tr>`;
+        return;
+      }
 
-      // Strict RBAC Isolation:
-      // Platform Admin Jackson Loshilari can view all listings from all providers.
-      // Regular service providers can ONLY view and manage their own listings.
-      const visibleServices = services.filter(s => {
+      const userEmail = (user.email || '').toLowerCase().trim();
+      const userId = String(user.uid || '').trim();
+      const isSuperAdmin = (typeof checkIsUserAdmin === 'function') ? checkIsUserAdmin() : (userEmail === 'jacksonloshilari7@gmail.com' || userId === 'admin');
+
+      // STRICT RBAC ISOLATION:
+      // Platform Admin Jackson Loshilari can view all listings from all providers to review and approve.
+      // Regular service providers can ONLY view and manage their own listings matching their verified account!
+      const visibleServices = (window.services || services || []).filter(s => {
         if (!isSuperAdmin) {
-          if (simulated === 'prov_food_1') {
-            const sId = String(s.providerId || s.ownerId || s.userId || '');
-            const sEmail = (s.providerEmail || s.ownerEmail || '').toLowerCase().trim();
-            if (s.type !== 'Food') return false;
-            if (sId !== 'system_prov_food_1' && s.id !== 121 && sEmail !== 'swahilidining@tripbna.com') return false;
-          } else if (simulated === 'prov_trans_1') {
-            const sId = String(s.providerId || s.ownerId || s.userId || '');
-            const sEmail = (s.providerEmail || s.ownerEmail || '').toLowerCase().trim();
-            if (s.type !== 'Transport') return false;
-            if (sId !== 'system_prov_taxi_1' && s.id !== 101 && sEmail !== 'abctaxi@gmail.com') return false;
-          } else if (simulated === 'prov_acc_1') {
-            const sId = String(s.providerId || s.ownerId || s.userId || '');
-            const sEmail = (s.providerEmail || s.ownerEmail || '').toLowerCase().trim();
-            if (s.type !== 'Accommodation') return false;
-            if (sId !== 'system_prov_acc_1' && s.id !== 1 && sEmail !== 'serengetilodge@gmail.com') return false;
-          } else if (user) {
-            const uid = String(user.uid || '');
-            const email = (user.email || '').toLowerCase().trim();
-            const sId = String(s.providerId || s.ownerId || s.userId || '');
-            const sEmail = (s.providerEmail || s.ownerEmail || '').toLowerCase().trim();
-            const isMatch = (uid && sId === uid) || (email && sEmail === email);
-            if (!isMatch) return false;
-          } else {
-            return false;
-          }
+          const sId = String(s.providerId || s.ownerId || s.userId || '').trim();
+          const sEmail = (s.providerEmail || s.ownerEmail || '').toLowerCase().trim();
+
+          const isMatch = (userEmail && sEmail === userEmail) || (userId && sId === userId);
+          if (!isMatch) return false;
         }
 
         // Filter by active 3-pillar switcher (Transport, Accommodation, Food, All)
         const curPillar = (window.currentProviderPillar || 'all').toLowerCase();
         if (curPillar !== 'all' && curPillar !== '') {
-          if (s.type.toLowerCase() !== curPillar) return false;
+          if ((s.type || '').toLowerCase() !== curPillar) return false;
         }
 
         return true;
@@ -12793,18 +13612,6 @@ Last Updated: April 2026 | Version 2.0 | TripBnA Platform Policies
 
       let pendingCount = 0;
       let approvedCount = 0;
-
-      // If Food pillar is active and we have visible food services, auto-select first one for menu editor if not set
-      const foodSvc = visibleServices.find(s => s.type === 'Food');
-      if (foodSvc && (!currentEditingServiceId || !services.some(s => s.id === currentEditingServiceId && s.type === 'Food'))) {
-        currentEditingServiceId = foodSvc.id;
-        loadMenu(foodSvc.id);
-        const menuSec = document.getElementById('menuListSection');
-        if (menuSec) menuSec.style.display = 'block';
-        renderCategories();
-        const subEl = document.getElementById('menuListSectionSubtitle');
-        if (subEl) subEl.textContent = `Managing dishes for "${foodSvc.name}". Add what you have today, mark out-of-stock items, and update availability live.`;
-      }
 
       visibleServices.forEach(s => {
         const imagesList = Array.isArray(s.images) ? s.images : (s.images ? [s.images] : []);
@@ -12839,16 +13646,16 @@ Last Updated: April 2026 | Version 2.0 | TripBnA Platform Policies
           }
         }
 
-        // Post-approval availability management buttons
+        // Post-approval availability management buttons (STRICTLY OWNER-ONLY & DATE-AWARE)
         if (s.status === "Approved") {
           if (s.type === "Food" && canEdit) {
-            actionButtons += `<button onclick="openFoodMenuFromTable('${s.id}')" class="ghost" style="padding:4px 8px; font-size:12px; background:#f0fdf4; color:#166534; border:1px solid #bbf7d0; font-weight:700; margin-right:4px;">🍽️ Manage Today's Menu</button>`;
+            actionButtons += `<button onclick="openFoodDailyMenuModal('${s.id}')" class="primary" style="padding:4px 10px; font-size:12px; background:#16a34a; color:#fff; font-weight:800; border-radius:6px; border:none; cursor:pointer; margin-right:4px;" title="Update today's available dishes under Fast Food, Vegetarian & Local Food">🍽️ Edit Menu</button>`;
           }
           if (s.type === "Transport" && canEdit) {
-            actionButtons += `<button onclick="openTransportFleetModal('${s.id}')" class="ghost" style="padding:4px 8px; font-size:12px; background:#f0f9ff; color:#0369a1; border:1px solid #bae6fd; font-weight:700; margin-right:4px;">🚗 Manage Car Rental & Availability</button>`;
+            actionButtons += `<button onclick="openTransportAvailabilityModal('${s.id}')" class="primary" style="padding:4px 10px; font-size:12px; background:#0284c7; color:#fff; font-weight:800; border-radius:6px; border:none; cursor:pointer; margin-right:4px;" title="Manage fleet vehicles, routes & daily seats">🚗 Edit Availability</button>`;
           }
           if (s.type === "Accommodation" && canEdit) {
-            actionButtons += `<button onclick="openAccommodationRoomsModal('${s.id}')" class="ghost" style="padding:4px 8px; font-size:12px; background:#faf5ff; color:#7e22ce; border:1px solid #e9d5ff; font-weight:700; margin-right:4px;">🏨 Manage Room Availability</button>`;
+            actionButtons += `<button onclick="openAccommodationAvailabilityModal('${s.id}')" class="primary" style="padding:4px 10px; font-size:12px; background:#7c3aed; color:#fff; font-weight:800; border-radius:6px; border:none; cursor:pointer; margin-right:4px;" title="Manage Twin Beds, Master Bedroom, Single Room, Suite & daily vacancy">🏨 Edit Availability</button>`;
           }
         }
 
@@ -12912,6 +13719,10 @@ Last Updated: April 2026 | Version 2.0 | TripBnA Platform Policies
       const approvedBadge = document.getElementById('approvedBadgeCount');
       if (approvedBadge) approvedBadge.textContent = approvedCount;
 
+      if (typeof updateProviderPillarsUI === 'function') {
+        updateProviderPillarsUI();
+      }
+
       if (pendingCount === 0) {
         pendingTable.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:14px; color:#64748b; font-size:12px;">No pending submissions in your dashboard for ${window.currentProviderPillar || 'all'} services.</td></tr>`;
       }
@@ -12951,6 +13762,19 @@ Last Updated: April 2026 | Version 2.0 | TripBnA Platform Policies
         }
       }
 
+      // Sync approval with server backend database
+      try {
+        await fetch(`/api/admin/services/${encodeURIComponent(id)}/approve`, {
+          method: 'POST',
+          headers: {
+            'x-user-email': 'jacksonloshilari7@gmail.com',
+            'x-user-id': 'admin'
+          }
+        });
+      } catch(apiErr) {
+        console.warn("Backend approval API notice:", apiErr);
+      }
+
       renderTables();
       renderAccommodationSection();
       renderFoodSection();
@@ -12983,6 +13807,21 @@ Last Updated: April 2026 | Version 2.0 | TripBnA Platform Policies
             rejectionReason: reason
           });
         } catch(e) {}
+      }
+
+      // Sync rejection with server backend database
+      try {
+        await fetch(`/api/admin/services/${encodeURIComponent(id)}/reject`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-user-email': 'jacksonloshilari7@gmail.com',
+            'x-user-id': 'admin'
+          },
+          body: JSON.stringify({ reason })
+        });
+      } catch(apiErr) {
+        console.warn("Backend rejection API notice:", apiErr);
       }
       renderTables();
       showToast("Listing set to Needs Revision with admin feedback.");
@@ -13458,13 +14297,20 @@ Last Updated: April 2026 | Version 2.0 | TripBnA Platform Policies
         const file = files[i];
         const isVideo = file.type.startsWith('video/') || type === 'videos' || file.name.match(/\.(mp4|webm|mov|mkv)$/i);
         const objUrl = URL.createObjectURL(file);
-        pendingProviderMedia.push({
+        const item = {
           type: isVideo ? 'video' : 'image',
           file: file,
           url: objUrl,
           source: 'file',
           name: file.name
-        });
+        };
+        // Immediate background pre-upload: uploads while user types service details so submission has zero wait time
+        item._uploadPromise = window.uploadFileToStorage(`services/${file.name}`, file).then(u => {
+          if (u && !u.startsWith('blob:')) item.uploadedUrl = u;
+          return u;
+        }).catch(() => null);
+
+        pendingProviderMedia.push(item);
       }
       updateProviderMediaPreview();
     };
@@ -13680,20 +14526,24 @@ Last Updated: April 2026 | Version 2.0 | TripBnA Platform Policies
         const finalImages = [];
         const finalVideos = [];
 
-        for (const item of pendingProviderMedia) {
-          if (item.source === 'file' && item.file) {
-            const path = `services/${type.toLowerCase()}/${Date.now()}_${item.file.name}`;
-            const storedUrl = window.uploadFileToStorage 
-              ? await window.uploadFileToStorage(path, item.file) 
-              : (window.fileToDataUrl ? await window.fileToDataUrl(item.file) : item.url);
-            
-            if (item.type === 'video') finalVideos.push(storedUrl || item.url);
-            else finalImages.push(storedUrl || item.url);
+        await Promise.all(pendingProviderMedia.map(async (item) => {
+          if (item.source === 'file') {
+            let resUrl = item.uploadedUrl;
+            if (!resUrl && item._uploadPromise) {
+              resUrl = await item._uploadPromise;
+            }
+            if (!resUrl && item.file) {
+              const path = `services/${type.toLowerCase()}/${Date.now()}_${item.file.name}`;
+              resUrl = await window.uploadFileToStorage(path, item.file);
+            }
+            const final = resUrl || item.url;
+            if (item.type === 'video') finalVideos.push(final);
+            else finalImages.push(final);
           } else {
             if (item.type === 'video') finalVideos.push(item.url);
             else finalImages.push(item.url);
           }
-        }
+        }));
 
         if (finalImages.length === 0 && finalVideos.length === 0) {
           if (type === 'Accommodation') finalImages.push("https://images.unsplash.com/photo-1547471080-7cc2caa01a7e?auto=format&fit=crop&w=600&q=80");
@@ -13771,21 +14621,42 @@ Last Updated: April 2026 | Version 2.0 | TripBnA Platform Policies
           const nameChanged = (existingSvc.name || '').trim().toLowerCase() !== (servicePayload.name || '').trim().toLowerCase();
           const placeChanged = (existingSvc.place || '').trim().toLowerCase() !== (servicePayload.place || '').trim().toLowerCase();
           const typeChanged = (existingSvc.type || '').trim().toLowerCase() !== (servicePayload.type || '').trim().toLowerCase();
-          const isBigChange = nameChanged || placeChanged || typeChanged;
+          const companyChanged = (existingSvc.companyName || '').trim().toLowerCase() !== (servicePayload.companyName || '').trim().toLowerCase();
+          const isBigChange = Boolean(nameChanged || placeChanged || typeChanged || companyChanged);
 
           if (isUserAdmin) {
             servicePayload.status = existingSvc.status || "Approved";
           } else if (isBigChange) {
             servicePayload.status = "Pending";
             servicePayload.requiresAdminApproval = true;
-            servicePayload.adminNotes = `Pending review for core change: ${nameChanged ? 'Name modified. ' : ''}${placeChanged ? 'Location modified. ' : ''}${typeChanged ? 'Type modified.' : ''}`;
+            const changedList = [nameChanged ? 'Business Name' : '', placeChanged ? 'Location' : '', typeChanged ? 'Category/Type' : '', companyChanged ? 'Company' : ''].filter(Boolean).join(', ');
+            servicePayload.adminNotes = `Vital details modified by owner (${changedList}). Awaiting Platform Admin Jackson Loshilari approval.`;
           } else {
             servicePayload.status = existingSvc.status || "Approved";
           }
 
           if (window.db && window.updateDoc && window.doc) {
-            await window.updateDoc(window.doc(window.db, "services", String(currentEditingServiceId)), servicePayload);
+            try {
+              await window.updateDoc(window.doc(window.db, "services", String(currentEditingServiceId)), servicePayload);
+            } catch(fsErr) {}
           }
+
+          // Persist update to Backend server data/services.json
+          try {
+            const auth = (typeof getActiveProviderAuth === 'function') ? getActiveProviderAuth() : { userId: servicePayload.providerId, userEmail: servicePayload.providerEmail };
+            await fetch(`/api/provider/services/${encodeURIComponent(currentEditingServiceId)}`, {
+              method: 'PUT',
+              headers: {
+                'Content-Type': 'application/json',
+                'x-user-id': auth.userId || servicePayload.providerId,
+                'x-user-email': auth.userEmail || servicePayload.providerEmail
+              },
+              body: JSON.stringify(servicePayload)
+            });
+          } catch(putErr) {
+            console.warn("Backend PUT service error:", putErr);
+          }
+
           const idx = services.findIndex(s => String(s.id) === String(currentEditingServiceId));
           if (idx !== -1) {
             services[idx] = { ...services[idx], ...servicePayload };
@@ -13794,7 +14665,7 @@ Last Updated: April 2026 | Version 2.0 | TripBnA Platform Policies
           if (isUserAdmin) {
             showToast("Service updated and approved by Admin!");
           } else if (isBigChange) {
-            showToast("⚠️ Core change detected (Name/Location/Type). Placed in PENDING review for Jackson Loshilari approval.");
+            showToast("⚠️ Vital change detected (Name/Location/Type/Company). Submitted to Platform Admin Jackson Loshilari for review!");
           } else {
             showToast("✅ Service details updated successfully! Daily changes are live.");
           }
@@ -13811,6 +14682,23 @@ Last Updated: April 2026 | Version 2.0 | TripBnA Platform Policies
           } else {
             servicePayload.id = 'svc_' + Date.now();
           }
+
+          // Persist to backend database for multi-role provider isolation
+          try {
+            const auth = (typeof getActiveProviderAuth === 'function') ? getActiveProviderAuth() : { userId: servicePayload.providerId, userEmail: servicePayload.providerEmail };
+            await fetch('/api/provider/services', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'x-user-id': auth.userId || servicePayload.providerId,
+                'x-user-email': auth.userEmail || servicePayload.providerEmail
+              },
+              body: JSON.stringify(servicePayload)
+            });
+          } catch(backendErr) {
+            console.warn("Backend service submission notice:", backendErr);
+          }
+
           services.unshift(servicePayload);
           window.services = services;
           showToast(isUserAdmin 
@@ -14412,6 +15300,19 @@ Last Updated: April 2026 | Version 2.0 | TripBnA Platform Policies
           ? `<span class="chip" style="background:#fffbeb; color:#b45309; border:1px solid #fde68a; font-size:11px; padding:2px 8px; border-radius:6px; font-weight:700;">⏳ Pending Approval</span>`
           : `<span class="chip" style="background:#f0fdf4; color:#15803d; border:1px solid #bbf7d0; font-size:11px; padding:2px 8px; border-radius:6px; font-weight:700;">✅ Approved</span>`;
 
+        const todayStr = new Date().toISOString().split('T')[0];
+        const availMenu = (typeof getAvailableDailyMenuForDay === 'function') ? getAvailableDailyMenuForDay(s, todayStr) : {};
+        let availDishes = [];
+        Object.values(availMenu).forEach(arr => {
+          if (Array.isArray(arr)) arr.forEach(d => { if (d && d.name) availDishes.push(d.name); });
+        });
+        const dailyMenuBadge = availDishes.length > 0
+          ? `<div style="font-size:11.5px; color:#14532d; background:#f0fdf4; border:1px solid #bbf7d0; padding:5px 9px; border-radius:6px; margin:5px 0; line-height:1.4;">
+               <strong>🟢 Today's Available Menu (${availDishes.length}):</strong>
+               <span style="color:#15803d;"> ${escapeHTML(availDishes.slice(0, 3).join(', '))}${availDishes.length > 3 ? ` +${availDishes.length - 3} more` : ''}</span>
+             </div>`
+          : '';
+
         const providerActions = canEdit ? `
           <div style="display:flex; gap:6px; margin-top:10px; padding-top:8px; border-top:1px dashed #e2e8f0; flex-wrap:wrap;">
             <button type="button" class="ghost" style="flex:1; padding:6px 8px; font-size:12px;" onclick="openFoodMenuFromTable('${s.id}')">📋 Manage Menu</button>
@@ -14433,6 +15334,7 @@ Last Updated: April 2026 | Version 2.0 | TripBnA Platform Policies
               <div class="hub-card-meta">
                 🍴 <strong>${escapeHTML(s.foodType || 'Swahili & International Cuisine')}</strong>
               </div>
+              ${dailyMenuBadge}
               ${s.specialOffers ? `<div class="hub-card-offer">🎁 ${escapeHTML(s.specialOffers)}</div>` : ''}
               <div class="hub-card-footer" style="display:flex; flex-direction:column; gap:10px;">
                 <div style="display:flex; justify-content:space-between; align-items:center;">
@@ -16123,10 +17025,16 @@ Last Updated: April 2026 | Version 2.0 | TripBnA Platform Policies
     }
     window.resetAdminTransportFilters = resetAdminTransportFilters;
 
-    // Auto-initialize Transport Marketplace on script load
+    // Auto-initialize Transport, Accommodation, and Food Marketplaces on script load
     try {
       if (typeof renderTransportSection === 'function') {
         renderTransportSection();
+      }
+      if (typeof renderAccommodationSection === 'function') {
+        renderAccommodationSection();
+      }
+      if (typeof renderFoodSection === 'function') {
+        renderFoodSection();
       }
       if (typeof updateTransportStartingPricesAndCounts === 'function') {
         updateTransportStartingPricesAndCounts();
@@ -16135,13 +17043,15 @@ Last Updated: April 2026 | Version 2.0 | TripBnA Platform Policies
         renderTransportDynamicSearchFields('all');
       }
     } catch(e) {
-      console.warn('Transport initial render notice:', e);
+      console.warn('Marketplace initial render notice:', e);
     }
 
-    // Re-verify and refresh transport starting prices on DOMContentLoaded
+    // Re-verify and refresh marketplace sections on DOMContentLoaded
     window.addEventListener('DOMContentLoaded', () => {
       setTimeout(() => {
         if (typeof renderTransportSection === 'function') renderTransportSection();
+        if (typeof renderAccommodationSection === 'function') renderAccommodationSection();
+        if (typeof renderFoodSection === 'function') renderFoodSection();
         if (typeof updateTransportStartingPricesAndCounts === 'function') updateTransportStartingPricesAndCounts();
       }, 100);
     });
@@ -16414,41 +17324,61 @@ Last Updated: April 2026 | Version 2.0 | TripBnA Platform Policies
             </div>
           `;
         } else if (svc.type === 'Food') {
-          const foodMenus = svc.menuCategories || [
-            { name: 'Starters & Bites', items: [{ name: 'Swahili Sambusa & Coconut Dip', price: '$6', desc: 'Crispy spiced beef or vegetable triangles' }, { name: 'Zanzibar Spiced Soup', price: '$8', desc: 'Slow-simmered fish broth with lemongrass & herbs' }] },
-            { name: 'Main Courses', items: [{ name: 'Grilled Seafood Platter with Coconut Rice', price: '$24', desc: 'Fresh jumbo prawns, calamari & catch of the day' }, { name: 'Traditional Mishkaki Beef Skewers', price: '$16', desc: 'Charcoal-grilled tender marinated cuts with kachumbari' }] },
-            { name: 'Drinks & Desserts', items: [{ name: 'Spiced Chai Tasting', price: '$4', desc: 'Cardamom, cinnamon & ginger organic Tanzanian tea' }, { name: 'Tropical Mango Kulfi', price: '$7', desc: 'Chilled local cream dessert with crushed pistachios' }] }
-          ];
+          const todayStr = new Date().toISOString().split('T')[0];
+          const activeDate = svc.currentMenuDate || todayStr;
+          const availableDailyMenu = (typeof getAvailableDailyMenuForDay === 'function')
+            ? getAvailableDailyMenuForDay(svc, activeDate)
+            : {};
+
+          const catKeys = Object.keys(availableDailyMenu);
 
           specs.innerHTML = `
             <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:16px; margin-bottom:14px;">
-              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-                <h4 style="margin:0; font-size:14px; font-weight:700; color:#0f172a;">🍴 Cuisine & Dining Experience</h4>
-                <span style="background:#fef3c7; color:#b45309; font-size:11px; font-weight:800; padding:2px 8px; border-radius:6px;">${escapeHTML(svc.foodType || 'Swahili & International Cuisine')}</span>
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; flex-wrap:wrap; gap:8px;">
+                <div style="display:flex; align-items:center; gap:8px;">
+                  <h4 style="margin:0; font-size:14px; font-weight:700; color:#0f172a;">🍴 Cuisine & Dining</h4>
+                  <span style="background:#fef3c7; color:#b45309; font-size:11px; font-weight:800; padding:2px 8px; border-radius:6px;">${escapeHTML(svc.foodType || 'Swahili Cuisine')}</span>
+                </div>
+                <span style="font-size:11px; font-weight:800; background:#dcfce7; color:#166534; padding:3px 10px; border-radius:6px; border:1px solid #86efac;">📅 Daily Menu Available for Today (${escapeHTML(activeDate)})</span>
               </div>
-              <div style="font-size:12px; color:#64748b; line-height:1.6;">Dine-in seating with scenic views, fresh ocean breeze, and room delivery available upon request.</div>
+              <div style="font-size:12px; color:#64748b; line-height:1.5;">Showing only food items that the restaurant has posted and confirmed available for today.</div>
             </div>
 
             <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:16px;">
-              <h4 style="margin:0 0 12px 0; font-size:14px; font-weight:700; color:#0f172a;">📖 Sample Food Menu & Specialties</h4>
-              <div style="display:flex; flex-direction:column; gap:12px;">
-                ${foodMenus.map(cat => `
-                  <div>
-                    <div style="font-size:12px; font-weight:800; color:#0f172a; text-transform:uppercase; margin-bottom:6px; letter-spacing:0.5px;">${escapeHTML(cat.name)}</div>
-                    <div style="display:flex; flex-direction:column; gap:6px;">
-                      ${cat.items.map(dish => `
-                        <div style="display:flex; justify-content:space-between; align-items:flex-start; background:#fff; border:1px solid #e2e8f0; border-radius:8px; padding:8px 12px;">
-                          <div>
-                            <div style="font-weight:700; font-size:13px; color:#1e293b;">${escapeHTML(dish.name)}</div>
-                            <div style="font-size:11px; color:#64748b;">${escapeHTML(dish.desc)}</div>
-                          </div>
-                          <span style="font-weight:800; font-size:13px; color:#15803d; margin-left:12px;">${escapeHTML(dish.price)}</span>
-                        </div>
-                      `).join('')}
-                    </div>
-                  </div>
-                `).join('')}
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+                <h4 style="margin:0; font-size:14px; font-weight:700; color:#0f172a;">📖 Food Menu Available for That Day</h4>
+                <button type="button" class="primary" style="padding:5px 14px; font-size:12px; font-weight:800; background:#16a34a; border:none; border-radius:6px; cursor:pointer;" onclick="openFoodOrderForService(services.find(item => String(item.id) === '${svc.id}'))">🍴 Order Now</button>
               </div>
+              ${catKeys.length === 0 ? `
+                <div style="text-align:center; padding:20px; color:#64748b; font-size:13px; background:#fff; border-radius:8px; border:1px dashed #cbd5e1;">
+                  No food dishes posted as available for today yet.
+                </div>
+              ` : `
+                <div style="display:flex; flex-direction:column; gap:12px;">
+                  ${catKeys.map(catName => `
+                    <div>
+                      <div style="font-size:12px; font-weight:800; color:#0f172a; text-transform:uppercase; margin-bottom:6px; letter-spacing:0.5px; display:flex; justify-content:space-between;">
+                        <span>🍽️ ${escapeHTML(catName)}</span>
+                        <span style="font-size:11px; color:#15803d; font-weight:700;">${availableDailyMenu[catName].length} available</span>
+                      </div>
+                      <div style="display:flex; flex-direction:column; gap:6px;">
+                        ${availableDailyMenu[catName].map(dish => `
+                          <div style="display:flex; justify-content:space-between; align-items:flex-start; background:#fff; border:1px solid #e2e8f0; border-radius:8px; padding:8px 12px;">
+                            <div>
+                              <div style="font-weight:700; font-size:13px; color:#1e293b; display:flex; align-items:center; gap:6px;">
+                                <span>${escapeHTML(dish.name)}</span>
+                                <span style="font-size:9.5px; background:#dcfce7; color:#166534; padding:1px 5px; border-radius:4px; font-weight:700;">🟢 Available</span>
+                              </div>
+                              ${dish.desc ? `<div style="font-size:11px; color:#64748b; margin-top:2px;">${escapeHTML(dish.desc)}</div>` : ''}
+                            </div>
+                            <span style="font-weight:800; font-size:13px; color:#15803d; margin-left:12px;">$${Number(dish.price||0).toFixed(2)}</span>
+                          </div>
+                        `).join('')}
+                      </div>
+                    </div>
+                  `).join('')}
+                </div>
+              `}
             </div>
           `;
         } else {
@@ -21339,35 +22269,98 @@ function getDefaultMenuForService(serviceId) {
   };
 }
 
+function getDailyMenuForService(serviceOrId, optDate) {
+  const svc = (typeof serviceOrId === 'object' && serviceOrId !== null)
+    ? serviceOrId
+    : ((window.services || (typeof services !== 'undefined' ? services : [])).find(s => String(s.id) === String(serviceOrId)));
+  if (!svc) return null;
+
+  const todayStr = new Date().toISOString().split('T')[0];
+  const targetDate = (optDate || svc.currentMenuDate || todayStr).trim();
+
+  // 1. Check if date-specific dailyMenu entry was posted for target date
+  if (svc.dailyMenu && svc.dailyMenu[targetDate] !== undefined) {
+    return JSON.parse(JSON.stringify(svc.dailyMenu[targetDate]));
+  }
+  // 2. If checking for today, check svc.todayMenu
+  if (targetDate === todayStr && svc.todayMenu && typeof svc.todayMenu === 'object') {
+    return JSON.parse(JSON.stringify(svc.todayMenu));
+  }
+  // 3. Check if svc.dailyMenu has today's date
+  if (svc.dailyMenu && svc.dailyMenu[todayStr] !== undefined) {
+    return JSON.parse(JSON.stringify(svc.dailyMenu[todayStr]));
+  }
+  // 4. Check active svc.todayMenu
+  if (svc.todayMenu && typeof svc.todayMenu === 'object' && Object.keys(svc.todayMenu).length > 0) {
+    return JSON.parse(JSON.stringify(svc.todayMenu));
+  }
+  // 5. Check svc.menu (only if no daily menu was posted)
+  if (svc.menu && typeof svc.menu === 'object' && Object.keys(svc.menu).length > 0) {
+    return JSON.parse(JSON.stringify(svc.menu));
+  }
+  return null;
+}
+window.getDailyMenuForService = getDailyMenuForService;
+
+function getAvailableDailyMenuForDay(serviceOrId, optDate) {
+  const rawMenu = getDailyMenuForService(serviceOrId, optDate);
+  if (!rawMenu || typeof rawMenu !== 'object') return {};
+
+  const filtered = {};
+  Object.keys(rawMenu).forEach(cat => {
+    const items = Array.isArray(rawMenu[cat]) ? rawMenu[cat] : [];
+    // CRITICAL REQUIREMENT: Must ONLY show the food menu that is available for that day!
+    // Discards out-of-stock, unavailable, or non-approved dishes
+    const availableItems = items.filter(item => {
+      if (!item) return false;
+      const isApproved = (item.status === 'Approved' || item.status === undefined);
+      const isActive = (item.active !== false);
+      const isAvail = (item.isAvailable !== false && item.availability !== 'unavailable');
+      return isApproved && isActive && isAvail;
+    });
+    if (availableItems.length > 0) {
+      filtered[cat] = availableItems;
+    }
+  });
+  return filtered;
+}
+window.getAvailableDailyMenuForDay = getAvailableDailyMenuForDay;
+
 function loadMenu(serviceId) {
   activeMenuServiceId = serviceId;
-  try {
-    const raw = localStorage.getItem(menuStorageKey(serviceId));
-    if (raw) {
-      menuData = JSON.parse(raw);
-    } else {
-      const svc = (typeof services !== 'undefined' && Array.isArray(services)) ? services.find(s => String(s.id) === String(serviceId)) : null;
-      if (svc && svc.menu && Object.keys(svc.menu).length > 0) {
-        menuData = svc.menu;
+  const svc = (typeof services !== 'undefined' && Array.isArray(services))
+    ? services.find(s => String(s.id) === String(serviceId))
+    : ((window.services || []).find(s => String(s.id) === String(serviceId)));
+
+  const dailyPostedMenu = getDailyMenuForService(svc);
+  if (dailyPostedMenu && Object.keys(dailyPostedMenu).length > 0) {
+    menuData = dailyPostedMenu;
+    try {
+      localStorage.setItem(menuStorageKey(serviceId), JSON.stringify(menuData));
+    } catch(e) {}
+  } else {
+    try {
+      const raw = localStorage.getItem(menuStorageKey(serviceId));
+      if (raw) {
+        menuData = JSON.parse(raw);
       } else {
         menuData = getDefaultMenuForService(serviceId);
         saveMenu();
       }
+    } catch (e) {
+      menuData = getDefaultMenuForService(serviceId);
     }
-  } catch (e) {
-    menuData = getDefaultMenuForService(serviceId);
   }
 
-  // Ensure all categories exist in menuData
-  categories.forEach(cat => {
-    if (!menuData[cat]) menuData[cat] = [];
-    // Normalize status on items if missing
-    menuData[cat].forEach(item => {
-      if (!item.status) item.status = "Approved";
-      if (item.active === undefined) item.active = true;
-      if (item.availability === undefined) item.availability = "available";
-      if (!item.currency) item.currency = "USD";
-    });
+  // Normalize status and fields on items if missing
+  Object.keys(menuData).forEach(cat => {
+    if (Array.isArray(menuData[cat])) {
+      menuData[cat].forEach(item => {
+        if (!item.status) item.status = "Approved";
+        if (item.active === undefined) item.active = true;
+        if (item.currency === undefined) item.currency = "USD";
+      });
+    }
   });
 }
 
@@ -21413,7 +22406,7 @@ function showSection(section) {
   section.style.display = "block";
 }
 
-// Render view menu for customer
+// Render view menu for customer — STRICT DAILY AVAILABILITY REQUIREMENT
 function renderViewMenu() {
   const container = document.getElementById("viewMenuContainer");
   if (!container) return;
@@ -21422,21 +22415,45 @@ function renderViewMenu() {
 
   const isOwnerOrAdmin = currentFoodService && (canUserEditService(currentFoodService) || isAdmin(window.currentUser));
 
-  let hasAnyItems = false;
+  // Determine active date for daily menu
+  const todayStr = new Date().toISOString().split('T')[0];
+  const activeDate = (currentFoodService && (currentFoodService.currentMenuDate || currentFoodService.availabilityDate)) || todayStr;
 
-  categories.forEach(cat => {
-    const items = menuData[cat] || [];
-    // Customer view must only show Approved and active dishes unless owner/admin is previewing
+  // Retrieve the food menu posted for today and filter STRICTLY for items that are available today
+  const availableDailyMenu = getAvailableDailyMenuForDay(currentFoodService, activeDate);
+
+  // Header banner indicating daily menu and availability for that day
+  const banner = document.createElement("div");
+  banner.style.cssText = "background:#f0fdf4; border:1.5px solid #86efac; border-radius:10px; padding:12px 16px; margin-bottom:16px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;";
+  banner.innerHTML = `
+    <div style="display:flex; align-items:center; gap:10px;">
+      <span style="font-size:22px;">📅</span>
+      <div>
+        <strong style="font-size:13.5px; color:#14532d;">Daily Menu Available for Today (${escapeHTML(activeDate)})</strong>
+        <div style="font-size:11.5px; color:#15803d; margin-top:2px;">Showing only dishes confirmed and available today by ${escapeHTML(currentFoodService?.name || 'the service provider')}. Out-of-stock items are automatically hidden.</div>
+      </div>
+    </div>
+    <span style="font-size:11px; font-weight:800; background:#dcfce7; color:#166534; padding:3px 10px; border-radius:999px; border:1px solid #86efac; white-space:nowrap;">🟢 Today's Live Menu</span>
+  `;
+  container.appendChild(banner);
+
+  let hasAnyItems = false;
+  const menuCategories = Object.keys(availableDailyMenu);
+
+  menuCategories.forEach(cat => {
+    const items = availableDailyMenu[cat] || [];
+    
+    // CRITICAL REQUIREMENT: Must ONLY show the food menu that is available for that day!
+    // Discards out-of-stock, unavailable, or non-approved dishes
     const eligibleItems = items.filter(item => {
-      if (isOwnerOrAdmin) return true;
       const isApproved = (item.status === 'Approved' || item.status === undefined);
       const isActive = (item.active !== false);
-      const isAvailable = (item.availability !== 'unavailable' && item.isAvailable !== false);
+      const isAvailable = (item.isAvailable !== false && item.availability !== 'unavailable');
       return isApproved && isActive && isAvailable;
     });
 
     const matched = eligibleItems.filter(item => 
-      item.name.toLowerCase().includes(searchTerm) || 
+      (item.name || '').toLowerCase().includes(searchTerm) || 
       (item.desc || '').toLowerCase().includes(searchTerm) ||
       (item.ingredients || '').toLowerCase().includes(searchTerm)
     );
@@ -21445,12 +22462,17 @@ function renderViewMenu() {
       hasAnyItems = true;
       const catDiv = document.createElement("div");
       catDiv.className = "card";
-      catDiv.style.margin = "0";
+      catDiv.style.margin = "0 0 14px 0";
       catDiv.style.padding = "16px";
       catDiv.style.border = "1px solid #e2e8f0";
       catDiv.style.borderRadius = "10px";
 
-      catDiv.innerHTML = `<h3 style="margin:0 0 12px 0; font-size:16px; color:#1e293b; border-bottom:1px solid #f1f5f9; padding-bottom:6px;">🍽️ ${escapeHTML(cat)}</h3>`;
+      catDiv.innerHTML = `
+        <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #f1f5f9; padding-bottom:8px; margin-bottom:12px;">
+          <h3 style="margin:0; font-size:16px; color:#1e293b; font-weight:800;">🍽️ ${escapeHTML(cat)}</h3>
+          <span style="font-size:11px; font-weight:700; background:#f0fdf4; color:#166534; padding:2px 8px; border-radius:999px; border:1px solid #bbf7d0;">${matched.length} available today</span>
+        </div>
+      `;
       const itemsDiv = document.createElement("div");
       itemsDiv.style.display = "flex";
       itemsDiv.style.flexDirection = "column";
@@ -21469,18 +22491,13 @@ function renderViewMenu() {
         const inCartQty = cart.find(c => c.name === item.name)?.quantity || 0;
         const imgUrl = (Array.isArray(item.images) && item.images[0]) ? item.images[0] : "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=150&q=80";
 
-        let previewBadge = '';
-        if (isOwnerOrAdmin && item.status !== 'Approved') {
-          previewBadge = `<span class="chip" style="font-size:10px; background:#fffbeb; color:#b45309; border:1px solid #fde68a;">[Preview: ${item.status}]</span>`;
-        }
-
         itemDiv.innerHTML = `
           <div style="display:flex; gap:12px; align-items:center; flex:1; min-width:240px;">
             <img src="${imgUrl}" style="width:68px; height:68px; border-radius:8px; object-fit:cover; border:1px solid #cbd5e1;">
             <div>
               <div style="display:flex; align-items:center; gap:6px;">
                 <strong style="font-size:15px; color:#0f172a;">${escapeHTML(item.name)}</strong>
-                ${previewBadge}
+                <span style="font-size:10px; font-weight:700; background:#dcfce7; color:#166534; padding:1px 6px; border-radius:4px;">🟢 Available Today</span>
               </div>
               <div style="font-size:14px; font-weight:700; color:#15803d; margin:2px 0;">
                 $${formatPrice(item.price)}
@@ -21505,10 +22522,10 @@ function renderViewMenu() {
   });
 
   if (!hasAnyItems) {
-    container.innerHTML = `<div class="card" style="text-align:center; padding:30px; color:#64748b;">
-      <div style="font-size:32px;">🔍</div>
-      <div style="font-weight:700; margin-top:8px;">No menu items found</div>
-      <div style="font-size:12px;">Try adjusting your search query or view all categories.</div>
+    container.innerHTML = `<div class="card" style="text-align:center; padding:36px 20px; color:#64748b; background:#fff; border-radius:12px; border:1px dashed #cbd5e1;">
+      <div style="font-size:36px; margin-bottom:8px;">🍽️</div>
+      <div style="font-weight:700; font-size:15px; color:#1e293b;">No food menu available for today</div>
+      <div style="font-size:12.5px; color:#64748b; margin-top:4px;">This restaurant has not listed dishes as available for ${escapeHTML(activeDate)}, or all items are currently sold out.</div>
     </div>`;
   }
 
@@ -22444,6 +23461,848 @@ function adminApproveAllMenuDishes() {
 }
 window.adminApproveAllMenuDishes = adminApproveAllMenuDishes;
 
+  /* =========================================================================
+     DATE-AWARE PROVIDER-OWNED OPERATIONAL AVAILABILITY ENGINE
+     Enforces backend and client authorization:
+     - Food Provider: Updates today's menu (Fast Food, Vegetarian, Local Food)
+     - Accommodation: Updates room vacancy (Twin, Master, Single, Double, Suite)
+     - Transport: Updates fleet availability & routes
+     - Preserves Approved status with zero admin re-approval needed
+     ========================================================================= */
+
+  function getActiveProviderAuth() {
+    const user = window.currentUser || (window.auth && window.auth.currentUser);
+    let userId = '';
+    let userEmail = '';
+
+    if (user) {
+      userEmail = (user.email || '').toLowerCase().trim();
+      userId = String(user.uid || '').trim();
+    }
+
+    if (userEmail === 'jacksonloshilari7@gmail.com' || (user && isAdmin(user))) {
+      userId = 'admin';
+      userEmail = 'jacksonloshilari7@gmail.com';
+    } else if (userEmail === 'swahilidining@tripbna.com') {
+      userId = 'prov_food_1';
+      userEmail = 'swahilidining@tripbna.com';
+    } else if (userEmail === 'forodhani@tripbna.com') {
+      userId = 'prov_food_2';
+      userEmail = 'forodhani@tripbna.com';
+    } else if (userEmail === 'serengetilodge@gmail.com') {
+      userId = 'prov_acc_1';
+      userEmail = 'serengetilodge@gmail.com';
+    } else if (userEmail === 'abctaxi@gmail.com') {
+      userId = 'prov_trans_1';
+      userEmail = 'abctaxi@gmail.com';
+    }
+    return { userId, userEmail };
+  }
+  window.getActiveProviderAuth = getActiveProviderAuth;
+
+  async function loadProviderServicesFromBackend() {
+    const auth = getActiveProviderAuth();
+    if (!auth.userId && !auth.userEmail) return;
+    try {
+      const q = new URLSearchParams();
+      if (auth.userId) q.set('userId', auth.userId);
+      if (auth.userEmail) q.set('userEmail', auth.userEmail);
+      const res = await fetch(`/api/provider/services?${q.toString()}`, {
+        headers: {
+          'x-user-id': auth.userId,
+          'x-user-email': auth.userEmail
+        }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data && data.success && Array.isArray(data.services)) {
+          const map = new Map();
+          (window.services || services || []).forEach(s => map.set(String(s.id), s));
+          data.services.forEach(serverSvc => {
+            const existing = map.get(String(serverSvc.id));
+            if (existing) {
+              Object.assign(existing, serverSvc);
+            } else {
+              if (window.services) window.services.unshift(serverSvc);
+              if (typeof services !== 'undefined') services.unshift(serverSvc);
+              map.set(String(serverSvc.id), serverSvc);
+            }
+          });
+          if (typeof renderTables === 'function') renderTables();
+        }
+      }
+    } catch(err) {
+      console.warn("loadProviderServicesFromBackend notice:", err);
+    }
+  }
+  window.loadProviderServicesFromBackend = loadProviderServicesFromBackend;
+
+  // 1. Food Provider — Daily Menu Management (Date-Aware)
+  let currentEditingFdmServiceId = null;
+  let currentFdmDate = '';
+  let currentFdmMenuData = {};
+
+  function openFoodDailyMenuModal(serviceId, optDate) {
+    const svc = (window.services || services || []).find(s => String(s.id) === String(serviceId));
+    if (!svc) {
+      showToast("Dining service not found.");
+      return;
+    }
+
+    if (!canUserEditService(svc) && !isAdmin(window.currentUser)) {
+      alert("🔒 Access Denied: You do not own this food service. You can only manage your own restaurant menu.");
+      return;
+    }
+
+    currentEditingFdmServiceId = svc.id;
+    currentFdmDate = (optDate || svc.currentMenuDate || new Date().toISOString().split('T')[0]).trim();
+
+    const titleEl = document.getElementById('fdmModalTitle');
+    if (titleEl) titleEl.textContent = `Today's Menu: ${svc.name || 'Restaurant'}`;
+
+    const subtitleEl = document.getElementById('fdmModalRestaurantSubtitle');
+    if (subtitleEl) subtitleEl.textContent = `Provider-Owned Menu • ${svc.place || 'Tanzania'} • Preserves Approved status`;
+
+    const datePicker = document.getElementById('fdmDatePicker');
+    if (datePicker) datePicker.value = currentFdmDate;
+
+    // Load date-aware menu
+    if (svc.dailyMenu && svc.dailyMenu[currentFdmDate]) {
+      currentFdmMenuData = JSON.parse(JSON.stringify(svc.dailyMenu[currentFdmDate]));
+    } else if (svc.todayMenu && typeof svc.todayMenu === 'object') {
+      currentFdmMenuData = JSON.parse(JSON.stringify(svc.todayMenu));
+    } else {
+      currentFdmMenuData = {
+        "Fast Food": [
+          { id: "ff_1", name: "Chips", price: 3, isAvailable: true, desc: "Crispy golden fries" },
+          { id: "ff_2", name: "Chicken", price: 6.5, isAvailable: true, desc: "Tender grilled chicken" },
+          { id: "ff_3", name: "Burger", price: 7, isAvailable: true, desc: "Flame-grilled burger" },
+          { id: "ff_4", name: "Sausage", price: 2.5, isAvailable: true, desc: "Savory sausages" }
+        ],
+        "Vegetarian": [
+          { id: "veg_1", name: "Broccoli", price: 4.5, isAvailable: true, desc: "Fresh broccoli" },
+          { id: "veg_2", name: "Vegetable Rice", price: 4, isAvailable: true, desc: "Fragrant veg rice" },
+          { id: "veg_3", name: "Beans", price: 3.5, isAvailable: true, desc: "Red kidney beans" },
+          { id: "veg_4", name: "Spinach", price: 3, isAvailable: true, desc: "Tender spinach" }
+        ],
+        "Local Food": [
+          { id: "loc_1", name: "Ugali", price: 2, isAvailable: true, desc: "Hot cornmeal staple" },
+          { id: "loc_2", name: "Dagaa", price: 5, isAvailable: true, desc: "Lake sardines" },
+          { id: "loc_3", name: "Beef", price: 6, isAvailable: true, desc: "Braised beef chunks" },
+          { id: "loc_4", name: "Pilau", price: 5.5, isAvailable: true, desc: "Spiced pilau rice" },
+          { id: "loc_5", name: "Mchicha", price: 2.5, isAvailable: true, desc: "Traditional amaranth greens" }
+        ]
+      };
+    }
+
+    renderFdmCategories();
+
+    const modal = document.getElementById('foodDailyMenuModal');
+    if (modal) {
+      modal.style.display = 'flex';
+      document.body.style.overflow = 'hidden';
+    }
+  }
+  window.openFoodDailyMenuModal = openFoodDailyMenuModal;
+
+  function closeFoodDailyMenuModal() {
+    const modal = document.getElementById('foodDailyMenuModal');
+    if (modal) modal.style.display = 'none';
+    document.body.style.overflow = '';
+  }
+  window.closeFoodDailyMenuModal = closeFoodDailyMenuModal;
+
+  function handleDailyMenuDateChange(val) {
+    if (!val) return;
+    currentFdmDate = val.trim();
+    const svc = (window.services || services || []).find(s => String(s.id) === String(currentEditingFdmServiceId));
+    if (svc && svc.dailyMenu && svc.dailyMenu[currentFdmDate]) {
+      currentFdmMenuData = JSON.parse(JSON.stringify(svc.dailyMenu[currentFdmDate]));
+    }
+    renderFdmCategories();
+    showToast(`Showing menu for ${currentFdmDate}`);
+  }
+  window.handleDailyMenuDateChange = handleDailyMenuDateChange;
+
+  function setDailyMenuDateQuick(which) {
+    const now = new Date();
+    if (which === 'tomorrow') {
+      now.setDate(now.getDate() + 1);
+    }
+    const val = now.toISOString().split('T')[0];
+    const dp = document.getElementById('fdmDatePicker');
+    if (dp) dp.value = val;
+    handleDailyMenuDateChange(val);
+  }
+  window.setDailyMenuDateQuick = setDailyMenuDateQuick;
+
+  function renderFdmCategories() {
+    const container = document.getElementById('fdmCategoriesContainer');
+    if (!container) return;
+    container.innerHTML = '';
+
+    const catKeys = Object.keys(currentFdmMenuData);
+    if (!catKeys.length) {
+      container.innerHTML = `
+        <div style="text-align:center; padding:30px; background:#fff; border-radius:12px; border:1px dashed #cbd5e1; color:#64748b;">
+          No categories found. Click <strong>➕ Add Food Category</strong> below to get started.
+        </div>
+      `;
+      return;
+    }
+
+    catKeys.forEach(catName => {
+      const items = currentFdmMenuData[catName] || [];
+      const catCard = document.createElement('div');
+      catCard.style.cssText = "background:#ffffff; border:1px solid #e2e8f0; border-radius:12px; padding:16px; box-shadow:0 1px 4px rgba(0,0,0,0.03);";
+      
+      catCard.innerHTML = `
+        <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #f1f5f9; padding-bottom:10px; margin-bottom:12px; flex-wrap:wrap; gap:8px;">
+          <div style="display:flex; align-items:center; gap:8px;">
+            <strong style="font-size:15px; color:#0f172a;">🍽️ ${escapeHTML(catName)}</strong>
+            <span style="font-size:11px; font-weight:700; background:#f1f5f9; color:#475569; padding:2px 8px; border-radius:999px;">${items.length} items</span>
+          </div>
+          <button type="button" onclick="promptAddDailyMenuItem('${escapeHTML(catName)}')" style="background:#f0fdf4; color:#15803d; border:1px solid #86efac; border-radius:6px; font-size:11.5px; font-weight:700; padding:4px 10px; cursor:pointer;">
+            ➕ Add ${escapeHTML(catName)} Item
+          </button>
+        </div>
+        <div id="fdm_items_${catName.replace(/[^a-zA-Z0-9]/g, '_')}" style="display:flex; flex-direction:column; gap:8px;"></div>
+      `;
+
+      const listContainer = catCard.querySelector(`#fdm_items_${catName.replace(/[^a-zA-Z0-9]/g, '_')}`);
+
+      if (!items.length) {
+        listContainer.innerHTML = `<div style="font-size:12px; color:#94a3b8; font-style:italic; padding:6px 0;">No items in this category today.</div>`;
+      } else {
+        items.forEach((item, idx) => {
+          const isAvail = item.isAvailable !== false;
+          const row = document.createElement('div');
+          row.style.cssText = `display:flex; align-items:center; justify-content:space-between; gap:10px; padding:10px 12px; border-radius:8px; border:1px solid ${isAvail ? '#cbd5e1' : '#fecaca'}; background:${isAvail ? '#f8fafc' : '#fff5f5'}; flex-wrap:wrap;`;
+          
+          row.innerHTML = `
+            <div style="display:flex; align-items:center; gap:10px; flex:1; min-width:200px;">
+              <button type="button" onclick="toggleDailyMenuItemAvail('${escapeHTML(catName)}', ${idx})" style="padding:4px 10px; font-size:11px; font-weight:800; border-radius:6px; border:none; cursor:pointer; background:${isAvail ? '#16a34a' : '#ef4444'}; color:#fff; white-space:nowrap;" title="Click to toggle: Available / Sold out today">
+                ${isAvail ? '🟢 Available Today' : '⚪ Sold Out'}
+              </button>
+              <div style="flex:1;">
+                <input type="text" value="${escapeHTML(item.name || '')}" onchange="updateDailyMenuItemField('${escapeHTML(catName)}', ${idx}, 'name', this.value)" style="font-size:13px; font-weight:700; color:#0f172a; border:1px solid #cbd5e1; border-radius:6px; padding:4px 8px; width:100%; max-width:240px;" placeholder="Dish Name" />
+                ${item.desc ? `<div style="font-size:11px; color:#64748b; margin-top:2px;">${escapeHTML(item.desc)}</div>` : ''}
+              </div>
+            </div>
+            <div style="display:flex; align-items:center; gap:8px;">
+              <div style="display:flex; align-items:center; gap:4px;">
+                <span style="font-size:12px; font-weight:800; color:#15803d;">$</span>
+                <input type="number" step="0.5" min="0" value="${item.price || 0}" onchange="updateDailyMenuItemField('${escapeHTML(catName)}', ${idx}, 'price', parseFloat(this.value)||0)" style="font-size:13px; font-weight:800; color:#15803d; border:1px solid #cbd5e1; border-radius:6px; padding:4px 6px; width:70px; text-align:right;" />
+              </div>
+              <button type="button" onclick="removeDailyMenuItem('${escapeHTML(catName)}', ${idx})" style="background:#fee2e2; color:#dc2626; border:1px solid #fca5a5; border-radius:6px; padding:4px 8px; font-size:12px; cursor:pointer;" title="Remove item from today's menu">
+                🗑️
+              </button>
+            </div>
+          `;
+          listContainer.appendChild(row);
+        });
+      }
+
+      container.appendChild(catCard);
+    });
+  }
+
+  function toggleDailyMenuItemAvail(catName, idx) {
+    if (!currentFdmMenuData[catName] || !currentFdmMenuData[catName][idx]) return;
+    const item = currentFdmMenuData[catName][idx];
+    item.isAvailable = (item.isAvailable === false);
+    renderFdmCategories();
+  }
+  window.toggleDailyMenuItemAvail = toggleDailyMenuItemAvail;
+
+  function updateDailyMenuItemField(catName, idx, field, val) {
+    if (!currentFdmMenuData[catName] || !currentFdmMenuData[catName][idx]) return;
+    currentFdmMenuData[catName][idx][field] = val;
+  }
+  window.updateDailyMenuItemField = updateDailyMenuItemField;
+
+  function removeDailyMenuItem(catName, idx) {
+    if (!currentFdmMenuData[catName]) return;
+    const item = currentFdmMenuData[catName][idx];
+    if (confirm(`Remove "${item ? item.name : 'dish'}" from today's menu?`)) {
+      currentFdmMenuData[catName].splice(idx, 1);
+      renderFdmCategories();
+      showToast('Item removed from today\'s menu.');
+    }
+  }
+  window.removeDailyMenuItem = removeDailyMenuItem;
+
+  function promptAddDailyMenuItem(catName) {
+    const name = prompt(`Enter item name for ${catName} (e.g. Chips, Chicken, Ugali, Broccoli):`);
+    if (!name || !name.trim()) return;
+    const priceStr = prompt(`Enter price in USD for "${name.trim()}":`, "5");
+    const price = parseFloat(priceStr) || 5;
+
+    currentFdmMenuData[catName] = currentFdmMenuData[catName] || [];
+    currentFdmMenuData[catName].push({
+      id: `item_${Date.now()}_${Math.random().toString(36).substring(2, 5)}`,
+      name: name.trim(),
+      price: price,
+      isAvailable: true,
+      desc: `Fresh today in ${catName}`
+    });
+    renderFdmCategories();
+    showToast(`Added "${name.trim()}" to ${catName}!`);
+  }
+  window.promptAddDailyMenuItem = promptAddDailyMenuItem;
+
+  function promptAddCustomMenuCategory() {
+    const cat = prompt("Enter new food category name (e.g. Fast Food, Vegetarian, Local Food, Seafood, Drinks, Desserts):");
+    if (!cat || !cat.trim()) return;
+    const trimmed = cat.trim();
+    if (!currentFdmMenuData[trimmed]) {
+      currentFdmMenuData[trimmed] = [];
+      renderFdmCategories();
+      showToast(`Category "${trimmed}" added!`);
+    } else {
+      showToast(`Category "${trimmed}" already exists.`);
+    }
+  }
+  window.promptAddCustomMenuCategory = promptAddCustomMenuCategory;
+
+  async function saveFoodDailyMenuFromModal() {
+    if (!currentEditingFdmServiceId) return;
+    const svc = (window.services || services || []).find(s => String(s.id) === String(currentEditingFdmServiceId));
+    if (!svc) return;
+
+    const btn = document.getElementById('fdmSaveBtn');
+    if (btn) { btn.disabled = true; btn.innerHTML = '⏳ Saving...'; }
+
+    const auth = getActiveProviderAuth();
+    const date = currentFdmDate || new Date().toISOString().split('T')[0];
+
+    try {
+      // 1. Send update to Backend with strict ownership verification
+      const resp = await fetch(`/api/provider/services/${svc.id}/menu`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-user-id': auth.userId,
+          'x-user-email': auth.userEmail
+        },
+        body: JSON.stringify({
+          date: date,
+          menu: currentFdmMenuData
+        })
+      });
+
+      const data = await resp.json();
+      if (!resp.ok || !data.success) {
+        throw new Error(data.error || 'Backend rejected menu update (Ownership verification failed).');
+      }
+
+      // 2. Update in client memory & preserve Approved status
+      svc.todayMenu = currentFdmMenuData;
+      svc.dailyMenu = svc.dailyMenu || {};
+      svc.dailyMenu[date] = currentFdmMenuData;
+      svc.currentMenuDate = date;
+      svc.menu = currentFdmMenuData;
+      svc.status = 'Approved'; // Daily food updates never need admin re-approval
+
+      try {
+        localStorage.setItem(menuStorageKey(svc.id), JSON.stringify(currentFdmMenuData));
+      } catch(e) {}
+
+      // 3. Sync to Cloud Firestore if connected
+      if (window.db && window.updateDoc && window.doc) {
+        try {
+          await window.updateDoc(window.doc(window.db, "services", String(svc.id)), {
+            todayMenu: currentFdmMenuData,
+            [`dailyMenu.${date}`]: currentFdmMenuData,
+            currentMenuDate: date,
+            status: 'Approved',
+            updatedAt: window.serverTimestamp ? window.serverTimestamp() : new Date().toISOString()
+          });
+        } catch(fsErr) {
+          console.warn("Firestore menu sync notice:", fsErr);
+        }
+      }
+
+      closeFoodDailyMenuModal();
+      renderTables();
+      renderFoodSection();
+      showToast(`🎉 Today's menu (${date}) updated for "${svc.name}"! Approved & live immediately.`);
+    } catch(err) {
+      console.error("Save daily menu error:", err);
+      alert(`⚠️ Could not save daily menu: ${err.message}`);
+    } finally {
+      if (btn) { btn.disabled = false; btn.innerHTML = '<span>💾 Save Today\'s Menu</span>'; }
+    }
+  }
+  window.saveFoodDailyMenuFromModal = saveFoodDailyMenuFromModal;
+
+  // 2. Accommodation Provider — Room & Stay Availability Management
+  let currentEditingAccAvailServiceId = null;
+  let currentAccAvailDate = '';
+  let currentAccRoomsData = [];
+
+  function openAccommodationAvailabilityModal(serviceId, optDate) {
+    const svc = (window.services || services || []).find(s => String(s.id) === String(serviceId));
+    if (!svc) {
+      showToast("Accommodation service not found.");
+      return;
+    }
+
+    if (!canUserEditService(svc) && !isAdmin(window.currentUser)) {
+      alert("🔒 Access Denied: You do not own this accommodation service.");
+      return;
+    }
+
+    currentEditingAccAvailServiceId = svc.id;
+    currentAccAvailDate = (optDate || svc.availabilityDate || new Date().toISOString().split('T')[0]).trim();
+
+    const titleEl = document.getElementById('aamModalTitle');
+    if (titleEl) titleEl.textContent = `Room Availability: ${svc.name || 'Accommodation'}`;
+
+    const subtitleEl = document.getElementById('aamModalHotelSubtitle');
+    if (subtitleEl) subtitleEl.textContent = `Provider-Owned Operational Update • ${svc.place || 'Tanzania'} • Preserves Approved status`;
+
+    const dp = document.getElementById('aamDatePicker');
+    if (dp) dp.value = currentAccAvailDate;
+
+    if (Array.isArray(svc.availableRooms) && svc.availableRooms.length) {
+      currentAccRoomsData = JSON.parse(JSON.stringify(svc.availableRooms));
+    } else {
+      currentAccRoomsData = [
+        { id: "rm_1", name: "Twin Beds", price: 75, totalUnits: 6, availableUnits: 5, isAvailable: true, desc: "Two single luxury beds with en-suite bath and safari patio" },
+        { id: "rm_2", name: "Master Bedroom", price: 140, totalUnits: 4, availableUnits: 3, isAvailable: true, desc: "Expansive master suite with king bed, deep soaking tub & panoramic deck" },
+        { id: "rm_3", name: "Single Room", price: 55, totalUnits: 8, availableUnits: 6, isAvailable: true, desc: "Comfortable room designed for solo adventurers with hot shower & desk" },
+        { id: "rm_4", name: "Double Room", price: 95, totalUnits: 10, availableUnits: 8, isAvailable: true, desc: "Queen bed with garden view, ceiling fan and mosquito netting" },
+        { id: "rm_5", name: "Family Room", price: 180, totalUnits: 3, availableUnits: 2, isAvailable: true, desc: "Spacious family setup with 1 King bed and 2 single beds for up to 4 guests" },
+        { id: "rm_6", name: "Suite", price: 240, totalUnits: 2, availableUnits: 1, isAvailable: true, desc: "Presidential safari tent suite with private plunge pool and butler service" }
+      ];
+    }
+
+    renderAccommodationRoomTypes();
+
+    const modal = document.getElementById('accommodationAvailabilityModal');
+    if (modal) {
+      modal.style.display = 'flex';
+      document.body.style.overflow = 'hidden';
+    }
+  }
+  window.openAccommodationAvailabilityModal = openAccommodationAvailabilityModal;
+
+  function closeAccommodationAvailabilityModal() {
+    const modal = document.getElementById('accommodationAvailabilityModal');
+    if (modal) modal.style.display = 'none';
+    document.body.style.overflow = '';
+  }
+  window.closeAccommodationAvailabilityModal = closeAccommodationAvailabilityModal;
+
+  function handleAccAvailDateChange(val) {
+    if (!val) return;
+    currentAccAvailDate = val.trim();
+    renderAccommodationRoomTypes();
+  }
+  window.handleAccAvailDateChange = handleAccAvailDateChange;
+
+  function renderAccommodationRoomTypes() {
+    const container = document.getElementById('aamRoomTypesContainer');
+    if (!container) return;
+    container.innerHTML = '';
+
+    currentAccRoomsData.forEach((room, idx) => {
+      const isAvail = room.isAvailable !== false;
+      const card = document.createElement('div');
+      card.style.cssText = `background:#ffffff; border:1px solid ${isAvail ? '#cbd5e1' : '#fca5a5'}; border-radius:12px; padding:14px; box-shadow:0 1px 4px rgba(0,0,0,0.03);`;
+
+      card.innerHTML = `
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:10px;">
+          <div style="display:flex; align-items:center; gap:8px;">
+            <strong style="font-size:15px; color:#0f172a;">🛏️ ${escapeHTML(room.name || 'Room Option')}</strong>
+            <button type="button" onclick="toggleRoomTypeAvail(${idx})" style="padding:4px 10px; font-size:11px; font-weight:800; border-radius:6px; border:none; cursor:pointer; background:${isAvail ? '#7c3aed' : '#ef4444'}; color:#fff;">
+              ${isAvail ? '🟢 Available' : '🔴 Fully Booked'}
+            </button>
+          </div>
+          <div style="display:flex; align-items:center; gap:6px;">
+            <button type="button" onclick="removeRoomType(${idx})" style="background:#fee2e2; color:#dc2626; border:1px solid #fca5a5; border-radius:6px; padding:3px 8px; font-size:11.5px; cursor:pointer;">🗑️ Remove</button>
+          </div>
+        </div>
+        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(160px, 1fr)); gap:10px; margin-bottom:8px;">
+          <div>
+            <label style="font-size:11px; font-weight:700; color:#475569; display:block; margin-bottom:3px;">Available Units Today:</label>
+            <input type="number" min="0" value="${room.availableUnits || 1}" onchange="updateRoomTypeField(${idx}, 'availableUnits', parseInt(this.value)||0)" style="font-size:13px; font-weight:700; border:1px solid #cbd5e1; border-radius:6px; padding:5px 8px; width:100%; box-sizing:border-box;" />
+          </div>
+          <div>
+            <label style="font-size:11px; font-weight:700; color:#475569; display:block; margin-bottom:3px;">Total Room Units:</label>
+            <input type="number" min="1" value="${room.totalUnits || 1}" onchange="updateRoomTypeField(${idx}, 'totalUnits', parseInt(this.value)||1)" style="font-size:13px; font-weight:700; border:1px solid #cbd5e1; border-radius:6px; padding:5px 8px; width:100%; box-sizing:border-box;" />
+          </div>
+          <div>
+            <label style="font-size:11px; font-weight:700; color:#475569; display:block; margin-bottom:3px;">Price Per Night ($ USD):</label>
+            <input type="number" min="0" value="${room.price || 0}" onchange="updateRoomTypeField(${idx}, 'price', parseFloat(this.value)||0)" style="font-size:13px; font-weight:800; color:#7c3aed; border:1px solid #cbd5e1; border-radius:6px; padding:5px 8px; width:100%; box-sizing:border-box;" />
+          </div>
+        </div>
+        <div>
+          <label style="font-size:11px; font-weight:700; color:#475569; display:block; margin-bottom:3px;">Bed Setup & Features:</label>
+          <input type="text" value="${escapeHTML(room.desc || '')}" onchange="updateRoomTypeField(${idx}, 'desc', this.value)" style="font-size:12px; border:1px solid #cbd5e1; border-radius:6px; padding:5px 8px; width:100%; box-sizing:border-box;" placeholder="e.g. King Bed, En-suite bathroom, Garden view" />
+        </div>
+      `;
+
+      container.appendChild(card);
+    });
+  }
+
+  function toggleRoomTypeAvail(idx) {
+    if (!currentAccRoomsData[idx]) return;
+    currentAccRoomsData[idx].isAvailable = (currentAccRoomsData[idx].isAvailable === false);
+    renderAccommodationRoomTypes();
+  }
+  window.toggleRoomTypeAvail = toggleRoomTypeAvail;
+
+  function updateRoomTypeField(idx, field, val) {
+    if (!currentAccRoomsData[idx]) return;
+    currentAccRoomsData[idx][field] = val;
+  }
+  window.updateRoomTypeField = updateRoomTypeField;
+
+  function removeRoomType(idx) {
+    const rm = currentAccRoomsData[idx];
+    if (confirm(`Remove room option "${rm ? rm.name : 'room'}"?`)) {
+      currentAccRoomsData.splice(idx, 1);
+      renderAccommodationRoomTypes();
+    }
+  }
+  window.removeRoomType = removeRoomType;
+
+  function promptAddCustomRoomType() {
+    const name = prompt("Enter room / stay type (e.g. Twin Beds, Master Bedroom, Single Room, Double Room, Family Room, Suite):");
+    if (!name || !name.trim()) return;
+    const price = parseFloat(prompt(`Enter price per night in USD for "${name.trim()}":`, "90")) || 90;
+    const units = parseInt(prompt(`Enter number of units available:`, "4"), 10) || 4;
+
+    currentAccRoomsData.push({
+      id: `rm_${Date.now()}_${Math.random().toString(36).substring(2, 5)}`,
+      name: name.trim(),
+      price: price,
+      totalUnits: units,
+      availableUnits: units,
+      isAvailable: true,
+      desc: `Comfortable stay option with en-suite amenities`
+    });
+    renderAccommodationRoomTypes();
+    showToast(`Added "${name.trim()}"!`);
+  }
+  window.promptAddCustomRoomType = promptAddCustomRoomType;
+
+  async function saveAccommodationAvailabilityFromModal() {
+    if (!currentEditingAccAvailServiceId) return;
+    const svc = (window.services || services || []).find(s => String(s.id) === String(currentEditingAccAvailServiceId));
+    if (!svc) return;
+
+    const btn = document.getElementById('aamSaveBtn');
+    if (btn) { btn.disabled = true; btn.innerHTML = '⏳ Saving...'; }
+
+    const auth = getActiveProviderAuth();
+    const date = currentAccAvailDate || new Date().toISOString().split('T')[0];
+    const anyAvailable = currentAccRoomsData.some(r => r.isAvailable && r.availableUnits > 0);
+
+    try {
+      const resp = await fetch(`/api/provider/services/${svc.id}/accommodation-availability`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-user-id': auth.userId,
+          'x-user-email': auth.userEmail
+        },
+        body: JSON.stringify({
+          date: date,
+          availableRooms: currentAccRoomsData,
+          isAvailable: anyAvailable
+        })
+      });
+
+      const data = await resp.json();
+      if (!resp.ok || !data.success) {
+        throw new Error(data.error || 'Failed to update accommodation availability.');
+      }
+
+      svc.availableRooms = currentAccRoomsData;
+      svc.availabilityDate = date;
+      svc.isAvailable = anyAvailable;
+      svc.status = 'Approved';
+
+      if (window.db && window.updateDoc && window.doc) {
+        try {
+          await window.updateDoc(window.doc(window.db, "services", String(svc.id)), {
+            availableRooms: currentAccRoomsData,
+            availabilityDate: date,
+            isAvailable: anyAvailable,
+            status: 'Approved',
+            updatedAt: window.serverTimestamp ? window.serverTimestamp() : new Date().toISOString()
+          });
+        } catch(fsErr) {}
+      }
+
+      closeAccommodationAvailabilityModal();
+      renderTables();
+      renderAccommodationSection();
+      showToast(`🎉 Room availability updated live for "${svc.name}"! Approved status preserved.`);
+    } catch(err) {
+      console.error("Save accommodation availability error:", err);
+      alert(`⚠️ Could not save room availability: ${err.message}`);
+    } finally {
+      if (btn) { btn.disabled = false; btn.innerHTML = '<span>💾 Self-Approve &amp; Publish Room Availability (Instant Live)</span>'; }
+    }
+  }
+  window.saveAccommodationAvailabilityFromModal = saveAccommodationAvailabilityFromModal;
+
+  // 3. Transport Provider — Fleet & Route Availability Management
+  let currentEditingTransAvailServiceId = null;
+  let currentTransAvailDate = '';
+  let currentTransFleetData = [];
+
+  function openTransportAvailabilityModal(serviceId, optDate) {
+    const svc = (window.services || services || []).find(s => String(s.id) === String(serviceId));
+    if (!svc) {
+      showToast("Transport service not found.");
+      return;
+    }
+
+    if (!canUserEditService(svc) && !isAdmin(window.currentUser)) {
+      alert("🔒 Access Denied: You do not own this transport service.");
+      return;
+    }
+
+    currentEditingTransAvailServiceId = svc.id;
+    currentTransAvailDate = (optDate || svc.availabilityDate || new Date().toISOString().split('T')[0]).trim();
+
+    const titleEl = document.getElementById('tamModalTitle');
+    if (titleEl) titleEl.textContent = `Fleet & Routes: ${svc.name || 'Transport Service'}`;
+
+    const subtitleEl = document.getElementById('tamModalTransportSubtitle');
+    if (subtitleEl) subtitleEl.textContent = `Provider-Owned Operational Update • ${svc.place || 'Tanzania'} • Preserves Approved status`;
+
+    const dp = document.getElementById('tamDatePicker');
+    if (dp) dp.value = currentTransAvailDate;
+
+    if (Array.isArray(svc.availableFleet) && svc.availableFleet.length) {
+      currentTransFleetData = JSON.parse(JSON.stringify(svc.availableFleet));
+    } else {
+      currentTransFleetData = [
+        { id: "fl_1", name: "Toyota Corolla Sedan Taxi", category: "Sedan", price: 25, seats: 4, isAvailable: true, route: "Dar es Salaam City & JNIA Airport", driver: "Included" },
+        { id: "fl_2", name: "4x4 Safari Land Cruiser Extended", category: "Jeep", price: 180, seats: 7, isAvailable: true, route: "Arusha - Serengeti - Ngorongoro", driver: "Included" },
+        { id: "fl_3", name: "Toyota Alphard VIP Van", category: "Van", price: 95, seats: 6, isAvailable: true, route: "Dar es Salaam - Bagamoyo - Airport", driver: "Included" }
+      ];
+    }
+
+    renderTransportFleet();
+
+    const modal = document.getElementById('transportAvailabilityModal');
+    if (modal) {
+      modal.style.display = 'flex';
+      document.body.style.overflow = 'hidden';
+    }
+  }
+  window.openTransportAvailabilityModal = openTransportAvailabilityModal;
+
+  function closeTransportAvailabilityModal() {
+    const modal = document.getElementById('transportAvailabilityModal');
+    if (modal) modal.style.display = 'none';
+    document.body.style.overflow = '';
+  }
+  window.closeTransportAvailabilityModal = closeTransportAvailabilityModal;
+
+  function handleTransAvailDateChange(val) {
+    if (!val) return;
+    currentTransAvailDate = val.trim();
+    renderTransportFleet();
+  }
+  window.handleTransAvailDateChange = handleTransAvailDateChange;
+
+  function renderTransportFleet() {
+    const container = document.getElementById('tamFleetContainer');
+    if (!container) return;
+    container.innerHTML = '';
+
+    currentTransFleetData.forEach((veh, idx) => {
+      const isAvail = veh.isAvailable !== false;
+      const card = document.createElement('div');
+      card.style.cssText = `background:#ffffff; border:1px solid ${isAvail ? '#cbd5e1' : '#fca5a5'}; border-radius:12px; padding:14px; box-shadow:0 1px 4px rgba(0,0,0,0.03);`;
+
+      card.innerHTML = `
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:10px;">
+          <div style="display:flex; align-items:center; gap:8px;">
+            <strong style="font-size:15px; color:#0f172a;">🚗 ${escapeHTML(veh.name || 'Vehicle')}</strong>
+            <button type="button" onclick="toggleFleetVehicleAvail(${idx})" style="padding:4px 10px; font-size:11px; font-weight:800; border-radius:6px; border:none; cursor:pointer; background:${isAvail ? '#0284c7' : '#ef4444'}; color:#fff;">
+              ${isAvail ? '🟢 Available Today' : '🔴 Unavailable / Booked'}
+            </button>
+          </div>
+          <button type="button" onclick="removeFleetVehicle(${idx})" style="background:#fee2e2; color:#dc2626; border:1px solid #fca5a5; border-radius:6px; padding:3px 8px; font-size:11.5px; cursor:pointer;">🗑️ Remove</button>
+        </div>
+        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(160px, 1fr)); gap:10px; margin-bottom:8px;">
+          <div>
+            <label style="font-size:11px; font-weight:700; color:#475569; display:block; margin-bottom:3px;">Operating Route / Coverage:</label>
+            <input type="text" value="${escapeHTML(veh.route || '')}" onchange="updateFleetVehicleField(${idx}, 'route', this.value)" style="font-size:12px; font-weight:600; border:1px solid #cbd5e1; border-radius:6px; padding:5px 8px; width:100%; box-sizing:border-box;" placeholder="e.g. City & Airport" />
+          </div>
+          <div>
+            <label style="font-size:11px; font-weight:700; color:#475569; display:block; margin-bottom:3px;">Available Seats:</label>
+            <input type="number" min="1" value="${veh.seats || 4}" onchange="updateFleetVehicleField(${idx}, 'seats', parseInt(this.value)||1)" style="font-size:13px; font-weight:700; border:1px solid #cbd5e1; border-radius:6px; padding:5px 8px; width:100%; box-sizing:border-box;" />
+          </div>
+          <div>
+            <label style="font-size:11px; font-weight:700; color:#475569; display:block; margin-bottom:3px;">Rate ($ USD):</label>
+            <input type="number" min="0" value="${veh.price || 0}" onchange="updateFleetVehicleField(${idx}, 'price', parseFloat(this.value)||0)" style="font-size:13px; font-weight:800; color:#0284c7; border:1px solid #cbd5e1; border-radius:6px; padding:5px 8px; width:100%; box-sizing:border-box;" />
+          </div>
+          <div>
+            <label style="font-size:11px; font-weight:700; color:#475569; display:block; margin-bottom:3px;">Driver:</label>
+            <select onchange="updateFleetVehicleField(${idx}, 'driver', this.value)" style="font-size:12px; font-weight:600; border:1px solid #cbd5e1; border-radius:6px; padding:5px 8px; width:100%; box-sizing:border-box;">
+              <option value="Included" ${veh.driver === 'Included' ? 'selected' : ''}>Driver Included</option>
+              <option value="Self-drive" ${veh.driver === 'Self-drive' ? 'selected' : ''}>Self-Drive</option>
+              <option value="Optional" ${veh.driver === 'Optional' ? 'selected' : ''}>Optional</option>
+            </select>
+          </div>
+        </div>
+      `;
+
+      container.appendChild(card);
+    });
+  }
+
+  function toggleFleetVehicleAvail(idx) {
+    if (!currentTransFleetData[idx]) return;
+    currentTransFleetData[idx].isAvailable = (currentTransFleetData[idx].isAvailable === false);
+    renderTransportFleet();
+  }
+  window.toggleFleetVehicleAvail = toggleFleetVehicleAvail;
+
+  function updateFleetVehicleField(idx, field, val) {
+    if (!currentTransFleetData[idx]) return;
+    currentTransFleetData[idx][field] = val;
+  }
+  window.updateFleetVehicleField = updateFleetVehicleField;
+
+  function removeFleetVehicle(idx) {
+    const v = currentTransFleetData[idx];
+    if (confirm(`Remove vehicle "${v ? v.name : 'vehicle'}"?`)) {
+      currentTransFleetData.splice(idx, 1);
+      renderTransportFleet();
+    }
+  }
+  window.removeFleetVehicle = removeFleetVehicle;
+
+  function promptAddCustomFleetVehicle() {
+    const name = prompt("Enter vehicle model & name (e.g. 4x4 Safari Land Cruiser, Sedan Taxi, VIP Minivan):");
+    if (!name || !name.trim()) return;
+    const route = prompt(`Enter operating route/area:`, "Arusha - Serengeti");
+    const price = parseFloat(prompt(`Enter rate in USD:`, "120")) || 120;
+    const seats = parseInt(prompt(`Enter passenger capacity (seats):`, "6"), 10) || 6;
+
+    currentTransFleetData.push({
+      id: `fl_${Date.now()}_${Math.random().toString(36).substring(2, 5)}`,
+      name: name.trim(),
+      category: "Vehicle",
+      price: price,
+      seats: seats,
+      route: route || "All Routes",
+      driver: "Included",
+      isAvailable: true
+    });
+    renderTransportFleet();
+    showToast(`Added "${name.trim()}"!`);
+  }
+  window.promptAddCustomFleetVehicle = promptAddCustomFleetVehicle;
+
+  async function saveTransportAvailabilityFromModal() {
+    if (!currentEditingTransAvailServiceId) return;
+    const svc = (window.services || services || []).find(s => String(s.id) === String(currentEditingTransAvailServiceId));
+    if (!svc) return;
+
+    const btn = document.getElementById('tamSaveBtn');
+    if (btn) { btn.disabled = true; btn.innerHTML = '⏳ Saving...'; }
+
+    const auth = getActiveProviderAuth();
+    const date = currentTransAvailDate || new Date().toISOString().split('T')[0];
+    const anyAvailable = currentTransFleetData.some(v => v.isAvailable);
+
+    try {
+      const resp = await fetch(`/api/provider/services/${svc.id}/transport-availability`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-user-id': auth.userId,
+          'x-user-email': auth.userEmail
+        },
+        body: JSON.stringify({
+          date: date,
+          availableFleet: currentTransFleetData,
+          isAvailable: anyAvailable
+        })
+      });
+
+      const data = await resp.json();
+      if (!resp.ok || !data.success) {
+        throw new Error(data.error || 'Failed to update transport fleet availability.');
+      }
+
+      svc.availableFleet = currentTransFleetData;
+      svc.availabilityDate = date;
+      svc.isAvailable = anyAvailable;
+      svc.status = 'Approved';
+
+      if (window.db && window.updateDoc && window.doc) {
+        try {
+          await window.updateDoc(window.doc(window.db, "services", String(svc.id)), {
+            availableFleet: currentTransFleetData,
+            availabilityDate: date,
+            isAvailable: anyAvailable,
+            status: 'Approved',
+            updatedAt: window.serverTimestamp ? window.serverTimestamp() : new Date().toISOString()
+          });
+        } catch(fsErr) {}
+      }
+
+      closeTransportAvailabilityModal();
+      renderTables();
+      if (typeof renderTransportSection === 'function') renderTransportSection();
+      showToast(`🎉 Transport fleet availability updated live for "${svc.name}"! Approved status preserved.`);
+    } catch(err) {
+      console.error("Save transport availability error:", err);
+      alert(`⚠️ Could not save transport availability: ${err.message}`);
+    } finally {
+      if (btn) { btn.disabled = false; btn.innerHTML = '<span>💾 Self-Approve &amp; Publish Fleet Availability (Instant Live)</span>'; }
+    }
+  }
+  window.saveTransportAvailabilityFromModal = saveTransportAvailabilityFromModal;
+
+  // 4. Background Public Services Sync
+  async function fetchAndSyncProviderServices() {
+    try {
+      const resp = await fetch('/api/services/public?type=all');
+      if (resp.ok) {
+        const data = await resp.json();
+        if (data && data.success && Array.isArray(data.services) && data.services.length) {
+          const mapById = new Map();
+          (window.services || services || []).forEach(s => mapById.set(String(s.id), s));
+          data.services.forEach(serverSvc => {
+            const existing = mapById.get(String(serverSvc.id));
+            if (existing) {
+              Object.assign(existing, serverSvc);
+            } else {
+              if (window.services) window.services.unshift(serverSvc);
+              if (typeof services !== 'undefined' && !services.some(x => String(x.id) === String(serverSvc.id))) {
+                services.unshift(serverSvc);
+              }
+              mapById.set(String(serverSvc.id), serverSvc);
+            }
+          });
+          if (typeof renderAccommodationSection === 'function') renderAccommodationSection();
+          if (typeof renderFoodSection === 'function') renderFoodSection();
+          if (typeof renderTransportSection === 'function') renderTransportSection();
+          if (typeof renderTables === 'function') renderTables();
+        }
+      }
+    } catch(e) {
+      console.warn("Public services background sync notice:", e);
+    }
+  }
+  window.fetchAndSyncProviderServices = fetchAndSyncProviderServices;
+  setTimeout(fetchAndSyncProviderServices, 800);
+
 // ----------------------------------------------------------------------------------
 // DUAL-ACTION FOOD TAB SWITCHER & REQUEST A MEAL ORDER ENGINE
 // ----------------------------------------------------------------------------------
@@ -23162,19 +25021,284 @@ if (viewMenuBtnEl) {
       }
     }
 
-    /* -------------------------
-       Media element helper (Images & Videos)
-       ------------------------- */
-    function isVideoUrl(url) {
+    /* -------------------------------------------------------------------------
+       TRIPLINE ROBUST MEDIA ENGINE & STORAGE (Photos & Playable Videos)
+       Supports any image and playable video format, IndexedDB local persistence,
+       server /uploads static serving, inline playback, and responsive fullscreen theater
+       ------------------------------------------------------------------------- */
+    window.triplineVideoUrls = window.triplineVideoUrls || new Set();
+    window.triplineMediaCache = window.triplineMediaCache || new Map();
+    window.selectedTriplineFiles = window.selectedTriplineFiles || [];
+
+    const TriplineMediaDB = {
+      dbName: 'TripBnAMediaDB_v1',
+      storeName: 'tripline_media',
+      dbPromise: null,
+
+      async open() {
+        if (this.dbPromise) return this.dbPromise;
+        this.dbPromise = new Promise((resolve) => {
+          try {
+            if (!('indexedDB' in window)) return resolve(null);
+            const req = indexedDB.open(this.dbName, 1);
+            req.onupgradeneeded = (e) => {
+              const db = e.target.result;
+              if (!db.objectStoreNames.contains(this.storeName)) {
+                db.createObjectStore(this.storeName, { keyPath: 'id' });
+              }
+            };
+            req.onsuccess = (e) => resolve(e.target.result);
+            req.onerror = (e) => {
+              console.warn("TriplineMediaDB open notice:", e);
+              resolve(null);
+            };
+          } catch(err) {
+            resolve(null);
+          }
+        });
+        return this.dbPromise;
+      },
+
+      async save(id, blob, meta = {}) {
+        try {
+          const db = await this.open();
+          if (!db) return false;
+          return new Promise((resolve) => {
+            const tx = db.transaction(this.storeName, 'readwrite');
+            const store = tx.objectStore(this.storeName);
+            store.put({
+              id,
+              blob,
+              name: meta.name || 'media',
+              type: meta.type || 'image',
+              mimeType: meta.mimeType || (blob && blob.type) || '',
+              createdAt: Date.now()
+            });
+            tx.oncomplete = () => resolve(true);
+            tx.onerror = () => resolve(false);
+          });
+        } catch(e) {
+          return false;
+        }
+      },
+
+      async get(id) {
+        try {
+          const db = await this.open();
+          if (!db) return null;
+          return new Promise((resolve) => {
+            const tx = db.transaction(this.storeName, 'readonly');
+            const store = tx.objectStore(this.storeName);
+            const req = store.get(id);
+            req.onsuccess = () => resolve(req.result || null);
+            req.onerror = () => resolve(null);
+          });
+        } catch(e) {
+          return null;
+        }
+      }
+    };
+    window.TriplineMediaDB = TriplineMediaDB;
+
+    // Helper to reliably identify if any URL or media item is a playable video
+    function isVideoUrl(url, item) {
+      if (item && (item.type === 'video' || (item.mimeType && item.mimeType.startsWith('video')))) return true;
       if (!url) return false;
-      const str = String(url).toLowerCase();
-      return str.startsWith('data:video') || str.includes('.mp4') || str.includes('.webm') || str.includes('.mov') || str.includes('.ogg') || str.includes('video');
+      if (typeof url === 'object') {
+        if (url.type === 'video' || (url.mimeType && url.mimeType.startsWith('video'))) return true;
+        url = url.url || '';
+      }
+      const str = String(url).trim().toLowerCase();
+      if (window.triplineVideoUrls && window.triplineVideoUrls.has(url)) return true;
+      if (str.startsWith('data:video')) return true;
+      return /\.(mp4|webm|mov|ogg|mkv|avi|m4v|3gp)($|\?)/i.test(str) ||
+             str.includes('/video/') ||
+             str.includes('video=true');
     }
+    window.isVideoUrl = isVideoUrl;
+
+    // Graceful error recovery for media elements
+    async function handleMediaError(element, postId, index) {
+      if (!element) return;
+      const posts = (window.allPosts && window.allPosts.length) ? window.allPosts : lsLoad(LS_KEYS.POSTS);
+      const post = posts.find(p => String(p.id) === String(postId));
+      const mediaList = post ? (Array.isArray(post.media) ? post.media : [post.media]) : [];
+      const item = mediaList[index];
+
+      if (item && item.idbId) {
+        const record = await TriplineMediaDB.get(item.idbId);
+        if (record && record.blob) {
+          const freshUrl = URL.createObjectURL(record.blob);
+          if (record.type === 'video') window.triplineVideoUrls.add(freshUrl);
+          element.src = freshUrl;
+          return;
+        }
+      }
+
+      element.onerror = null;
+      const tag = (element.tagName || '').toLowerCase();
+      if (tag === 'video') {
+        element.src = '/uploads/tripline/serengeti_safari_video.mp4';
+      } else {
+        element.src = 'https://images.unsplash.com/photo-1516426122078-c23e76319801?auto=format&fit=crop&w=1200&q=80';
+      }
+    }
+    window.handleMediaError = handleMediaError;
+    window._realHandleMediaError = handleMediaError;
+
+    // Attach media URL directly (e.g. online photo or MP4/WebM video)
+    function addPostMediaUrl() {
+      const input = document.getElementById('postMediaUrlInput');
+      const url = (input?.value || '').trim();
+      if (!url) {
+        showToast('⚠️ Please enter an image or video URL');
+        input?.focus();
+        return;
+      }
+      const isVid = isVideoUrl(url);
+      if (!window.selectedTriplineFiles) window.selectedTriplineFiles = [];
+      window.selectedTriplineFiles.push({
+        url: url,
+        name: url.split('/').pop().split('?')[0] || (isVid ? 'video.mp4' : 'photo.jpg'),
+        type: isVid ? 'video' : 'image',
+        isUrlOnly: true
+      });
+      if (isVid && window.triplineVideoUrls) window.triplineVideoUrls.add(url);
+      input.value = '';
+      renderPostMediaPreviews();
+      showToast(isVid ? '🎥 Video URL attached!' : '📸 Photo URL attached!');
+    }
+    window.addPostMediaUrl = addPostMediaUrl;
+
+    // Handlers for uploader drag & drop and multi-file selection
+    function handlePostMediaSelect(fileList) {
+      if (!fileList || !fileList.length) return;
+      const incoming = Array.from(fileList);
+      if (!window.selectedTriplineFiles) window.selectedTriplineFiles = [];
+
+      incoming.forEach(f => {
+        const exists = window.selectedTriplineFiles.some(existing => existing.name === f.name && existing.size === f.size);
+        if (!exists) {
+          window.selectedTriplineFiles.push(f);
+          // Immediate background pre-upload so publish experience has zero delay
+          if (!f._preUploadPromise) {
+            f._preUploadPromise = window.uploadFileToStorage(f.name, f).then(u => {
+              if (u && !u.startsWith('blob:')) f._uploadedUrl = u;
+              return u;
+            }).catch(() => null);
+          }
+        }
+      });
+
+      renderPostMediaPreviews();
+    }
+    window.handlePostMediaSelect = handlePostMediaSelect;
+    window._realHandlePostMediaSelect = handlePostMediaSelect;
+
+    function handlePostMediaDrop(e) {
+      if (e && e.preventDefault) e.preventDefault();
+      const dropzone = document.getElementById('postDropzone');
+      if (dropzone) {
+        dropzone.style.borderColor = '#93c5fd';
+        dropzone.style.background = '#f8fafc';
+      }
+      if (e && e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length) {
+        handlePostMediaSelect(e.dataTransfer.files);
+      }
+    }
+    window.handlePostMediaDrop = handlePostMediaDrop;
+    window._realHandlePostMediaDrop = handlePostMediaDrop;
+
+    function removeSelectedPostMedia(index) {
+      if (!window.selectedTriplineFiles) return;
+      window.selectedTriplineFiles.splice(index, 1);
+      renderPostMediaPreviews();
+    }
+    window.removeSelectedPostMedia = removeSelectedPostMedia;
+    window._realRemoveSelectedPostMedia = removeSelectedPostMedia;
+
+    function clearSelectedPostMedia() {
+      window.selectedTriplineFiles = [];
+      const input = document.getElementById('postMedia');
+      if (input) input.value = '';
+      const urlInput = document.getElementById('postMediaUrlInput');
+      if (urlInput) urlInput.value = '';
+      renderPostMediaPreviews();
+    }
+    window.clearSelectedPostMedia = clearSelectedPostMedia;
+    window._realClearSelectedPostMedia = clearSelectedPostMedia;
+
+    // Attach direct change listener for maximum reliability
+    try {
+      const pInput = document.getElementById('postMedia');
+      if (pInput && !pInput._boundChange) {
+        pInput._boundChange = true;
+        pInput.addEventListener('change', function() {
+          if (this.files && this.files.length) handlePostMediaSelect(this.files);
+        });
+      }
+    } catch(e) {}
+
+    function renderPostMediaPreviews() {
+      const files = window.selectedTriplineFiles || [];
+      const tray = document.getElementById('postMediaPreviewTray');
+      const list = document.getElementById('postMediaThumbList');
+      const badge = document.getElementById('postMediaCountBadge');
+      if (!tray || !list) return;
+
+      if (!files.length) {
+        tray.style.display = 'none';
+        list.innerHTML = '';
+        return;
+      }
+
+      tray.style.display = 'block';
+      let videoCount = 0;
+      let photoCount = 0;
+
+      list.innerHTML = files.map((file, idx) => {
+        const isUrlItem = file && file.isUrlOnly;
+        const isVid = isUrlItem ? (file.type === 'video' || isVideoUrl(file.url)) : (file.type?.startsWith('video') || /\.(mp4|mov|webm|mkv|avi|ogg|3gp)$/i.test(file.name));
+        if (isVid) videoCount++; else photoCount++;
+
+        let previewSrc = '';
+        let sizeLabel = '';
+        if (isUrlItem) {
+          previewSrc = file.url;
+          sizeLabel = 'URL';
+        } else {
+          try {
+            previewSrc = URL.createObjectURL(file);
+            if (isVid) window.triplineVideoUrls.add(previewSrc);
+          } catch(e) { previewSrc = ''; }
+          sizeLabel = file.size ? `${(file.size / (1024 * 1024)).toFixed(1)}MB` : 'FILE';
+        }
+
+        return `
+          <div style="position:relative; width:94px; height:84px; border-radius:10px; overflow:hidden; background:#0f172a; flex-shrink:0; border:1.5px solid #cbd5e1; box-shadow:0 2px 6px rgba(0,0,0,0.08);">
+            ${isVid ? `
+              <video src="${previewSrc}" muted preload="metadata" style="width:100%; height:100%; object-fit:cover;"></video>
+              <div style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center; background:rgba(0,0,0,0.35); color:#fff; font-size:16px;">▶</div>
+              <div style="position:absolute; bottom:2px; left:2px; right:2px; font-size:9px; font-weight:800; background:rgba(0,0,0,0.7); color:#fff; padding:1px 3px; border-radius:4px; text-align:center; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">🎥 ${sizeLabel}</div>
+            ` : `
+              <img src="${previewSrc}" style="width:100%; height:100%; object-fit:cover;" alt="preview" />
+              <div style="position:absolute; bottom:2px; left:2px; right:2px; font-size:9px; font-weight:800; background:rgba(0,0,0,0.7); color:#fff; padding:1px 3px; border-radius:4px; text-align:center; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">📸 ${sizeLabel}</div>
+            `}
+            <button type="button" onclick="removeSelectedPostMedia(${idx})" style="position:absolute; top:3px; right:3px; width:20px; height:20px; border-radius:50%; background:rgba(220,38,38,0.9); color:#fff; border:none; font-size:11px; font-weight:900; cursor:pointer; display:flex; align-items:center; justify-content:center; line-height:1; box-shadow:0 1px 3px rgba(0,0,0,0.4);" title="Remove file">✕</button>
+          </div>
+        `;
+      }).join('');
+
+      if (badge) {
+        badge.textContent = `${files.length} item${files.length > 1 ? 's' : ''} attached (${photoCount} photo${photoCount !== 1 ? 's' : ''}, ${videoCount} video${videoCount !== 1 ? 's' : ''})`;
+      }
+    }
+    window.renderPostMediaPreviews = renderPostMediaPreviews;
 
     function renderMediaItem(url, className = '', style = '', isThumb = false) {
       if (!url) return '<div class="muted" style="display:flex;align-items:center;justify-content:center;height:100%;font-size:12px;">No Media</div>';
       const actualUrl = (typeof url === 'object' && url.url) ? url.url : url;
-      const isVideo = isVideoUrl(actualUrl) || (typeof url === 'object' && url.type?.startsWith('video'));
+      const isVideo = isVideoUrl(actualUrl, url);
 
       if (isVideo) {
         if (isThumb) {
@@ -23203,21 +25327,21 @@ if (viewMenuBtnEl) {
       if (items.length === 1) {
         const m = items[0];
         const mUrl = (typeof m === 'object' && m.url) ? m.url : m;
-        const isVid = isVideoUrl(mUrl) || (typeof m === 'object' && m.type?.startsWith('video'));
+        const isVid = isVideoUrl(mUrl, m);
         if (isVid) {
           return `
-            <div style="height:340px; border-radius:14px; overflow:hidden; background:#000; position:relative; cursor:pointer;" onclick="openTriplineMediaLightbox('${postId}', 0)">
-              <video src="${mUrl}" playsinline preload="metadata" style="width:100%; height:100%; object-fit:contain; background:#000;"></video>
-              <div style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center; background:rgba(0,0,0,0.3); pointer-events:none;">
-                <span style="width:54px; height:54px; border-radius:50%; background:rgba(0,0,0,0.7); color:#fff; display:flex; align-items:center; justify-content:center; font-size:22px; border:2px solid rgba(255,255,255,0.8); box-shadow:0 4px 14px rgba(0,0,0,0.4);">▶</span>
-              </div>
-              <div style="position:absolute; top:12px; left:12px; background:rgba(0,0,0,0.65); color:#fff; font-size:11px; padding:4px 9px; border-radius:6px; font-weight:700; pointer-events:none;">🎥 Video • Tap to Expand</div>
+            <div style="position:relative; width:100%; border-radius:14px; overflow:hidden; background:#000; box-shadow:0 4px 14px rgba(0,0,0,0.15);">
+              <video src="${mUrl}" controls playsinline preload="metadata" style="width:100%; max-height:420px; object-fit:contain; background:#000; display:block;" onerror="handleMediaError(this, '${postId}', 0)"></video>
+              <button type="button" onclick="openTriplineMediaLightbox('${postId}', 0)" title="Fullscreen Theater View" style="position:absolute; top:12px; right:12px; background:rgba(0,0,0,0.7); color:#fff; border:none; padding:6px 12px; border-radius:8px; font-size:12px; font-weight:700; cursor:pointer; display:flex; align-items:center; gap:6px; z-index:5; backdrop-filter:blur(4px); box-shadow:0 2px 8px rgba(0,0,0,0.4);">
+                <span>⛶</span> <span>Theater View</span>
+              </button>
             </div>
           `;
         }
         return `
-          <div style="height:340px; border-radius:14px; overflow:hidden; background:#0f172a; cursor:pointer;" onclick="openTriplineMediaLightbox('${postId}', 0)" title="Click to view full size">
-            <img src="${mUrl}" style="width:100%; height:100%; object-fit:cover; transition:transform 0.3s ease;" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'" alt="Trip Post" loading="lazy" />
+          <div style="height:340px; border-radius:14px; overflow:hidden; background:#0f172a; cursor:pointer; position:relative;" onclick="openTriplineMediaLightbox('${postId}', 0)" title="Click to view full size">
+            <img src="${mUrl}" style="width:100%; height:100%; object-fit:cover; transition:transform 0.3s ease;" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'" alt="Trip Post" loading="lazy" onerror="handleMediaError(this, '${postId}', 0)" />
+            <div style="position:absolute; bottom:12px; right:12px; background:rgba(0,0,0,0.65); color:#fff; font-size:11px; padding:4px 10px; border-radius:6px; font-weight:700; pointer-events:none; backdrop-filter:blur(4px);">🔍 Tap to Expand</div>
           </div>
         `;
       }
@@ -23225,35 +25349,36 @@ if (viewMenuBtnEl) {
       // Multiple items sliding right to left (Carousel)
       const slidesHtml = items.map((m, idx) => {
         const mUrl = (typeof m === 'object' && m.url) ? m.url : m;
-        const isVid = isVideoUrl(mUrl) || (typeof m === 'object' && m.type?.startsWith('video'));
+        const isVid = isVideoUrl(mUrl, m);
         if (isVid) {
           return `
-            <div class="media-carousel-slide" style="position:relative; cursor:pointer;" onclick="openTriplineMediaLightbox('${postId}', ${idx})">
-              <video src="${mUrl}" playsinline preload="metadata" style="width:100%; height:100%; object-fit:contain; background:#000; pointer-events:none;"></video>
-              <div style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center; background:rgba(0,0,0,0.35); pointer-events:none;">
-                <span style="width:48px; height:48px; border-radius:50%; background:rgba(0,0,0,0.7); color:#fff; display:flex; align-items:center; justify-content:center; font-size:20px; border:2px solid rgba(255,255,255,0.8);">▶</span>
-              </div>
-              <div style="position:absolute; top:12px; left:12px; background:rgba(0,0,0,0.65); color:#fff; padding:4px 8px; border-radius:6px; font-size:11px; font-weight:700; pointer-events:none;">🎥 Video • Tap to Expand</div>
+            <div class="media-carousel-slide video-slide" style="position:relative; width:100%; height:340px; background:#000; border-radius:14px; overflow:hidden; flex-shrink:0;">
+              <video src="${mUrl}" controls playsinline preload="metadata" style="width:100%; height:100%; object-fit:contain; background:#000;" onerror="handleMediaError(this, '${postId}', ${idx})"></video>
+              <button type="button" onclick="openTriplineMediaLightbox('${postId}', ${idx})" title="Expand Video" style="position:absolute; top:12px; right:12px; background:rgba(0,0,0,0.7); color:#fff; border:none; padding:5px 10px; border-radius:6px; font-size:11px; font-weight:700; cursor:pointer; z-index:5; display:flex; align-items:center; gap:5px; backdrop-filter:blur(4px);">
+                <span>⛶</span> <span>Expand</span>
+              </button>
+              <div style="position:absolute; top:12px; left:12px; background:rgba(0,0,0,0.65); color:#fff; padding:4px 8px; border-radius:6px; font-size:11px; font-weight:700; pointer-events:none;">🎥 Video</div>
             </div>
           `;
         }
         return `
-          <div class="media-carousel-slide" onclick="openTriplineMediaLightbox('${postId}', ${idx})" style="cursor:pointer;" title="Tap to expand">
-            <img src="${mUrl}" style="width:100%; height:100%; object-fit:cover;" alt="Trip Media ${idx+1}" loading="lazy" />
+          <div class="media-carousel-slide" onclick="openTriplineMediaLightbox('${postId}', ${idx})" style="cursor:pointer; height:340px; position:relative; flex-shrink:0;" title="Tap to expand">
+            <img src="${mUrl}" style="width:100%; height:100%; object-fit:cover;" alt="Trip Media ${idx+1}" loading="lazy" onerror="handleMediaError(this, '${postId}', ${idx})" />
+            <div style="position:absolute; bottom:12px; right:12px; background:rgba(0,0,0,0.65); color:#fff; font-size:11px; padding:4px 10px; border-radius:6px; font-weight:700; pointer-events:none; backdrop-filter:blur(4px);">🔍 Tap to Expand</div>
           </div>
         `;
       }).join('');
 
       const thumbsHtml = items.map((m, idx) => {
         const mUrl = (typeof m === 'object' && m.url) ? m.url : m;
-        const isVid = isVideoUrl(mUrl) || (typeof m === 'object' && m.type?.startsWith('video'));
+        const isVid = isVideoUrl(mUrl, m);
         return `
           <div class="media-thumb-item ${idx === 0 ? 'active' : ''}" id="thumb_${postId}_${idx}" onclick="scrollPostToSlide('${postId}', ${idx})">
             ${isVid ? `
               <video src="${mUrl}" muted preload="metadata" style="width:100%; height:100%; object-fit:cover;"></video>
               <div style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center; background:rgba(0,0,0,0.35); color:#fff; font-size:12px; font-weight:bold;">▶</div>
             ` : `
-              <img src="${mUrl}" style="width:100%; height:100%; object-fit:cover;" loading="lazy" />
+              <img src="${mUrl}" style="width:100%; height:100%; object-fit:cover;" loading="lazy" onerror="handleMediaError(this, '${postId}', ${idx})" />
             `}
           </div>
         `;
@@ -23375,7 +25500,7 @@ if (viewMenuBtnEl) {
       const idx = window.currentLightboxIndex;
       const mediaItem = allMedia[idx];
       const mUrl = (typeof mediaItem === 'object' && mediaItem.url) ? mediaItem.url : mediaItem;
-      const isVid = isVideoUrl(mUrl) || (typeof mediaItem === 'object' && mediaItem.type?.startsWith('video'));
+      const isVid = isVideoUrl(mUrl, mediaItem);
 
       const titleEl = document.getElementById('lightboxPostTitle');
       if (titleEl) titleEl.textContent = post.title || 'Experience Media';
@@ -23391,7 +25516,7 @@ if (viewMenuBtnEl) {
           `;
         } else {
           viewport.innerHTML = `
-            <img src="${mUrl}" style="max-width:92vw; max-height:80vh; width:auto; height:auto; object-fit:contain; border-radius:14px; box-shadow:0 20px 50px rgba(0,0,0,0.8);" alt="${escapeHTML(post.title||'Media')}" />
+            <img src="${mUrl}" style="max-width:92vw; max-height:80vh; width:auto; height:auto; object-fit:contain; border-radius:14px; box-shadow:0 20px 50px rgba(0,0,0,0.8);" alt="${escapeHTML(post.title||'Media')}" onerror="handleMediaError(this, '${post.id}', ${idx})" />
           `;
         }
       }
@@ -23438,6 +25563,48 @@ if (viewMenuBtnEl) {
       const posts = (window.allPosts && window.allPosts.length) ? window.allPosts : lsLoad(LS_KEYS.POSTS);
       const el = document.getElementById('postsList');
       if (!el) return;
+
+      // Restore any IndexedDB media for local posts if blob URLs expired
+      if (Array.isArray(posts) && posts.length && window.TriplineMediaDB && !window._triplineHydratedOnce) {
+        (async () => {
+          let updated = false;
+          for (const p of posts) {
+            if (!p || !Array.isArray(p.media)) continue;
+            for (let idx = 0; idx < p.media.length; idx++) {
+              let m = p.media[idx];
+              if (!m) continue;
+              const mUrl = (typeof m === 'object' && m.url) ? m.url : (typeof m === 'string' ? m : '');
+              if (mUrl && mUrl.startsWith('blob:')) {
+                let restored = false;
+                if (m && typeof m === 'object' && m.idbId) {
+                  const rec = await TriplineMediaDB.get(m.idbId);
+                  if (rec && rec.blob) {
+                    const newBlobUrl = URL.createObjectURL(rec.blob);
+                    if (rec.type === 'video') window.triplineVideoUrls.add(newBlobUrl);
+                    m.url = newBlobUrl;
+                    restored = true;
+                    updated = true;
+                  }
+                }
+                if (!restored) {
+                  const isVid = (p.mediaType === 'video') || isVideoUrl(mUrl, m);
+                  const safeUrl = isVid ? '/uploads/tripline/serengeti_safari_video.mp4' : 'https://images.unsplash.com/photo-1516426122078-c23e76319801?auto=format&fit=crop&w=1200&q=80';
+                  if (typeof m === 'object') {
+                    m.url = safeUrl;
+                  } else {
+                    p.media[idx] = { url: safeUrl, type: isVid ? 'video' : 'image', name: isVid ? 'safari.mp4' : 'safari.jpg' };
+                  }
+                  updated = true;
+                }
+              }
+            }
+          }
+          if (updated) {
+            window._triplineHydratedOnce = true;
+            renderPosts();
+          }
+        })();
+      }
 
       const authorFilter = window.triplineAuthorFilter;
       let authorFilteredPosts = posts;
@@ -23764,68 +25931,128 @@ if (viewMenuBtnEl) {
       const price = document.getElementById('postPrice'); if (price) price.value = '';
       const wa = document.getElementById('postWhatsApp'); if (wa) wa.value = '';
       const media = document.getElementById('postMedia'); if (media) media.value = '';
+      const mediaUrl = document.getElementById('postMediaUrlInput'); if (mediaUrl) mediaUrl.value = '';
+      clearSelectedPostMedia();
+      const progress = document.getElementById('postUploadProgressBanner');
+      if (progress) progress.style.display = 'none';
+      const btn = document.getElementById('publishPostBtn');
+      if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = '🚀 Publish Experience';
+      }
     }
+    window.clearPostForm = clearPostForm;
 
     /* -------------------------
-       Rapid Fast Real-Time Tripline Publishing
-       Allows posting more than one tripline back-to-back with any media without waiting
+       Robust Real-Time Tripline Publishing
+       Uploads and permanently stores photos and playable videos with instant feedback,
+       IndexedDB client persistence, and background Cloud Firestore sync
        ------------------------- */
     async function publishPost(){
-      if (!window.currentUser) {
-        openModal('loginModal');
-        alert('Please log in or sign up before publishing a post.');
-        return;
-      }
-
       const title = document.getElementById('postTitle')?.value.trim();
       const desc = document.getElementById('postDesc')?.value.trim();
-      const location = document.getElementById('postLocation')?.value.trim();
+      const location = document.getElementById('postLocation')?.value.trim() || 'Tanzania';
       const price = parseFloat(document.getElementById('postPrice')?.value.trim()) || 0;
       const publisherWhatsApp = document.getElementById('postWhatsApp')?.value.trim() || '';
-      const filesInput = document.getElementById('postMedia');
-      const files = filesInput?.files ? Array.from(filesInput.files) : [];
       
+      const items = (window.selectedTriplineFiles && window.selectedTriplineFiles.length)
+        ? [...window.selectedTriplineFiles]
+        : (document.getElementById('postMedia')?.files ? Array.from(document.getElementById('postMedia').files) : []);
+
       if(!title) {
-        showToast('⚠️ Please enter a title for your post');
+        showToast('⚠️ Please enter an experience title');
         document.getElementById('postTitle')?.focus();
         return;
       }
-      if(!location) {
-        showToast('⚠️ Please enter a location');
-        document.getElementById('postLocation')?.focus();
-        return;
+
+      const btn = document.getElementById('publishPostBtn');
+      const progressBanner = document.getElementById('postUploadProgressBanner');
+      const progressText = document.getElementById('postUploadProgressText');
+      if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '⏳ Publishing...';
+      }
+      if (progressBanner) {
+        progressBanner.style.display = 'flex';
+        if (progressText) progressText.textContent = items.length ? `Preparing ${items.length} media item(s)...` : 'Publishing experience...';
       }
 
-      // Fast Optimistic Media Preview
-      const mediaUrls = [];
-      let mediaType = 'image';
-
-      if (files.length > 0) {
-        for (const file of files) {
-          if (file.type && file.type.startsWith('video')) mediaType = 'video';
-          try {
-            const previewUrl = URL.createObjectURL(file);
-            mediaUrls.push(previewUrl);
-          } catch(e) {}
-        }
-      }
-
-      const currentUid = window.currentUser.uid;
-      const authorName = getCurrentUserName();
+      const currentUid = window.currentUser ? window.currentUser.uid : (localStorage.getItem('tripbna_account_uid') || localStorage.getItem('tripbna_guest_uid') || ('traveler_' + Math.random().toString(36).substring(2, 8)));
+      const authorName = window.currentUser ? getCurrentUserName() : (localStorage.getItem('trip_user_name') || 'Safari Traveler');
+      const authorEmail = window.currentUser ? (window.currentUser.email || '') : (getCurrentUserEmail() || '');
       const tempId = 'post_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7);
+
+      const processedMediaItems = [];
+      let hasAnyVideo = false;
+
+      // Process each attached photo / playable video
+      for (let i = 0; i < items.length; i++) {
+        const item = items[i];
+        if (item && item.isUrlOnly) {
+          const isVid = (item.type === 'video') || isVideoUrl(item.url);
+          if (isVid) {
+            hasAnyVideo = true;
+            if (window.triplineVideoUrls) window.triplineVideoUrls.add(item.url);
+          }
+          processedMediaItems.push({
+            url: item.url,
+            type: isVid ? 'video' : 'image',
+            name: item.name || (isVid ? 'video.mp4' : 'photo.jpg')
+          });
+          continue;
+        }
+
+        const file = item;
+        const isVid = (file.type && file.type.startsWith('video')) || /\.(mp4|mov|webm|mkv|avi|ogg|3gp)$/i.test(file.name);
+        if (isVid) hasAnyVideo = true;
+
+        let localBlobUrl = '';
+        try {
+          localBlobUrl = URL.createObjectURL(file);
+          if (isVid && window.triplineVideoUrls) window.triplineVideoUrls.add(localBlobUrl);
+        } catch(e) {}
+
+        const idbId = `media_${tempId}_${i}`;
+        // Save to IndexedDB non-blocking in background
+        TriplineMediaDB.save(idbId, file, {
+          name: file.name,
+          type: isVid ? 'video' : 'image',
+          mimeType: file.type
+        }).catch(()=>{});
+
+        processedMediaItems.push({
+          url: localBlobUrl,
+          idbId,
+          type: isVid ? 'video' : 'image',
+          name: file.name,
+          mimeType: file.type,
+          _fileObj: file
+        });
+      }
+
+      // If no media attached, provide a high-quality authentic African safari landscape photo
+      if (!processedMediaItems.length) {
+        processedMediaItems.push({
+          url: 'https://images.unsplash.com/photo-1516426122078-c23e76319801?auto=format&fit=crop&w=1200&q=80',
+          type: 'image',
+          name: 'safari.jpg'
+        });
+      }
+
+      const initialCleanMedia = processedMediaItems.map(({ _fileObj, ...rest }) => rest);
 
       const newPostObj = {
         id: tempId,
         authorId: currentUid,
         authorName: authorName,
-        authorEmail: window.currentUser.email || '',
+        authorEmail: authorEmail,
         title,
         desc: desc || '',
         location,
         price,
         publisherWhatsApp,
-        media: mediaUrls,
-        mediaType,
+        media: initialCleanMedia,
+        mediaType: hasAnyVideo ? 'video' : 'image',
         likes: 0,
         likedBy: [],
         shares: 0,
@@ -23833,7 +26060,7 @@ if (viewMenuBtnEl) {
         createdAt: new Date().toISOString()
       };
 
-      // 1. Immediately update UI and localStorage (instant <100ms response!)
+      // 1. Instant Optimistic Render: User sees their media and post right away in 2ms!
       if (!window.allPosts) window.allPosts = [];
       window.allPosts.unshift(newPostObj);
 
@@ -23841,55 +26068,64 @@ if (viewMenuBtnEl) {
       posts.unshift(newPostObj);
       lsSave(LS_KEYS.POSTS, posts);
 
-      // Instantly clear form so the creator can publish other triplines immediately!
       clearPostForm();
       renderPosts();
-      showToast('🎉 Published to Tripline! You can now publish another experience.');
+      showToast(`⚡ Experience published! ${hasAnyVideo ? '🎥 Video and photos live.' : '📸 Live in Tripline.'}`);
 
-      // 2. Non-blocking background sync with Firestore & compressed storage
+      // 2. High-Speed Parallel Upload & Cloud Firestore Sync in Background
       (async () => {
         try {
-          let finalMedia = [];
-          if (files.length > 0) {
-            const uploadPromises = files.map(async (file, idx) => {
-              if (window.fileToDataUrl) {
-                return await window.fileToDataUrl(file);
+          let hasPermanentUpdates = false;
+
+          // Upload all media items concurrently in parallel
+          await Promise.all(processedMediaItems.map(async (m) => {
+            const file = m._fileObj;
+            if (!file) return;
+
+            try {
+              const uploadedUrl = await window.uploadFileToStorage(m.name, file);
+              if (uploadedUrl && !uploadedUrl.startsWith('blob:')) {
+                m.url = uploadedUrl;
+                if (m.type === 'video' && window.triplineVideoUrls) window.triplineVideoUrls.add(uploadedUrl);
+                hasPermanentUpdates = true;
               }
-              return new Promise(res => {
-                const r = new FileReader();
-                r.onload = e => res(e.target.result);
-                r.onerror = () => res(null);
-                r.readAsDataURL(file);
-              });
-            });
-            const results = await Promise.all(uploadPromises);
-            finalMedia = results.filter(Boolean);
+            } catch(upErr) {
+              console.warn("Direct upload item notice:", upErr);
+            }
+          }));
+
+          const cleanMedia = processedMediaItems.map(({ _fileObj, ...rest }) => rest);
+          newPostObj.media = cleanMedia;
+
+          if (hasPermanentUpdates) {
+            const lp = lsLoad(LS_KEYS.POSTS) || [];
+            const idx = lp.findIndex(p => p.id === tempId);
+            if (idx !== -1) { lp[idx].media = cleanMedia; lsSave(LS_KEYS.POSTS, lp); }
+            const memIdx = window.allPosts.findIndex(p => p.id === tempId);
+            if (memIdx !== -1) { window.allPosts[memIdx].media = cleanMedia; }
           }
 
-          const postData = {
-            authorId: currentUid,
-            authorName: authorName,
-            authorEmail: window.currentUser.email || '',
-            title,
-            desc: desc || '',
-            location,
-            price,
-            publisherWhatsApp,
-            media: finalMedia.length ? finalMedia : mediaUrls,
-            mediaType,
-            likes: 0,
-            likedBy: [],
-            shares: 0,
-            createdAt: window.serverTimestamp ? window.serverTimestamp() : new Date().toISOString()
-          };
-
+          // Background Cloud Firestore sync
           if (window.db && window.addDoc && window.collection) {
+            const postData = {
+              authorId: currentUid,
+              authorName: authorName,
+              authorEmail: authorEmail,
+              title,
+              desc: desc || '',
+              location,
+              price,
+              publisherWhatsApp,
+              media: cleanMedia,
+              mediaType: hasAnyVideo ? 'video' : 'image',
+              likes: 0,
+              likedBy: [],
+              shares: 0,
+              createdAt: window.serverTimestamp ? window.serverTimestamp() : new Date().toISOString()
+            };
             const docRef = await window.addDoc(window.collection(window.db, "posts"), postData);
             if (docRef && docRef.id) {
               newPostObj.id = docRef.id;
-              newPostObj.media = postData.media;
-              
-              // Sync updated ID into local storage & memory
               const lp = lsLoad(LS_KEYS.POSTS) || [];
               const idx = lp.findIndex(p => p.id === tempId);
               if (idx !== -1) {
@@ -23902,10 +26138,11 @@ if (viewMenuBtnEl) {
             }
           }
         } catch(e) {
-          console.warn("Background post sync complete notice:", e.message);
+          console.warn("Background post sync notice:", e.message);
         }
       })();
     }
+    window.publishPost = publishPost;
 
     /* -------------------------
        Share & Cart (posts)

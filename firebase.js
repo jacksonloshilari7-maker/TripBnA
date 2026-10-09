@@ -5,8 +5,8 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/12.18.0/fireba
 import {
   initializeFirestore,
   persistentLocalCache,
-  persistentMultipleTabManager,
-  getFirestore
+  getFirestore,
+  setLogLevel
 } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-firestore.js";
 
 // Authentication
@@ -39,25 +39,22 @@ const firebaseConfig = {
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 
+try {
+  setLogLevel('error');
+} catch (e) {}
 
-// Initialize Firebase services with resilient long-polling for iframes and proxy networks
+// Initialize Firebase services with resilient fallback for sandboxes and offline operation
 let db;
 try {
   db = initializeFirestore(app, {
     experimentalForceLongPolling: true,
-    experimentalLongPollingOptions: { timeoutSeconds: 25 },
-    localCache: persistentLocalCache({
-      tabManager: persistentMultipleTabManager()
-    })
+    localCache: persistentLocalCache({})
   });
 } catch (e1) {
   try {
-    db = initializeFirestore(app, {
-      experimentalForceLongPolling: true,
-      experimentalLongPollingOptions: { timeoutSeconds: 25 }
-    });
-  } catch (e2) {
     db = getFirestore(app);
+  } catch (e2) {
+    console.warn("Firestore initialization notice:", e2);
   }
 }
 

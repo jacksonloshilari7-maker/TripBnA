@@ -1,0 +1,421 @@
+[
+  {
+    "id": "svc_food_swahili",
+    "providerId": "prov_food_1",
+    "providerEmail": "swahilidining@tripbna.com",
+    "providerName": "Swahili Heritage Dining",
+    "name": "Swahili Heritage Dining & Nyama Choma",
+    "type": "Food",
+    "status": "Approved",
+    "place": "Arusha",
+    "price": 15,
+    "priceUnit": "/ meal",
+    "foodDiningType": "Restaurant",
+    "description": "Authentic Tanzanian barbecue, local Swahili specialties, and freshly grilled meats.",
+    "images": [
+      "https://images.unsplash.com/photo-1555939594-58d7cb561ad1?auto=format&fit=crop&w=600&q=80"
+    ],
+    "videos": [],
+    "rating": 4.9,
+    "reviewCount": 38,
+    "currentMenuDate": "2026-10-09",
+    "todayMenu": {
+      "Fast Food": [
+        {
+          "id": "ff_1",
+          "name": "Chips",
+          "price": 3,
+          "isAvailable": true,
+          "desc": "Crispy golden fries"
+        },
+        {
+          "id": "ff_2",
+          "name": "Chicken",
+          "price": 6.5,
+          "isAvailable": true,
+          "desc": "Tender grilled chicken"
+        }
+      ],
+      "Local Food": [
+        {
+          "id": "loc_1",
+          "name": "Ugali",
+          "price": 2,
+          "isAvailable": true,
+          "desc": "Hot cornmeal staple"
+        },
+        {
+          "id": "loc_2",
+          "name": "Dagaa",
+          "price": 5,
+          "isAvailable": true,
+          "desc": "Lake sardines with lime"
+        }
+      ]
+    },
+    "dailyMenu": {
+      "2026-10-07": {
+        "Fast Food": [
+          {
+            "id": "ff_1",
+            "name": "Chips",
+            "price": 3,
+            "isAvailable": true,
+            "desc": "Crispy golden fries"
+          },
+          {
+            "id": "ff_2",
+            "name": "Chicken",
+            "price": 6.5,
+            "isAvailable": true,
+            "desc": "Tender grilled chicken"
+          }
+        ],
+        "Vegetarian": [
+          {
+            "id": "veg_1",
+            "name": "Broccoli",
+            "price": 4.5,
+            "isAvailable": true,
+            "desc": "Fresh broccoli"
+          }
+        ],
+        "Local Food": [
+          {
+            "id": "loc_1",
+            "name": "Ugali",
+            "price": 2,
+            "isAvailable": true,
+            "desc": "Hot cornmeal staple"
+          },
+          {
+            "id": "loc_2",
+            "name": "Dagaa",
+            "price": 5,
+            "isAvailable": true,
+            "desc": "Lake sardines"
+          }
+        ]
+      },
+      "2026-10-08": {
+        "Fast Food": [
+          {
+            "id": "ff_1",
+            "name": "Chips 22",
+            "price": 3,
+            "isAvailable": true
+          },
+          {
+            "id": "ff_2",
+            "name": "Chicken22",
+            "price": 6.5,
+            "isAvailable": true
+          }
+        ],
+        "Local Food": [
+          {
+            "id": "loc_1",
+            "name": "Ugali22",
+            "price": 2,
+            "isAvailable": true
+          },
+          {
+            "id": "loc_2",
+            "name": "Dagaa",
+            "price": 5,
+            "isAvailable": true
+          }
+        ]
+      },
+      "2026-10-09": {
+        "Fast Food": [
+          {
+            "id": "ff_1",
+            "name": "Chips",
+            "price": 3,
+            "isAvailable": true,
+            "desc": "Crispy golden fries"
+          },
+          {
+            "id": "ff_2",
+            "name": "Chicken",
+            "price": 6.5,
+            "isAvailable": true,
+            "desc": "Tender grilled chicken"
+          }
+        ],
+        "Local Food": [
+          {
+            "id": "loc_1",
+            "name": "Ugali",
+            "price": 2,
+            "isAvailable": true,
+            "desc": "Hot cornmeal staple"
+          },
+          {
+            "id": "loc_2",
+            "name": "Dagaa",
+            "price": 5,
+            "isAvailable": true,
+            "desc": "Lake sardines with lime"
+          }
+        ]
+      }
+    },
+    "menuUpdatedAt": "2026-10-09T12:31:14.710Z",
+    "updatedAt": "2026-10-09T11:28:16.969Z",
+    "requiresAdminApproval": true,
+    "adminNotes": "Vital details updated by owner (Business Name). Awaiting Platform Admin Jackson Loshilari approval.",
+    "approvedAt": "2026-10-09T11:28:05.734Z",
+    "menu": {
+      "Fast Food": [
+        {
+          "id": "ff_1",
+          "name": "Chips",
+          "price": 3,
+          "isAvailable": true,
+          "desc": "Crispy golden fries"
+        },
+        {
+          "id": "ff_2",
+          "name": "Chicken",
+          "price": 6.5,
+          "isAvailable": true,
+          "desc": "Tender grilled chicken"
+        }
+      ],
+      "Local Food": [
+        {
+          "id": "loc_1",
+          "name": "Ugali",
+          "price": 2,
+          "isAvailable": true,
+          "desc": "Hot cornmeal staple"
+        },
+        {
+          "id": "loc_2",
+          "name": "Dagaa",
+          "price": 5,
+          "isAvailable": true,
+          "desc": "Lake sardines with lime"
+        }
+      ]
+    }
+  },
+  {
+    "id": "svc_food_zanzibar",
+    "providerId": "prov_food_2",
+    "providerEmail": "forodhani@tripbna.com",
+    "providerName": "Zanzibar Spice & Seafood Grill",
+    "name": "Forodhani Spice Seafood Grill",
+    "type": "Food",
+    "status": "Approved",
+    "place": "Zanzibar",
+    "price": 20,
+    "priceUnit": "/ meal",
+    "foodDiningType": "Restaurant",
+    "description": "Zanzibar fresh oceanic seafood, grilled lobster tails, and coconut curry.",
+    "images": [
+      "https://images.unsplash.com/photo-1534422298391-e4f8c172dddb?auto=format&fit=crop&w=600&q=80"
+    ],
+    "videos": [],
+    "rating": 4.8,
+    "reviewCount": 24,
+    "currentMenuDate": "2026-10-09",
+    "todayMenu": {
+      "Fast Food": [
+        {
+          "id": "ff_z1",
+          "name": "Chips",
+          "price": 3.5,
+          "isAvailable": true,
+          "desc": "Zanzibar spiced masala chips"
+        },
+        {
+          "id": "ff_z2",
+          "name": "Burger",
+          "price": 8,
+          "isAvailable": true,
+          "desc": "Grilled snapper fish fillet burger"
+        }
+      ],
+      "Local Food": [
+        {
+          "id": "loc_z1",
+          "name": "Pilau",
+          "price": 6.5,
+          "isAvailable": true,
+          "desc": "Zanzibar clove spiced goat pilau"
+        },
+        {
+          "id": "loc_z2",
+          "name": "Dagaa",
+          "price": 5.5,
+          "isAvailable": true,
+          "desc": "Crispy island sardines with lime"
+        }
+      ]
+    },
+    "dailyMenu": {
+      "2026-10-08": {
+        "Fast Food": [
+          {
+            "id": "ff_z1",
+            "name": "Chips",
+            "price": 3.5,
+            "isAvailable": true,
+            "desc": "Zanzibar spiced masala chips"
+          },
+          {
+            "id": "ff_z2",
+            "name": "Burger",
+            "price": 8,
+            "isAvailable": true,
+            "desc": "Grilled snapper fish fillet burger"
+          }
+        ],
+        "Local Food": [
+          {
+            "id": "loc_z1",
+            "name": "Pilau",
+            "price": 6.5,
+            "isAvailable": true,
+            "desc": "Zanzibar clove spiced goat pilau"
+          },
+          {
+            "id": "loc_z2",
+            "name": "Dagaa",
+            "price": 5.5,
+            "isAvailable": true,
+            "desc": "Crispy island sardines with lime"
+          }
+        ]
+      },
+      "2026-10-09": {
+        "Fast Food": [
+          {
+            "id": "ff_z1",
+            "name": "Chips",
+            "price": 3.5,
+            "isAvailable": true,
+            "desc": "Zanzibar spiced masala chips"
+          },
+          {
+            "id": "ff_z2",
+            "name": "Burger",
+            "price": 8,
+            "isAvailable": true,
+            "desc": "Grilled snapper fish fillet burger"
+          }
+        ],
+        "Local Food": [
+          {
+            "id": "loc_z1",
+            "name": "Pilau",
+            "price": 6.5,
+            "isAvailable": true,
+            "desc": "Zanzibar clove spiced goat pilau"
+          },
+          {
+            "id": "loc_z2",
+            "name": "Dagaa",
+            "price": 5.5,
+            "isAvailable": true,
+            "desc": "Crispy island sardines with lime"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "id": "svc_acc_serengeti",
+    "providerId": "prov_acc_1",
+    "providerEmail": "serengetilodge@gmail.com",
+    "providerName": "Serengeti Safari Lodge",
+    "name": "Sunrise Safari Lodge & Camp",
+    "type": "Accommodation",
+    "status": "Approved",
+    "place": "Serengeti",
+    "price": 110,
+    "priceUnit": "/ night",
+    "accommodationCategory": "Lodges",
+    "description": "Luxury safari stay overlooking the wildlife plains of Serengeti with heated swimming pool.",
+    "images": [
+      "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=600&q=80"
+    ],
+    "videos": [],
+    "rating": 4.9,
+    "reviewCount": 42,
+    "availabilityDate": "2026-10-09",
+    "availableRooms": [
+      {
+        "id": "rm_1",
+        "name": "Twin Beds",
+        "price": 75,
+        "totalUnits": 6,
+        "availableUnits": 5,
+        "isAvailable": true
+      }
+    ],
+    "availabilityUpdatedAt": "2026-10-09T11:27:44.475Z",
+    "isAvailable": true
+  },
+  {
+    "id": "svc_trans_abc",
+    "providerId": "prov_trans_1",
+    "providerEmail": "abctaxi@gmail.com",
+    "providerName": "ABC Executive Taxi & Safari",
+    "name": "ABC Executive Taxi & 4x4 Safari Transport",
+    "type": "Transport",
+    "status": "Approved",
+    "place": "Dar es Salaam",
+    "price": 35,
+    "priceUnit": "/ ride",
+    "transportMode": "Book & Rent",
+    "vehicleCategory": "Taxi & 4x4",
+    "description": "Executive airport transfers, city excursions, and safari vehicle hire with licensed drivers.",
+    "images": [
+      "https://images.unsplash.com/photo-1549924231-f129b911e442?auto=format&fit=crop&w=600&q=80"
+    ],
+    "videos": [],
+    "rating": 4.9,
+    "reviewCount": 35,
+    "availabilityDate": "2026-10-08",
+    "availableFleet": [
+      {
+        "id": "fl_1",
+        "name": "Toyota Corolla Sedan Taxi",
+        "price": 25,
+        "seats": 4,
+        "isAvailable": true
+      },
+      {
+        "id": "fl_2",
+        "name": "4x4 Safari Land Cruiser Extended",
+        "price": 180,
+        "seats": 7,
+        "isAvailable": true
+      }
+    ],
+    "isAvailable": true,
+    "availabilityUpdatedAt": "2026-10-08T09:18:25.459Z"
+  },
+  {
+    "id": "svc_pending_demo",
+    "providerId": "prov_food_1",
+    "providerEmail": "swahilidining@tripbna.com",
+    "providerName": "Swahili Heritage Dining",
+    "name": "Swahili Sunset Beach Barbecue",
+    "type": "Food",
+    "status": "Pending",
+    "place": "Zanzibar",
+    "price": 25,
+    "priceUnit": "/ meal",
+    "foodDiningType": "Restaurant",
+    "description": "Fresh sunset grilled seafood buffet awaiting Jackson Loshilari platform admin review.",
+    "images": [
+      "https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=600&q=80"
+    ],
+    "videos": []
+  }
+]
