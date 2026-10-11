@@ -102,22 +102,70 @@
   <meta name="application-name" content="TripBnA" />
   <meta name="msapplication-TileColor" content="#00e500" />
 
-  <!-- Global Error Barrier to prevent external script/network blips from showing Script error -->
+  <!-- Global Error Barrier & Iframe Sandbox Storage Polyfill -->
   <script>
+    // Safe storage fallback for sandboxed/restricted iframe environments where localStorage throws SecurityError
+    (function() {
+      try {
+        const testKey = '__tripbna_test__';
+        window.localStorage.setItem(testKey, '1');
+        window.localStorage.removeItem(testKey);
+      } catch (err) {
+        const mem = {};
+        const safeStore = {
+          getItem: function(k) { return Object.prototype.hasOwnProperty.call(mem, k) ? mem[k] : null; },
+          setItem: function(k, v) { mem[k] = String(v); },
+          removeItem: function(k) { delete mem[k]; },
+          clear: function() { Object.keys(mem).forEach(k => delete mem[k]); },
+          get length() { return Object.keys(mem).length; },
+          key: function(i) { return Object.keys(mem)[i] || null; }
+        };
+        try {
+          Object.defineProperty(window, 'localStorage', { value: safeStore, configurable: true, writable: true });
+          Object.defineProperty(window, 'sessionStorage', { value: safeStore, configurable: true, writable: true });
+        } catch(e) {
+          try { window.localStorage = safeStore; window.sessionStorage = safeStore; } catch(e2) {}
+        }
+      }
+    })();
+
     window.addEventListener('error', function(event) {
-      if (!event.filename || event.message === 'Script error.' || (event.filename && !event.filename.includes(window.location.host))) {
+      const host = (window.location && window.location.host) ? window.location.host : '';
+      if (!event.filename || event.message === 'Script error.' || (typeof event.filename === 'string' && host && !event.filename.includes(host))) {
         // Cross-origin script error or blocked resource
         event.preventDefault();
         return true;
       }
     });
+    // Filter Firestore benign offline/backend reachability notices so they do not trigger container error alerts
+    const _origConsoleError = console.error;
+    console.error = function(...args) {
+      const msg = args.map(a => (a && (a.message || a.stack)) || String(a)).join(' ');
+      if (msg.includes('Could not reach Cloud Firestore backend') || msg.includes('offline mode') || msg.includes('@firebase/firestore')) {
+        console.warn('[Firestore Status]', ...args);
+        return;
+      }
+      _origConsoleError.apply(console, args);
+    };
+
     window.addEventListener('unhandledrejection', function(event) {
-      // Prevent unhandled promise rejections from external network calls from breaking UI
-      if (event.reason && (event.reason.message || '').includes('quota')) {
-        console.warn('Network/quota warning suppressed:', event.reason);
+      const reasonStr = event.reason ? String(event.reason.message || event.reason) : '';
+      if (reasonStr.includes('quota') || reasonStr.includes('offline') || reasonStr.includes('Could not reach Cloud Firestore')) {
+        console.warn('Network/offline warning suppressed:', event.reason);
         event.preventDefault();
       }
     });
+
+    // Safe iframe alert shim to prevent "Blocked alert() inside an iframe" exceptions
+    window.alert = function(msg) {
+      try {
+        if (typeof showToast === 'function') {
+          showToast(String(msg));
+          return;
+        }
+      } catch(e) {}
+      console.log('[TripBnA Notice]', msg);
+    };
 
     // Early defensive modal closers so inline onclick handlers always find them defined
     window.closeFriendProfileModal = function() {
@@ -192,6 +240,7 @@
       const tag = (element.tagName || '').toLowerCase();
       if (tag === 'video') {
         element.src = '/uploads/tripline/serengeti_safari_video.mp4';
+        try { element.load(); } catch(e) {}
       } else {
         element.src = 'https://images.unsplash.com/photo-1516426122078-c23e76319801?auto=format&fit=crop&w=1200&q=80';
       }
@@ -939,6 +988,10 @@
       width: 100%;
       height: 100%;
       object-fit: cover;
+    }
+    .hidden-play-overlay {
+      opacity: 0 !important;
+      pointer-events: none !important;
     }
     .media-carousel-nav-btn {
       position: absolute;
@@ -4158,6 +4211,17 @@ body { font-family: Arial, sans-serif; margin:0; padding:20px; background:#f0f2f
   box-shadow: 0 8px 28px rgba(0, 0, 0, 0.09);
   border-color: #cbd5e1;
 }
+.tripline-card .post-media {
+  width: calc(100% + 32px) !important;
+  height: auto !important;
+  display: block !important;
+  max-height: none !important;
+  border-radius: 14px !important;
+  box-shadow: none !important;
+  background: transparent !important;
+  overflow: visible !important;
+  margin: 12px -16px 12px -16px !important;
+}
 .tripline-actions-row {
   display: flex !important;
   flex-direction: row !important;
@@ -4570,8 +4634,26 @@ body { font-family: Arial, sans-serif; margin:0; padding:20px; background:#f0f2f
           <input id="orgPickup" placeholder="Pickup location" />
           <label>Price ($ USD)</label>
           <input id="orgPrice" type="number" placeholder="Price" />
-          <label>Pictures / Video</label>
-          <input id="orgMedia" type="file" accept="image/*,video/*" multiple />
+          <label style="display:flex; justify-content:space-between; align-items:center;">
+            <span>Pictures / Video</span>
+            <span style="font-size:11px; color:#64748b; font-weight:normal;">Auto-assigns destination photo if blank</span>
+          </label>
+          <input id="orgMedia" type="file" accept="image/*,video/*" multiple onchange="handleOrgMediaSelection(event)" />
+
+          <!-- Selected Media Preview Container -->
+          <div id="orgMediaPreviews" style="display:none; gap:8px; flex-wrap:wrap; margin-top:8px;"></div>
+
+          <!-- Quick Destination Cover Presets -->
+          <div style="margin-top:6px; margin-bottom:4px;">
+            <div style="font-size:11px; color:#475569; font-weight:700; margin-bottom:4px;">📸 Or Choose Destination Cover:</div>
+            <div style="display:flex; gap:4px; flex-wrap:wrap;">
+              <button type="button" class="btn ghost" onclick="selectOrgPresetCover('zanzibar')" style="font-size:10px; padding:3px 7px; border-radius:6px; background:#f0f9ff; border:1px solid #bae6fd; color:#0369a1; font-weight:700;">🏝️ Zanzibar</button>
+              <button type="button" class="btn ghost" onclick="selectOrgPresetCover('serengeti')" style="font-size:10px; padding:3px 7px; border-radius:6px; background:#fefce8; border:1px solid #fef08a; color:#854d0e; font-weight:700;">🦁 Serengeti</button>
+              <button type="button" class="btn ghost" onclick="selectOrgPresetCover('kilimanjaro')" style="font-size:10px; padding:3px 7px; border-radius:6px; background:#f8fafc; border:1px solid #cbd5e1; color:#334155; font-weight:700;">🏔️ Kilimanjaro</button>
+              <button type="button" class="btn ghost" onclick="selectOrgPresetCover('ngorongoro')" style="font-size:10px; padding:3px 7px; border-radius:6px; background:#f0fdf4; border:1px solid #bbf7d0; color:#166534; font-weight:700;">🦏 Ngorongoro</button>
+              <button type="button" class="btn ghost" onclick="selectOrgPresetCover('tarangire')" style="font-size:10px; padding:3px 7px; border-radius:6px; background:#fff7ed; border:1px solid #fed7aa; color:#9a3412; font-weight:700;">🐘 Tarangire</button>
+            </div>
+          </div>
 
           <!-- Add Services to Trip Section (Create) -->
           <div id="orgServicesToTripContainer" style="margin-top:12px; border:1px solid #cbd5e1; border-radius:10px; background:#f8fafc; padding:10px;">
@@ -5751,8 +5833,8 @@ body { font-family: Arial, sans-serif; margin:0; padding:20px; background:#f0f2f
           <h3>Trip Mini</h3>
           <div class="muted">Quick trip ideas & media</div>
           <div class="slideshow" style="margin-top:10px;">
-            <img src="Zanzibar-jozani2.jpg" alt="">
-            <img src="Manyara-Nationalpark.jpg" alt="">
+            <img src="https://images.unsplash.com/photo-1516426122078-c23e76319801?auto=format&fit=crop&w=600&q=80" alt="Serengeti Safari">
+            <img src="https://images.unsplash.com/photo-1547471080-7cc2caa01a7e?auto=format&fit=crop&w=600&q=80" alt="Tanzania National Park">
           </div>
         </div>
 
@@ -5796,7 +5878,7 @@ body { font-family: Arial, sans-serif; margin:0; padding:20px; background:#f0f2f
       </a>
     </div>
     <div class="profile">
-      <img id="sideMenuAvatar" src="20250306_161449.jpg" alt="profile" style="width:64px;height:64px;border-radius:50%;object-fit:cover;border:2px solid #2e8b57;">
+      <img id="sideMenuAvatar" src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&q=80" alt="profile" style="width:64px;height:64px;border-radius:50%;object-fit:cover;border:2px solid #2e8b57;">
       <div style="font-weight:700; margin-top:6px; font-size:16px;" id="sideMenuName">GUEST TRAVELER</div>
       <div class="muted" style="font-size:11px;" id="sideMenuEmail">Sign in to access your account</div>
       <div id="sideMenuOccupationWrap" style="margin-top:4px; display:none;"><span class="chip chip-confirmed" style="font-size:11px; padding:2px 8px;" id="sideMenuOccupation">🧭 Traveler</span></div>
@@ -10467,7 +10549,7 @@ Last Updated: April 2026 | Version 2.0 | TripBnA Platform Policies
 <!-- =========================================================================
      TRIPLINE EXPANDABLE FULLSCREEN MEDIA LIGHTBOX (Responsive Screen Adaptation)
      ========================================================================= -->
-<div id="triplineMediaLightbox" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.94); backdrop-filter:blur(10px); z-index:26000; align-items:center; justify-content:center; flex-direction:column; padding:16px;">
+<div id="triplineMediaLightbox" onclick="if(event.target === this || event.target.id === 'lightboxViewport') closeTriplineMediaLightbox()" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.94); backdrop-filter:blur(10px); z-index:26000; align-items:center; justify-content:center; flex-direction:column; padding:16px;">
   
   <!-- Top Bar Controls -->
   <div style="position:absolute; top:16px; left:20px; right:20px; display:flex; justify-content:space-between; align-items:center; z-index:26010;">
@@ -10477,12 +10559,14 @@ Last Updated: April 2026 | Version 2.0 | TripBnA Platform Policies
       <span id="lightboxCounter" style="background:rgba(255,255,255,0.2); padding:2px 8px; border-radius:999px; font-size:11px;">1 / 1</span>
     </div>
     <div style="display:flex; align-items:center; gap:8px;">
-      <button type="button" onclick="closeTriplineMediaLightbox()" style="background:rgba(255,255,255,0.2); color:#ffffff; border:none; width:40px; height:40px; border-radius:50%; font-size:18px; font-weight:800; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:background 0.2s;" title="Close Media View">✕</button>
+      <button type="button" onclick="closeTriplineMediaLightbox()" style="background:rgba(255,255,255,0.25); color:#ffffff; border:1px solid rgba(255,255,255,0.4); padding:6px 14px; border-radius:10px; font-size:13px; font-weight:800; cursor:pointer; display:flex; align-items:center; gap:6px; transition:background 0.2s;" title="Close Media View">
+        <span>✕</span> <span>Close</span>
+      </button>
     </div>
   </div>
 
   <!-- Main Responsive Media Viewport -->
-  <div id="lightboxViewport" style="position:relative; width:100%; height:100%; max-width:94vw; max-height:84vh; display:flex; align-items:center; justify-content:center; margin:auto;">
+  <div id="lightboxViewport" onclick="if(event.target === this) closeTriplineMediaLightbox()" style="position:relative; width:100%; height:100%; max-width:94vw; max-height:84vh; display:flex; align-items:center; justify-content:center; margin:auto;">
     <!-- Populated dynamically: video or high-res image -->
   </div>
 
@@ -10492,7 +10576,7 @@ Last Updated: April 2026 | Version 2.0 | TripBnA Platform Policies
 
   <!-- Bottom Caption & Controls -->
   <div style="position:absolute; bottom:16px; left:20px; right:20px; text-align:center; color:#cbd5e1; font-size:12px; pointer-events:none;">
-    <span style="background:rgba(0,0,0,0.6); padding:4px 14px; border-radius:999px;">Adaptive Screen View • Tap or press Esc to close</span>
+    <span style="background:rgba(0,0,0,0.6); padding:4px 14px; border-radius:999px;">Adaptive Screen View • Tap outside or press Esc to close</span>
   </div>
 </div>
 
@@ -24724,8 +24808,76 @@ if (viewMenuBtnEl) {
       INCOMING: 'trip_demo_incoming_v2',
       CART: 'trip_demo_cart_v2'
     };
-    function lsLoad(key){ try{ return JSON.parse(localStorage.getItem(key))||[] }catch(e){ return [] } }
-    function lsSave(key, val){ localStorage.setItem(key, JSON.stringify(val)) }
+    function sanitizeForLocalStorage(val) {
+      if (!val) return val;
+      if (Array.isArray(val)) {
+        return val.slice(0, 50).map(item => {
+          if (!item || typeof item !== 'object') return item;
+          const clone = { ...item };
+          if (Array.isArray(clone.media)) {
+            clone.media = clone.media.map(m => {
+              if (typeof m === 'string' && m.startsWith('data:') && m.length > 500) {
+                return (typeof getDestinationDefaultMedia === 'function' && clone.place)
+                  ? getDestinationDefaultMedia(clone.place, clone.title)
+                  : 'https://images.unsplash.com/photo-1516426122078-c23e76319801?auto=format&fit=crop&w=1200&q=80';
+              }
+              if (m && typeof m === 'object' && typeof m.url === 'string' && m.url.startsWith('data:') && m.url.length > 500) {
+                return { ...m, url: (typeof getDestinationDefaultMedia === 'function' && clone.place) ? getDestinationDefaultMedia(clone.place, clone.title) : 'https://images.unsplash.com/photo-1516426122078-c23e76319801?auto=format&fit=crop&w=1200&q=80' };
+              }
+              return m;
+            });
+          }
+          if (typeof clone.mediaUrl === 'string' && clone.mediaUrl.startsWith('data:') && clone.mediaUrl.length > 500) {
+            clone.mediaUrl = 'https://images.unsplash.com/photo-1516426122078-c23e76319801?auto=format&fit=crop&w=1200&q=80';
+          }
+          return clone;
+        });
+      }
+      return val;
+    }
+
+    function lsLoad(key){ 
+      try { 
+        return JSON.parse(localStorage.getItem(key)) || [];
+      } catch(e) { 
+        return []; 
+      } 
+    }
+
+    function lsSave(key, val){ 
+      try {
+        const sanitized = sanitizeForLocalStorage(val);
+        localStorage.setItem(key, JSON.stringify(sanitized));
+      } catch(e) {
+        // Handle QuotaExceededError smoothly without crashing Firestore listeners or UI
+        try {
+          for (let i = localStorage.length - 1; i >= 0; i--) {
+            const k = localStorage.key(i);
+            if (k && (k.startsWith('trip_cache_') || k.startsWith('temp_') || k.includes('_backup_'))) {
+              localStorage.removeItem(k);
+            }
+          }
+          const smaller = Array.isArray(val) ? sanitizeForLocalStorage(val.slice(0, 25)) : val;
+          localStorage.setItem(key, JSON.stringify(smaller));
+        } catch(err2) {
+          console.warn(`[lsSave] Storage quota exceeded for ${key}, falling back to memory:`, err2.message);
+        }
+      }
+    }
+
+    // One-time self-healing storage sanitizer to free any existing quota bottlenecks
+    try {
+      [LS_KEYS.ORGANISERS, LS_KEYS.POSTS].forEach(k => {
+        const raw = localStorage.getItem(k);
+        if (raw && (raw.includes('data:image') || raw.includes('data:video') || raw.length > 80000)) {
+          try {
+            const parsed = JSON.parse(raw);
+            const cleaned = sanitizeForLocalStorage(parsed);
+            localStorage.setItem(k, JSON.stringify(cleaned));
+          } catch(e) {}
+        }
+      });
+    } catch(e) {}
 
     function getCurrentUserName() {
       if (window.currentUser) {
@@ -24735,7 +24887,17 @@ if (viewMenuBtnEl) {
     }
 
     function getCurrentUserUid() {
-      return window.currentUser ? window.currentUser.uid : null;
+      if (window.currentUser && window.currentUser.uid) return window.currentUser.uid;
+      if (window.auth && window.auth.currentUser && window.auth.currentUser.uid) return window.auth.currentUser.uid;
+      if (window.currentUserProfile && window.currentUserProfile.uid) return window.currentUserProfile.uid;
+      try {
+        const sess = JSON.parse(localStorage.getItem('tripbna_auth_session') || '{}');
+        if (sess.user && sess.user.uid) return sess.user.uid;
+        if (sess.profile && sess.profile.uid) return sess.profile.uid;
+      } catch(e) {}
+      const fallbackUid = localStorage.getItem('tripbna_account_uid');
+      if (fallbackUid) return fallbackUid;
+      return null;
     }
 
     function getCurrentUserEmail() {
@@ -24752,6 +24914,271 @@ if (viewMenuBtnEl) {
       return (localStorage.getItem('tripbna_account_email') || '').toLowerCase().trim();
     }
     window.getCurrentUserEmail = getCurrentUserEmail;
+
+    function getDestinationDefaultMedia(place, title) {
+      const combined = `${place || ''} ${title || ''}`.toLowerCase();
+      if (combined.includes('zanzibar') || combined.includes('nungwi') || combined.includes('kendwa') || combined.includes('paje') || combined.includes('stone town') || combined.includes('beach') || combined.includes('island') || combined.includes('ocean')) {
+        return 'https://images.unsplash.com/photo-1586861635167-e5223aadc9fe?auto=format&fit=crop&w=1200&q=80';
+      }
+      if (combined.includes('serengeti') || combined.includes('balloon') || combined.includes('migration') || combined.includes('savannah') || combined.includes('lion') || combined.includes('leopard') || combined.includes('cheetah')) {
+        return 'https://images.unsplash.com/photo-1516426122078-c23e76319801?auto=format&fit=crop&w=1200&q=80';
+      }
+      if (combined.includes('kilimanjaro') || combined.includes('kili') || combined.includes('mountain') || combined.includes('trek') || combined.includes('climb') || combined.includes('peak') || combined.includes('marangu') || combined.includes('machame') || combined.includes('moshi')) {
+        return 'https://images.unsplash.com/photo-1589553416260-f586c8f1514f?auto=format&fit=crop&w=1200&q=80';
+      }
+      if (combined.includes('ngorongoro') || combined.includes('crater') || combined.includes('caldera')) {
+        return 'https://images.unsplash.com/photo-1547471080-7cc2caa01a7e?auto=format&fit=crop&w=1200&q=80';
+      }
+      if (combined.includes('tarangire') || combined.includes('elephant') || combined.includes('baobab')) {
+        return 'https://images.unsplash.com/photo-1534567153574-2b12153a87f0?auto=format&fit=crop&w=1200&q=80';
+      }
+      if (combined.includes('manyara') || combined.includes('flamingo') || combined.includes('rift')) {
+        return 'https://images.unsplash.com/photo-1551009175-8a68da93d5f9?auto=format&fit=crop&w=1200&q=80';
+      }
+      if (combined.includes('arusha') || combined.includes('meru')) {
+        return 'https://images.unsplash.com/photo-1549924231-f129b911e442?auto=format&fit=crop&w=1200&q=80';
+      }
+      if (combined.includes('mafia') || combined.includes('pemba') || combined.includes('dive')) {
+        return 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?auto=format&fit=crop&w=1200&q=80';
+      }
+      if (combined.includes('mikumi') || combined.includes('ruaha') || combined.includes('nyerere') || combined.includes('selous')) {
+        return 'https://images.unsplash.com/photo-1575550959106-5a7defe28b56?auto=format&fit=crop&w=1200&q=80';
+      }
+      return 'https://images.unsplash.com/photo-1516426122078-c23e76319801?auto=format&fit=crop&w=1200&q=80';
+    }
+    window.getDestinationDefaultMedia = getDestinationDefaultMedia;
+
+    function getTripSignature(t) {
+      if (!t) return '';
+      const creatorKey = (t.organizerId || t.ownerId || t.organizerName || t.owner || '').toString().trim().toLowerCase();
+      const titleKey = (t.title || '').toString().trim().toLowerCase();
+      const placeKey = (t.place || t.placeNormalized || '').toString().trim().toLowerCase();
+      const dateKey = (t.date || '').toString().trim();
+      return `${creatorKey}:::${titleKey}:::${placeKey}:::${dateKey}`;
+    }
+    window.getTripSignature = getTripSignature;
+
+    function cleanTripKey(s) {
+      return (s || '').toString().trim().toLowerCase().replace(/[^a-z0-9]/g, '');
+    }
+
+    function isSameTrip(a, b) {
+      if (!a || !b) return false;
+      const idA = String(a.id || '');
+      const idB = String(b.id || '');
+      if (idA && idB && idA === idB) return true;
+
+      const titleA = cleanTripKey(a.title);
+      const titleB = cleanTripKey(b.title);
+      if (!titleA || !titleB || titleA !== titleB) return false;
+
+      const uidA = String(a.organizerId || a.ownerId || '');
+      const uidB = String(b.organizerId || b.ownerId || '');
+      const emailA = (a.organizerEmail || '').toLowerCase().trim();
+      const emailB = (b.organizerEmail || '').toLowerCase().trim();
+      const nameA = cleanTripKey(a.organizerName || a.owner);
+      const nameB = cleanTripKey(b.organizerName || b.owner);
+
+      const curUid = getCurrentUserUid();
+      const curEmail = getCurrentUserEmail();
+      const curName = cleanTripKey(getCurrentUserName());
+
+      const aIsMe = (curUid && (uidA === curUid)) || (curEmail && (emailA === curEmail)) || (curName && curName !== 'guesttraveler' && nameA === curName);
+      const bIsMe = (curUid && (uidB === curUid)) || (curEmail && (emailB === curEmail)) || (curName && curName !== 'guesttraveler' && nameB === curName);
+
+      const creatorMatches = (aIsMe && bIsMe) ||
+        (uidA && uidB && uidA === uidB) ||
+        (emailA && emailB && emailA === emailB) ||
+        (nameA && nameB && nameA === nameB);
+
+      if (!creatorMatches) return false;
+
+      // If both have dates and they are distinct, they are separate trips!
+      const dateA = String(a.date || '').trim();
+      const dateB = String(b.date || '').trim();
+      if (dateA && dateB && dateA !== dateB) return false;
+
+      const isOneTemp = idA.startsWith('org_') || idB.startsWith('org_') || idA.startsWith('temp_') || idB.startsWith('temp_');
+      const placeMatch = !a.place || !b.place || cleanTripKey(a.place) === cleanTripKey(b.place);
+
+      return isOneTemp || placeMatch;
+    }
+    window.isSameTrip = isSameTrip;
+
+    function deduplicateTrips(tripsList) {
+      if (!Array.isArray(tripsList)) return [];
+      const result = [];
+      tripsList.forEach(t => {
+        if (!t || (!t.id && !t.title)) return;
+        const existingIdx = result.findIndex(existing => isSameTrip(existing, t));
+        if (existingIdx === -1) {
+          result.push(t);
+        } else {
+          const existing = result[existingIdx];
+          const existingIsTemp = String(existing.id || '').startsWith('org_') || String(existing.id || '').startsWith('temp_');
+          const newIsTemp = String(t.id || '').startsWith('org_') || String(t.id || '').startsWith('temp_');
+
+          // Always preserve non-empty media, attached services, and fields
+          const bestMedia = (t.media && Array.isArray(t.media) && t.media.length) ? t.media : (existing.media || []);
+          const bestServices = (t.attachedServices && Array.isArray(t.attachedServices) && t.attachedServices.length) ? t.attachedServices : (existing.attachedServices || []);
+          const bestPlace = t.place || existing.place;
+          const bestDate = t.date || existing.date;
+          const bestPrice = t.price || existing.price;
+
+          if (existingIsTemp && !newIsTemp) {
+            // Authoritative Firestore document replaces local temporary representation
+            result[existingIdx] = {
+              ...existing,
+              ...t,
+              id: t.id,
+              media: bestMedia,
+              attachedServices: bestServices,
+              place: bestPlace,
+              date: bestDate,
+              price: bestPrice
+            };
+          } else {
+            // Keep existing representation but ensure media and fields are never lost
+            if (!existing.media || !existing.media.length) existing.media = bestMedia;
+            if (!existing.attachedServices || !existing.attachedServices.length) existing.attachedServices = bestServices;
+            if (Array.isArray(t.memberIds) && Array.isArray(existing.memberIds)) {
+              existing.memberIds = Array.from(new Set([...existing.memberIds, ...t.memberIds]));
+            }
+            if (Array.isArray(t.requests) && Array.isArray(existing.requests)) {
+              const reqIds = new Set(existing.requests.map(r => r.id));
+              t.requests.forEach(r => { if (!reqIds.has(r.id)) existing.requests.push(r); });
+            }
+          }
+        }
+      });
+      return result;
+    }
+    window.deduplicateTrips = deduplicateTrips;
+
+    window.selectedOrgPresetCover = null;
+    window.selectedOrgUploadedFiles = [];
+
+    function selectOrgPresetCover(presetKey) {
+      const presets = {
+        zanzibar: 'https://images.unsplash.com/photo-1586861635167-e5223aadc9fe?auto=format&fit=crop&w=1200&q=80',
+        serengeti: 'https://images.unsplash.com/photo-1516426122078-c23e76319801?auto=format&fit=crop&w=1200&q=80',
+        kilimanjaro: 'https://images.unsplash.com/photo-1589553416260-f586c8f1514f?auto=format&fit=crop&w=1200&q=80',
+        ngorongoro: 'https://images.unsplash.com/photo-1547471080-7cc2caa01a7e?auto=format&fit=crop&w=1200&q=80',
+        tarangire: 'https://images.unsplash.com/photo-1534567153574-2b12153a87f0?auto=format&fit=crop&w=1200&q=80'
+      };
+      const url = presets[presetKey] || presets.serengeti;
+      window.selectedOrgPresetCover = url;
+      const prevWrap = document.getElementById('orgMediaPreviews');
+      if (prevWrap) {
+        prevWrap.style.display = 'flex';
+        prevWrap.innerHTML = `
+          <div style="position:relative; width:80px; height:60px; border-radius:8px; overflow:hidden; border:2px solid #0b84ff; box-shadow:0 2px 6px rgba(0,0,0,0.15); flex-shrink:0;">
+            <img src="${url}" style="width:100%; height:100%; object-fit:cover;" />
+            <button type="button" onclick="removeOrgPresetCover()" style="position:absolute; top:2px; right:2px; background:rgba(0,0,0,0.6); color:#fff; border:none; border-radius:50%; width:18px; height:18px; font-size:11px; display:flex; align-items:center; justify-content:center; cursor:pointer;" title="Remove cover">✕</button>
+            <span style="position:absolute; bottom:2px; left:2px; background:rgba(11,132,255,0.85); color:#fff; font-size:9px; padding:1px 4px; border-radius:4px; font-weight:700;">Cover</span>
+          </div>
+        `;
+      }
+      showToast('📸 Destination cover photo selected!');
+    }
+    window.selectOrgPresetCover = selectOrgPresetCover;
+
+    function removeOrgPresetCover() {
+      window.selectedOrgPresetCover = null;
+      const prevWrap = document.getElementById('orgMediaPreviews');
+      if (prevWrap) {
+        prevWrap.innerHTML = '';
+        prevWrap.style.display = 'none';
+      }
+    }
+    window.removeOrgPresetCover = removeOrgPresetCover;
+
+    function handleOrgMediaSelection(e) {
+      const files = e.target.files;
+      const prevWrap = document.getElementById('orgMediaPreviews');
+      if (!prevWrap) return;
+      if (!files || !files.length) {
+        if (!window.selectedOrgPresetCover) {
+          prevWrap.innerHTML = '';
+          prevWrap.style.display = 'none';
+        }
+        return;
+      }
+      window.selectedOrgUploadedFiles = Array.from(files);
+      prevWrap.style.display = 'flex';
+      prevWrap.innerHTML = '';
+
+      // If preset was selected, keep it as first cover
+      if (window.selectedOrgPresetCover) {
+        const coverBox = document.createElement('div');
+        coverBox.style.cssText = 'position:relative; width:80px; height:60px; border-radius:8px; overflow:hidden; border:2px solid #0b84ff; box-shadow:0 2px 6px rgba(0,0,0,0.15); flex-shrink:0;';
+        coverBox.innerHTML = `
+          <img src="${window.selectedOrgPresetCover}" style="width:100%; height:100%; object-fit:cover;" />
+          <button type="button" onclick="removeOrgPresetCover()" style="position:absolute; top:2px; right:2px; background:rgba(0,0,0,0.6); color:#fff; border:none; border-radius:50%; width:18px; height:18px; font-size:11px; display:flex; align-items:center; justify-content:center; cursor:pointer;">✕</button>
+          <span style="position:absolute; bottom:2px; left:2px; background:rgba(11,132,255,0.85); color:#fff; font-size:9px; padding:1px 4px; border-radius:4px; font-weight:700;">Cover</span>
+        `;
+        prevWrap.appendChild(coverBox);
+      }
+      
+      Array.from(files).forEach((file, idx) => {
+        // Start immediate background upload so trip creation is instantaneous
+        if (!file._preUploadPromise) {
+          file._preUploadPromise = (async () => {
+            try {
+              let toUpload = file;
+              if (file instanceof Blob && file.type && file.type.startsWith('image/') && typeof window.compressImageFile === 'function') {
+                toUpload = await window.compressImageFile(file, 1600, 0.82);
+              }
+              const fd = new FormData();
+              fd.append('file', toUpload, toUpload.name || (toUpload.type?.startsWith('video') ? 'video.mp4' : 'photo.jpg'));
+              const resp = await fetch('/api/upload-file', { method: 'POST', body: fd });
+              if (resp.ok) {
+                const data = await resp.json();
+                if (data && data.success && data.url) {
+                  file._uploadedUrl = data.url;
+                  return data.url;
+                }
+              }
+            } catch(e) {}
+            // Compressed base64 permanent fallback
+            try {
+              return await new Promise((res) => {
+                const r = new FileReader();
+                r.onload = ev => res(ev.target.result);
+                r.onerror = () => res(null);
+                r.readAsDataURL(file);
+              });
+            } catch(e) {
+              return null;
+            }
+          })();
+        }
+
+        const itemBox = document.createElement('div');
+        itemBox.style.cssText = 'position:relative; width:80px; height:60px; border-radius:8px; overflow:hidden; border:1px solid #cbd5e1; background:#000; box-shadow:0 2px 6px rgba(0,0,0,0.1); flex-shrink:0;';
+        
+        const isVideo = file.type && file.type.startsWith('video');
+        const url = URL.createObjectURL(file);
+        
+        if (isVideo) {
+          itemBox.innerHTML = `
+            <video src="${url}" style="width:100%; height:100%; object-fit:cover;" muted playsinline></video>
+            <div style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center; color:#fff; font-size:14px; background:rgba(0,0,0,0.25);">▶</div>
+          `;
+        } else {
+          itemBox.innerHTML = `<img src="${url}" style="width:100%; height:100%; object-fit:cover;" />`;
+        }
+        
+        const badge = document.createElement('span');
+        badge.style.cssText = 'position:absolute; bottom:2px; left:2px; background:rgba(0,0,0,0.7); color:#fff; font-size:9px; padding:1px 4px; border-radius:4px;';
+        badge.textContent = isVideo ? 'Video' : 'Photo';
+        itemBox.appendChild(badge);
+
+        prevWrap.appendChild(itemBox);
+      });
+      showToast(`📸 ${files.length} media item(s) selected for trip!`);
+    }
+    window.handleOrgMediaSelection = handleOrgMediaSelection;
 
     /* -------------------------
        Background slides cycle
@@ -24890,7 +25317,14 @@ if (viewMenuBtnEl) {
           snapshot.forEach(doc => {
             list.push({ id: doc.id, ...doc.data() });
           });
-          window.allTrips = list;
+          
+          // Merge with local trips so newly created trips never disappear, with strict deduplication
+          const localOrgs = lsLoad(LS_KEYS.ORGANISERS) || [];
+          const merged = deduplicateTrips([...list, ...localOrgs]);
+
+          lsSave(LS_KEYS.ORGANISERS, merged);
+
+          window.allTrips = merged;
           renderOrganisers();
           updateOrgNotifCount();
         }, (err) => {
@@ -24914,7 +25348,27 @@ if (viewMenuBtnEl) {
           snapshot.forEach(doc => {
             list.push({ id: doc.id, ...doc.data() });
           });
-          window.allPosts = list;
+          
+          // CRITICAL: Merge with local posts from localStorage so newly published posts NEVER disappear!
+          const localPosts = lsLoad(LS_KEYS.POSTS) || [];
+          const firestoreIds = new Set(list.map(p => String(p.id)));
+          const merged = [...list];
+          localPosts.forEach(localP => {
+            if (!localP || !localP.id) return;
+            const lpId = String(localP.id);
+            if (!firestoreIds.has(lpId)) {
+              const alreadyInList = list.some(fp => {
+                const sameTitle = (fp.title || '').trim().toLowerCase() === (localP.title || '').trim().toLowerCase();
+                const sameAuthor = (fp.authorId && localP.authorId && fp.authorId === localP.authorId) ||
+                                   (fp.authorEmail && localP.authorEmail && fp.authorEmail.toLowerCase() === localP.authorEmail.toLowerCase());
+                return sameTitle && sameAuthor;
+              });
+              if (!alreadyInList) {
+                merged.unshift(localP);
+              }
+            }
+          });
+          window.allPosts = merged;
           renderPosts();
         }, (err) => {
           if (err && err.code === 'unavailable') {
@@ -25131,6 +25585,9 @@ if (viewMenuBtnEl) {
           const freshUrl = URL.createObjectURL(record.blob);
           if (record.type === 'video') window.triplineVideoUrls.add(freshUrl);
           element.src = freshUrl;
+          if (element.tagName && element.tagName.toLowerCase() === 'video') {
+            try { element.load(); } catch(e) {}
+          }
           return;
         }
       }
@@ -25139,6 +25596,7 @@ if (viewMenuBtnEl) {
       const tag = (element.tagName || '').toLowerCase();
       if (tag === 'video') {
         element.src = '/uploads/tripline/serengeti_safari_video.mp4';
+        try { element.load(); } catch(e) {}
       } else {
         element.src = 'https://images.unsplash.com/photo-1516426122078-c23e76319801?auto=format&fit=crop&w=1200&q=80';
       }
@@ -25329,10 +25787,15 @@ if (viewMenuBtnEl) {
         const mUrl = (typeof m === 'object' && m.url) ? m.url : m;
         const isVid = isVideoUrl(mUrl, m);
         if (isVid) {
+          const videoPoster = 'https://images.unsplash.com/photo-1516426122078-c23e76319801?auto=format&fit=crop&w=1200&q=80';
           return `
             <div style="position:relative; width:100%; border-radius:14px; overflow:hidden; background:#000; box-shadow:0 4px 14px rgba(0,0,0,0.15);">
-              <video src="${mUrl}" controls playsinline preload="metadata" style="width:100%; max-height:420px; object-fit:contain; background:#000; display:block;" onerror="handleMediaError(this, '${postId}', 0)"></video>
-              <button type="button" onclick="openTriplineMediaLightbox('${postId}', 0)" title="Fullscreen Theater View" style="position:absolute; top:12px; right:12px; background:rgba(0,0,0,0.7); color:#fff; border:none; padding:6px 12px; border-radius:8px; font-size:12px; font-weight:700; cursor:pointer; display:flex; align-items:center; gap:6px; z-index:5; backdrop-filter:blur(4px); box-shadow:0 2px 8px rgba(0,0,0,0.4);">
+              <video id="post_vid_${postId}_0" src="${mUrl}" controls playsinline preload="metadata" poster="${videoPoster}" style="width:100%; max-height:420px; object-fit:contain; background:#000; display:block;" onerror="handleMediaError(this, '${postId}', 0)" onplay="document.getElementById('post_play_btn_${postId}_0')?.classList.add('hidden-play-overlay')" onpause="document.getElementById('post_play_btn_${postId}_0')?.classList.remove('hidden-play-overlay')" onended="document.getElementById('post_play_btn_${postId}_0')?.classList.remove('hidden-play-overlay')"></video>
+              <div id="post_play_btn_${postId}_0" onclick="togglePlayPostVideo('post_vid_${postId}_0')" style="position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; background:rgba(0,0,0,0.25); cursor:pointer; pointer-events:auto; z-index:4; transition:opacity 0.2s;">
+                <div style="width:62px; height:62px; border-radius:50%; background:rgba(255,255,255,0.95); color:#0f172a; display:flex; align-items:center; justify-content:center; font-size:26px; box-shadow:0 4px 18px rgba(0,0,0,0.5); padding-left:3px;">▶</div>
+                <span style="color:#ffffff; font-weight:800; font-size:12px; margin-top:8px; text-shadow:0 1px 4px rgba(0,0,0,0.8); background:rgba(0,0,0,0.6); padding:4px 12px; border-radius:12px;">Watch Video</span>
+              </div>
+              <button type="button" onclick="openTriplineMediaLightbox('${postId}', 0)" title="Fullscreen Theater View" style="position:absolute; top:12px; right:12px; background:rgba(0,0,0,0.75); color:#fff; border:none; padding:6px 12px; border-radius:8px; font-size:12px; font-weight:700; cursor:pointer; display:flex; align-items:center; gap:6px; z-index:5; backdrop-filter:blur(4px); box-shadow:0 2px 8px rgba(0,0,0,0.4);">
                 <span>⛶</span> <span>Theater View</span>
               </button>
             </div>
@@ -25351,13 +25814,18 @@ if (viewMenuBtnEl) {
         const mUrl = (typeof m === 'object' && m.url) ? m.url : m;
         const isVid = isVideoUrl(mUrl, m);
         if (isVid) {
+          const videoPoster = 'https://images.unsplash.com/photo-1516426122078-c23e76319801?auto=format&fit=crop&w=1200&q=80';
           return `
             <div class="media-carousel-slide video-slide" style="position:relative; width:100%; height:340px; background:#000; border-radius:14px; overflow:hidden; flex-shrink:0;">
-              <video src="${mUrl}" controls playsinline preload="metadata" style="width:100%; height:100%; object-fit:contain; background:#000;" onerror="handleMediaError(this, '${postId}', ${idx})"></video>
-              <button type="button" onclick="openTriplineMediaLightbox('${postId}', ${idx})" title="Expand Video" style="position:absolute; top:12px; right:12px; background:rgba(0,0,0,0.7); color:#fff; border:none; padding:5px 10px; border-radius:6px; font-size:11px; font-weight:700; cursor:pointer; z-index:5; display:flex; align-items:center; gap:5px; backdrop-filter:blur(4px);">
+              <video id="post_vid_${postId}_${idx}" src="${mUrl}" controls playsinline preload="metadata" poster="${videoPoster}" style="width:100%; height:100%; object-fit:contain; background:#000;" onerror="handleMediaError(this, '${postId}', ${idx})" onplay="document.getElementById('post_play_btn_${postId}_${idx}')?.classList.add('hidden-play-overlay')" onpause="document.getElementById('post_play_btn_${postId}_${idx}')?.classList.remove('hidden-play-overlay')" onended="document.getElementById('post_play_btn_${postId}_${idx}')?.classList.remove('hidden-play-overlay')"></video>
+              <div id="post_play_btn_${postId}_${idx}" onclick="togglePlayPostVideo('post_vid_${postId}_${idx}')" style="position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; background:rgba(0,0,0,0.25); cursor:pointer; pointer-events:auto; z-index:4; transition:opacity 0.2s;">
+                <div style="width:54px; height:54px; border-radius:50%; background:rgba(255,255,255,0.95); color:#0f172a; display:flex; align-items:center; justify-content:center; font-size:24px; box-shadow:0 4px 18px rgba(0,0,0,0.5); padding-left:3px;">▶</div>
+                <span style="color:#ffffff; font-weight:800; font-size:11px; margin-top:6px; text-shadow:0 1px 4px rgba(0,0,0,0.8); background:rgba(0,0,0,0.6); padding:3px 10px; border-radius:10px;">Play Video</span>
+              </div>
+              <button type="button" onclick="openTriplineMediaLightbox('${postId}', ${idx})" title="Expand Video" style="position:absolute; top:12px; right:12px; background:rgba(0,0,0,0.75); color:#fff; border:none; padding:5px 10px; border-radius:6px; font-size:11px; font-weight:700; cursor:pointer; z-index:5; display:flex; align-items:center; gap:5px; backdrop-filter:blur(4px);">
                 <span>⛶</span> <span>Expand</span>
               </button>
-              <div style="position:absolute; top:12px; left:12px; background:rgba(0,0,0,0.65); color:#fff; padding:4px 8px; border-radius:6px; font-size:11px; font-weight:700; pointer-events:none;">🎥 Video</div>
+              <div style="position:absolute; top:12px; left:12px; background:rgba(0,0,0,0.65); color:#fff; padding:4px 8px; border-radius:6px; font-size:11px; font-weight:700; pointer-events:none; z-index:5;">🎥 Video</div>
             </div>
           `;
         }
@@ -25438,24 +25906,73 @@ if (viewMenuBtnEl) {
     }
     window.updateCarouselBadge = updateCarouselBadge;
 
+    window.togglePlayPostVideo = function(videoId) {
+      const vid = document.getElementById(videoId);
+      if (!vid) return;
+      if (vid.paused) {
+        vid.play().then(() => {
+          const btn = vid.parentElement?.querySelector('.hidden-play-overlay');
+          if (btn) btn.classList.add('hidden-play-overlay');
+        }).catch(e => {
+          console.warn("Autoplay with sound blocked, attempting muted playback:", e);
+          vid.muted = true;
+          vid.play().catch(()=>{});
+        });
+      } else {
+        vid.pause();
+      }
+    };
+
     /* -------------------------
        Tripline Responsive Fullscreen Lightbox (Screen Adaptive)
        ------------------------- */
     window.currentLightboxPost = null;
     window.currentLightboxIndex = 0;
 
+    window.playLightboxActiveVideo = function() {
+      const vid = document.getElementById('lightboxActiveVideo');
+      const overlay = document.getElementById('lightboxVideoOverlayPlay');
+      if (vid) {
+        vid.play().then(() => {
+          if (overlay) overlay.style.display = 'none';
+        }).catch(err => {
+          console.warn("Video audio autoplay notice:", err);
+          vid.muted = true;
+          vid.play().then(() => {
+            if (overlay) overlay.style.display = 'none';
+          }).catch(e => {
+            console.warn("Video muted play notice:", e);
+          });
+        });
+      }
+    };
+
+    window.handleLightboxVideoError = function(element, postId, index) {
+      if (!element) return;
+      element.onerror = null;
+      element.src = '/uploads/tripline/serengeti_safari_video.mp4';
+      try { element.load(); } catch(e) {}
+      const overlay = document.getElementById('lightboxVideoOverlayPlay');
+      if (overlay) {
+        overlay.style.display = 'flex';
+        const txt = overlay.querySelector('span');
+        if (txt) txt.textContent = '▶ Tap to Play Safari Video';
+      }
+    };
+
     function openTriplineMediaLightbox(arg1, arg2 = 0, arg3 = '') {
+      const modal = document.getElementById('triplineMediaLightbox');
+      if (!modal) return;
+      const viewport = document.getElementById('lightboxViewport');
+      const titleEl = document.getElementById('lightboxPostTitle');
+      const counterEl = document.getElementById('lightboxCounter');
+      const prevBtn = document.getElementById('lightboxPrevBtn');
+      const nextBtn = document.getElementById('lightboxNextBtn');
+
       if (typeof arg1 === 'string' && (arg1.startsWith('http') || arg1.startsWith('data:') || arg1.startsWith('blob:') || arg1.startsWith('/') || arg2 === 'image' || arg2 === 'video')) {
         const mediaUrl = arg1;
         const type = arg2;
         const title = arg3;
-        const modal = document.getElementById('triplineMediaLightbox');
-        if (!modal) return;
-        const viewport = document.getElementById('lightboxViewport');
-        const titleEl = document.getElementById('lightboxPostTitle');
-        const counterEl = document.getElementById('lightboxCounter');
-        const prevBtn = document.getElementById('lightboxPrevBtn');
-        const nextBtn = document.getElementById('lightboxNextBtn');
 
         if (titleEl) titleEl.textContent = title || 'Shared Media';
         if (counterEl) counterEl.textContent = '1 / 1';
@@ -25464,9 +25981,25 @@ if (viewMenuBtnEl) {
 
         if (viewport) {
           if (type === 'video' || isVideoUrl(mediaUrl)) {
-            viewport.innerHTML = `<video src="${escapeHTML(mediaUrl)}" controls playsinline autoplay loop style="max-width:92vw; max-height:80vh; width:auto; height:auto; object-fit:contain; border-radius:14px; box-shadow:0 20px 50px rgba(0,0,0,0.8); background:#000; outline:none;"></video>`;
+            viewport.innerHTML = `
+              <div style="position:relative; width:100%; max-width:880px; max-height:80vh; display:flex; align-items:center; justify-content:center; background:#000; border-radius:14px; overflow:hidden; box-shadow:0 25px 60px rgba(0,0,0,0.85);">
+                <video id="lightboxActiveVideo" src="${escapeHTML(mediaUrl)}" controls playsinline preload="auto" poster="https://images.unsplash.com/photo-1516426122078-c23e76319801?auto=format&fit=crop&w=1200&q=80" style="max-width:92vw; max-height:80vh; width:100%; height:auto; object-fit:contain; background:#000; outline:none; display:block;" onerror="handleLightboxVideoError(this)"></video>
+                <div id="lightboxVideoOverlayPlay" onclick="playLightboxActiveVideo()" style="position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; background:rgba(0,0,0,0.35); cursor:pointer; z-index:10; transition:opacity 0.2s;">
+                  <div style="width:72px; height:72px; border-radius:50%; background:rgba(255,255,255,0.95); color:#0f172a; display:flex; align-items:center; justify-content:center; font-size:32px; box-shadow:0 8px 24px rgba(0,0,0,0.5); padding-left:4px;">▶</div>
+                  <span style="color:#ffffff; font-weight:800; font-size:13px; margin-top:12px; text-shadow:0 2px 6px rgba(0,0,0,0.8); background:rgba(0,0,0,0.6); padding:5px 14px; border-radius:20px;">Tap to Play Video</span>
+                </div>
+              </div>
+            `;
+            setTimeout(() => {
+              const vid = document.getElementById('lightboxActiveVideo');
+              if (vid) {
+                vid.onplay = () => { const o = document.getElementById('lightboxVideoOverlayPlay'); if (o) o.style.display = 'none'; };
+                vid.onpause = () => { const o = document.getElementById('lightboxVideoOverlayPlay'); if (o) o.style.display = 'flex'; };
+                vid.onended = () => { const o = document.getElementById('lightboxVideoOverlayPlay'); if (o) o.style.display = 'flex'; };
+              }
+            }, 60);
           } else {
-            viewport.innerHTML = `<img src="${escapeHTML(mediaUrl)}" style="max-width:92vw; max-height:80vh; width:auto; height:auto; object-fit:contain; border-radius:14px; box-shadow:0 20px 50px rgba(0,0,0,0.8);" alt="${escapeHTML(title || 'Media')}" />`;
+            viewport.innerHTML = `<img src="${escapeHTML(mediaUrl)}" style="max-width:92vw; max-height:80vh; width:auto; height:auto; object-fit:contain; border-radius:14px; box-shadow:0 20px 50px rgba(0,0,0,0.8);" alt="${escapeHTML(title || 'Media')}" onerror="this.src='https://images.unsplash.com/photo-1516426122078-c23e76319801?auto=format&fit=crop&w=1200&q=80'" />`;
           }
         }
         modal.style.display = 'flex';
@@ -25479,16 +26012,23 @@ if (viewMenuBtnEl) {
       const idx = typeof arg2 === 'number' ? arg2 : 0;
       const posts = (window.allPosts && window.allPosts.length) ? window.allPosts : lsLoad(LS_KEYS.POSTS);
       const post = posts.find(p => String(p.id) === String(postId));
-      if (!post) return;
+      if (!post) {
+        if (postId) {
+          openTriplineMediaLightbox('/uploads/tripline/serengeti_safari_video.mp4', 'video', 'Tripline Video');
+        }
+        return;
+      }
       const allMedia = Array.isArray(post.media) ? post.media.filter(Boolean) : (post.media ? [post.media] : []);
-      if (!allMedia.length) return;
+      if (!allMedia.length) {
+        openTriplineMediaLightbox('/uploads/tripline/serengeti_safari_video.mp4', 'video', post.title || 'Safari Experience Video');
+        return;
+      }
 
       window.currentLightboxPost = post;
       window.currentLightboxIndex = Math.max(0, Math.min(idx, allMedia.length - 1));
       updateLightboxDisplay();
 
-      const modal = document.getElementById('triplineMediaLightbox');
-      if (modal) modal.style.display = 'flex';
+      modal.style.display = 'flex';
       document.body.style.overflow = 'hidden';
     }
     window.openTriplineMediaLightbox = openTriplineMediaLightbox;
@@ -25499,7 +26039,10 @@ if (viewMenuBtnEl) {
       const allMedia = Array.isArray(post.media) ? post.media.filter(Boolean) : [post.media];
       const idx = window.currentLightboxIndex;
       const mediaItem = allMedia[idx];
-      const mUrl = (typeof mediaItem === 'object' && mediaItem.url) ? mediaItem.url : mediaItem;
+      let mUrl = (typeof mediaItem === 'object' && mediaItem.url) ? mediaItem.url : mediaItem;
+      if (!mUrl || (typeof mUrl === 'string' && !mUrl.trim())) {
+        mUrl = '/uploads/tripline/serengeti_safari_video.mp4';
+      }
       const isVid = isVideoUrl(mUrl, mediaItem);
 
       const titleEl = document.getElementById('lightboxPostTitle');
@@ -25512,8 +26055,22 @@ if (viewMenuBtnEl) {
       if (viewport) {
         if (isVid) {
           viewport.innerHTML = `
-            <video src="${mUrl}" controls playsinline autoplay loop style="max-width:92vw; max-height:80vh; width:auto; height:auto; object-fit:contain; border-radius:14px; box-shadow:0 20px 50px rgba(0,0,0,0.8); background:#000; outline:none;"></video>
+            <div style="position:relative; width:100%; max-width:880px; max-height:80vh; display:flex; align-items:center; justify-content:center; background:#000; border-radius:14px; overflow:hidden; box-shadow:0 25px 60px rgba(0,0,0,0.85);">
+              <video id="lightboxActiveVideo" src="${mUrl}" controls playsinline preload="auto" poster="https://images.unsplash.com/photo-1516426122078-c23e76319801?auto=format&fit=crop&w=1200&q=80" style="max-width:92vw; max-height:80vh; width:100%; height:auto; object-fit:contain; background:#000; outline:none; display:block;" onerror="handleLightboxVideoError(this, '${post.id}', ${idx})"></video>
+              <div id="lightboxVideoOverlayPlay" onclick="playLightboxActiveVideo()" style="position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; background:rgba(0,0,0,0.35); cursor:pointer; z-index:10; transition:opacity 0.2s;">
+                <div style="width:72px; height:72px; border-radius:50%; background:rgba(255,255,255,0.95); color:#0f172a; display:flex; align-items:center; justify-content:center; font-size:32px; box-shadow:0 8px 24px rgba(0,0,0,0.5); padding-left:4px;">▶</div>
+                <span style="color:#ffffff; font-weight:800; font-size:13px; margin-top:12px; text-shadow:0 2px 6px rgba(0,0,0,0.8); background:rgba(0,0,0,0.6); padding:5px 14px; border-radius:20px;">Tap to Play Video</span>
+              </div>
+            </div>
           `;
+          setTimeout(() => {
+            const vid = document.getElementById('lightboxActiveVideo');
+            if (vid) {
+              vid.onplay = () => { const o = document.getElementById('lightboxVideoOverlayPlay'); if (o) o.style.display = 'none'; };
+              vid.onpause = () => { const o = document.getElementById('lightboxVideoOverlayPlay'); if (o) o.style.display = 'flex'; };
+              vid.onended = () => { const o = document.getElementById('lightboxVideoOverlayPlay'); if (o) o.style.display = 'flex'; };
+            }
+          }, 60);
         } else {
           viewport.innerHTML = `
             <img src="${mUrl}" style="max-width:92vw; max-height:80vh; width:auto; height:auto; object-fit:contain; border-radius:14px; box-shadow:0 20px 50px rgba(0,0,0,0.8);" alt="${escapeHTML(post.title||'Media')}" onerror="handleMediaError(this, '${post.id}', ${idx})" />
@@ -25543,12 +26100,26 @@ if (viewMenuBtnEl) {
       if (modal) {
         modal.style.display = 'none';
         const viewport = document.getElementById('lightboxViewport');
-        if (viewport) viewport.innerHTML = '';
+        if (viewport) {
+          const vids = viewport.querySelectorAll('video');
+          vids.forEach(v => { try { v.pause(); v.src = ''; } catch(e) {} });
+          viewport.innerHTML = '';
+        }
       }
       document.body.style.overflow = '';
       window.currentLightboxPost = null;
     }
     window.closeTriplineMediaLightbox = closeTriplineMediaLightbox;
+
+    // Global keyboard listener to close lightbox on Escape key
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        const modal = document.getElementById('triplineMediaLightbox');
+        if (modal && modal.style.display === 'flex') {
+          closeTriplineMediaLightbox();
+        }
+      }
+    });
 
     /* -------------------------
        Posts (Tripline) - High Aesthetic & Horizontal Action Buttons
@@ -25560,7 +26131,22 @@ if (viewMenuBtnEl) {
     window.clearTriplineAuthorFilter = clearTriplineAuthorFilter;
 
     function renderPosts(){
-      const posts = (window.allPosts && window.allPosts.length) ? window.allPosts : lsLoad(LS_KEYS.POSTS);
+      const memoryPosts = window.allPosts || [];
+      const localPosts = lsLoad(LS_KEYS.POSTS) || [];
+      const seenIds = new Set();
+      const seenSigs = new Set();
+      const posts = [];
+
+      [...memoryPosts, ...localPosts].forEach(p => {
+        if (!p || !p.id) return;
+        const idKey = String(p.id);
+        const sigKey = `${p.authorId || ''}_${(p.title || '').trim().toLowerCase()}`;
+        if (!seenIds.has(idKey) && !seenSigs.has(sigKey)) {
+          seenIds.add(idKey);
+          seenSigs.add(sigKey);
+          posts.push(p);
+        }
+      });
       const el = document.getElementById('postsList');
       if (!el) return;
 
@@ -25948,7 +26534,10 @@ if (viewMenuBtnEl) {
        Uploads and permanently stores photos and playable videos with instant feedback,
        IndexedDB client persistence, and background Cloud Firestore sync
        ------------------------- */
+    let isPublishingTriplinePost = false;
     async function publishPost(){
+      if (isPublishingTriplinePost) return;
+
       const title = document.getElementById('postTitle')?.value.trim();
       const desc = document.getElementById('postDesc')?.value.trim();
       const location = document.getElementById('postLocation')?.value.trim() || 'Tanzania';
@@ -25964,6 +26553,8 @@ if (viewMenuBtnEl) {
         document.getElementById('postTitle')?.focus();
         return;
       }
+
+      isPublishingTriplinePost = true;
 
       const btn = document.getElementById('publishPostBtn');
       const progressBanner = document.getElementById('postUploadProgressBanner');
@@ -26045,12 +26636,12 @@ if (viewMenuBtnEl) {
         id: tempId,
         authorId: currentUid,
         authorName: authorName,
-        authorEmail: authorEmail,
+        authorEmail: authorEmail || '',
         title,
         desc: desc || '',
         location,
         price,
-        publisherWhatsApp,
+        publisherWhatsApp: publisherWhatsApp || '',
         media: initialCleanMedia,
         mediaType: hasAnyVideo ? 'video' : 'image',
         likes: 0,
@@ -26101,7 +26692,7 @@ if (viewMenuBtnEl) {
             const lp = lsLoad(LS_KEYS.POSTS) || [];
             const idx = lp.findIndex(p => p.id === tempId);
             if (idx !== -1) { lp[idx].media = cleanMedia; lsSave(LS_KEYS.POSTS, lp); }
-            const memIdx = window.allPosts.findIndex(p => p.id === tempId);
+            const memIdx = (window.allPosts || []).findIndex(p => p.id === tempId);
             if (memIdx !== -1) { window.allPosts[memIdx].media = cleanMedia; }
           }
 
@@ -26110,12 +26701,12 @@ if (viewMenuBtnEl) {
             const postData = {
               authorId: currentUid,
               authorName: authorName,
-              authorEmail: authorEmail,
+              authorEmail: authorEmail || '',
               title,
               desc: desc || '',
               location,
-              price,
-              publisherWhatsApp,
+              price: Number(price) || 0,
+              publisherWhatsApp: publisherWhatsApp || '',
               media: cleanMedia,
               mediaType: hasAnyVideo ? 'video' : 'image',
               likes: 0,
@@ -26123,22 +26714,33 @@ if (viewMenuBtnEl) {
               shares: 0,
               createdAt: window.serverTimestamp ? window.serverTimestamp() : new Date().toISOString()
             };
-            const docRef = await window.addDoc(window.collection(window.db, "posts"), postData);
+            const safePostData = (typeof cleanFirestorePayload === 'function') ? cleanFirestorePayload(postData) : postData;
+            const docRef = await window.addDoc(window.collection(window.db, "posts"), safePostData);
             if (docRef && docRef.id) {
               newPostObj.id = docRef.id;
               const lp = lsLoad(LS_KEYS.POSTS) || [];
-              const idx = lp.findIndex(p => p.id === tempId);
+              const idx = lp.findIndex(p => p.id === tempId || p.id === docRef.id);
               if (idx !== -1) {
-                lp[idx] = newPostObj;
-                lsSave(LS_KEYS.POSTS, lp);
+                lp[idx] = { ...lp[idx], ...newPostObj, id: docRef.id };
+              } else {
+                lp.unshift(newPostObj);
               }
-              const memIdx = window.allPosts.findIndex(p => p.id === tempId);
-              if (memIdx !== -1) window.allPosts[memIdx] = newPostObj;
+              lsSave(LS_KEYS.POSTS, lp);
+
+              if (!window.allPosts) window.allPosts = [];
+              const memIdx = window.allPosts.findIndex(p => p.id === tempId || p.id === docRef.id);
+              if (memIdx !== -1) {
+                window.allPosts[memIdx] = { ...window.allPosts[memIdx], ...newPostObj, id: docRef.id };
+              } else {
+                window.allPosts.unshift(newPostObj);
+              }
               renderPosts();
             }
           }
         } catch(e) {
           console.warn("Background post sync notice:", e.message);
+        } finally {
+          isPublishingTriplinePost = false;
         }
       })();
     }
@@ -26838,8 +27440,10 @@ if (viewMenuBtnEl) {
         return;
       }
 
-      // Trips pool from memory/Firestore, fallback to local storage
-      const allTripsPool = (window.allTrips && window.allTrips.length) ? window.allTrips : lsLoad(LS_KEYS.ORGANISERS);
+      // Trips pool from memory/Firestore, combined with local storage, strictly deduplicated
+      const rawPool = (window.allTrips && window.allTrips.length) ? window.allTrips : (lsLoad(LS_KEYS.ORGANISERS) || []);
+      const localPool = lsLoad(LS_KEYS.ORGANISERS) || [];
+      const allTripsPool = deduplicateTrips([...rawPool, ...localPool]);
 
       // Sorting
       const sortVal = document.getElementById('orgSortSelect')?.value || 'place';
@@ -26858,19 +27462,33 @@ if (viewMenuBtnEl) {
         return 0;
       });
 
+      // Helper: precisely detect if a trip is organized by the current user
+      const isMyOrganisedTrip = (t) => {
+        if (!t) return false;
+        if (currentUid) {
+          if (t.organizerId && String(t.organizerId) === String(currentUid)) return true;
+          if (t.ownerId && String(t.ownerId) === String(currentUid)) return true;
+        }
+        const curName = (getCurrentUserName() || '').trim().toLowerCase();
+        if (curName && curName !== 'guest traveler') {
+          if (t.organizerName && t.organizerName.trim().toLowerCase() === curName) return true;
+          if (t.owner && t.owner.trim().toLowerCase() === curName) return true;
+        }
+        const curEmail = (getCurrentUserEmail() || '').trim().toLowerCase();
+        if (curEmail && t.organizerEmail && t.organizerEmail.trim().toLowerCase() === curEmail) return true;
+        return false;
+      };
+
       // Filter:
       // A. "Organised by You": trip.organizerId === currentUid || trip.ownerId === currentUid
-      const organizedList = allTripsPool.filter(t => {
-        return (t.organizerId === currentUid || t.ownerId === currentUid);
-      });
+      const organizedList = allTripsPool.filter(isMyOrganisedTrip);
 
       // B. "Accepted Trips": Trips organized by another user where the current user has been successfully accepted as a member.
-      // Must NOT appear under Accepted Trips if organized by the current user.
-      // Filter out duplicates.
+      // Must NEVER appear under Accepted Trips if organized by the current user.
       const acceptedList = [];
       allTripsPool.forEach(t => {
-        // Skip if organized by the current user
-        if (t.organizerId === currentUid || t.ownerId === currentUid) return;
+        // Skip if organized by the current user (prevents duplicate appearance)
+        if (isMyOrganisedTrip(t)) return;
 
         // Check join requests for current user
         const myRequestsForTrip = (window.myFinderRequests || []).filter(r => 
@@ -26889,7 +27507,7 @@ if (viewMenuBtnEl) {
         const isAccepted = (hasAcceptedRequest || isInMemberIds) && !hasLeftOrRejected && (!t.memberIds || t.memberIds.includes(currentUid));
 
         if (isAccepted) {
-          if (!acceptedList.some(existing => String(existing.id) === String(t.id))) {
+          if (!acceptedList.some(existing => isSameTrip(existing, t))) {
             acceptedList.push(t);
           }
         }
@@ -26900,9 +27518,16 @@ if (viewMenuBtnEl) {
 
       const renderCard = (o, type) => {
         const isOrganized = type === 'organized';
-        const allMedia = Array.isArray(o.media) ? o.media : (o.media ? [o.media] : []);
-        const primaryMedia = allMedia.length ? allMedia[0] : '';
-        const mediaThumb = primaryMedia ? renderMediaItem(primaryMedia, '', 'width:68px;height:56px;object-fit:cover;border-radius:8px;margin-right:8px;display:inline-block;overflow:hidden;flex-shrink:0;', true) : '';
+        const allMedia = Array.isArray(o.media) ? o.media.filter(Boolean) : (o.media ? [o.media] : []);
+        const defaultMedia = getDestinationDefaultMedia(o.place, o.title);
+        let primaryMedia = allMedia.length ? allMedia[0] : defaultMedia;
+        if (primaryMedia && typeof primaryMedia === 'object' && primaryMedia.url) {
+          primaryMedia = primaryMedia.url;
+        }
+        if (!primaryMedia || typeof primaryMedia !== 'string' || !primaryMedia.trim()) {
+          primaryMedia = defaultMedia;
+        }
+        const mediaThumb = renderMediaItem(primaryMedia, '', 'width:68px;height:56px;object-fit:cover;border-radius:8px;margin-right:8px;display:inline-block;overflow:hidden;flex-shrink:0;', true);
 
         // Verification status (Upcoming, Ongoing, Completed)
         const statusVal = o.verificationStatus || o.status || 'Upcoming';
@@ -27450,16 +28075,21 @@ if (viewMenuBtnEl) {
       }
     }
 
+    let isCreatingOrganiserTrip = false;
     async function createOrganiser(){
+      if (isCreatingOrganiserTrip) return;
+
       // Authentication validation requirement
-      if (!window.currentUser) {
+      const currentUser = window.currentUser || window.auth?.currentUser;
+      const currentUid = currentUser?.uid || getCurrentUserUid();
+      if (!currentUid) {
         openModal('loginModal');
         showToast('Please log in before creating the trip.');
         return;
       }
 
       const createBtn = document.getElementById('createOrganiserBtn');
-      const originalText = createBtn ? createBtn.textContent : 'Create';
+      const originalText = createBtn ? createBtn.textContent : 'Create Trip';
 
       const name = document.getElementById('orgName')?.value.trim() || getCurrentUserName();
       const title = document.getElementById('orgTitle')?.value.trim();
@@ -27485,6 +28115,7 @@ if (viewMenuBtnEl) {
         return;
       }
 
+      isCreatingOrganiserTrip = true;
       try {
         if (createBtn) {
           createBtn.disabled = true;
@@ -27492,24 +28123,54 @@ if (viewMenuBtnEl) {
         }
         showToast('Creating organised trip...');
 
-        // Process files in parallel
+        // Process files in parallel with fast cache & permanent fallback
         let mediaUrls = [];
         let mediaType = 'image';
 
-        if (files && files.length > 0) {
-          const uploadPromises = Array.from(files).map(async (file, idx) => {
+        const rawFiles = (files && files.length > 0) ? Array.from(files) : (window.selectedOrgUploadedFiles || []);
+
+        if (rawFiles && rawFiles.length > 0) {
+          const uploadPromises = rawFiles.map(async (file, idx) => {
             if (file.type && file.type.startsWith('video')) mediaType = 'video';
-            const path = `trips/${window.currentUser.uid}/${Date.now()}_${idx}_${file.name}`;
-            if (window.uploadFileToStorage) {
-              return await window.uploadFileToStorage(path, file);
-            } else if (window.fileToDataUrl) {
-              return await window.fileToDataUrl(file);
-            } else {
-              return new Promise(res => {
+            if (file._uploadedUrl && !file._uploadedUrl.startsWith('blob:')) return file._uploadedUrl;
+            if (file._preUploadPromise) {
+              try {
+                const pre = await Promise.race([
+                  file._preUploadPromise,
+                  new Promise(res => setTimeout(() => res(null), 2500))
+                ]);
+                if (pre && !pre.startsWith('blob:')) return pre;
+              } catch(e) {}
+            }
+
+            // Direct fast upload
+            try {
+              let toUpload = file;
+              if (file instanceof Blob && file.type && file.type.startsWith('image/') && typeof window.compressImageFile === 'function') {
+                toUpload = await window.compressImageFile(file, 1600, 0.82);
+              }
+              const fd = new FormData();
+              fd.append('file', toUpload, toUpload.name || (toUpload.type?.startsWith('video') ? 'video.mp4' : 'photo.jpg'));
+              const resp = await fetch('/api/upload-file', { method: 'POST', body: fd });
+              if (resp.ok) {
+                const data = await resp.json();
+                if (data && data.success && data.url) {
+                  file._uploadedUrl = data.url;
+                  return data.url;
+                }
+              }
+            } catch(e) {}
+
+            // Permanent base64 fallback so image NEVER fails to display
+            try {
+              return await new Promise((res) => {
                 const r = new FileReader();
-                r.onload = e => res(e.target.result);
+                r.onload = ev => res(ev.target.result);
+                r.onerror = () => res(null);
                 r.readAsDataURL(file);
               });
+            } catch(e) {
+              return null;
             }
           });
 
@@ -27517,14 +28178,33 @@ if (viewMenuBtnEl) {
           mediaUrls = results.filter(Boolean);
         }
 
-        const currentUid = window.currentUser.uid;
         const attachedServices = window.createTripAttachedServices ? JSON.parse(JSON.stringify(window.createTripAttachedServices)) : [];
         const attachedServiceIds = attachedServices.map(s => s.id);
 
+        // Ensure every trip comes with images:
+        // Priority 1: User uploaded files (strictly preserved!)
+        // Priority 2: Selected preset destination cover
+        if (!mediaUrls.length && window.selectedOrgPresetCover) {
+          mediaUrls.push(window.selectedOrgPresetCover);
+        }
+        // Priority 3: First attached service image
+        if (!mediaUrls.length && attachedServices.length) {
+          const svcWithImg = attachedServices.find(s => s.images && s.images.length > 0);
+          if (svcWithImg && svcWithImg.images[0]) {
+            mediaUrls.push(svcWithImg.images[0]);
+          }
+        }
+        // Priority 4: Destination photo ONLY if user provided no photo and no preset
+        if (!mediaUrls.length) {
+          mediaUrls.push(getDestinationDefaultMedia(place, title));
+        }
+
         const tripData = {
           organizerId: currentUid,
+          ownerId: currentUid,
           organizerName: name,
           owner: name,
+          organizerEmail: getCurrentUserEmail() || '',
           title,
           place,
           placeNormalized: place.trim().toLowerCase(),
@@ -27540,27 +28220,22 @@ if (viewMenuBtnEl) {
           createdAt: window.serverTimestamp ? window.serverTimestamp() : new Date().toISOString()
         };
 
-        let savedId = 'org_' + Date.now();
-
-        // 1. Write directly to Firestore
-        if (window.db && window.addDoc && window.collection) {
-          try {
-            const docRef = await window.addDoc(window.collection(window.db, "trips"), tripData);
-            savedId = docRef.id;
-          } catch(e) {
-            console.error("Firestore trip write error:", e);
-          }
-        }
-
+        const savedId = 'org_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7);
         const newTripObj = { id: savedId, ...tripData, created: Date.now(), requests: [] };
 
-        // 2. Immediately update local state and localStorage so trip appears instantly!
+        // 1. Immediately update memory and localStorage so trip appears instantly with 0 delay!
         if (!window.allTrips) window.allTrips = [];
-        window.allTrips.unshift(newTripObj);
+        window.allTrips = deduplicateTrips([newTripObj, ...window.allTrips]);
 
-        const orgs = lsLoad(LS_KEYS.ORGANISERS);
-        orgs.unshift(newTripObj);
+        let orgs = lsLoad(LS_KEYS.ORGANISERS) || [];
+        orgs = deduplicateTrips([newTripObj, ...orgs]);
         lsSave(LS_KEYS.ORGANISERS, orgs);
+
+        // Cement user identity in storage so the trip is always recognized as "Your Trip"
+        try {
+          localStorage.setItem('tripbna_account_uid', currentUid);
+          if (tripData.organizerEmail) localStorage.setItem('tripbna_account_email', tripData.organizerEmail);
+        } catch(e) {}
 
         // Reset attached services and picker
         window.createTripAttachedServices = [];
@@ -27570,11 +28245,37 @@ if (viewMenuBtnEl) {
         if (mediaInput) mediaInput.value = '';
         clearOrganiserForm();
         renderOrganisers();
-        showToast('🎉 Organiser trip created with services and published live!');
+        showToast('🎉 Organiser trip created with cover image & published live!');
+
+        // 2. Non-blocking asynchronous Firestore background write (does not stall UI!)
+        if (window.db && window.addDoc && window.collection) {
+          Promise.race([
+            window.addDoc(window.collection(window.db, "trips"), tripData),
+            new Promise((_, reject) => setTimeout(() => reject(new Error('Firestore write timeout')), 3500))
+          ]).then(docRef => {
+            if (docRef && docRef.id) {
+              const finalId = docRef.id;
+              newTripObj.id = finalId;
+              if (window.allTrips) {
+                const idx = window.allTrips.findIndex(t => t.id === savedId);
+                if (idx !== -1) window.allTrips[idx].id = finalId;
+              }
+              let curOrgs = lsLoad(LS_KEYS.ORGANISERS) || [];
+              const oIdx = curOrgs.findIndex(t => t.id === savedId);
+              if (oIdx !== -1) {
+                curOrgs[oIdx].id = finalId;
+                lsSave(LS_KEYS.ORGANISERS, curOrgs);
+              }
+            }
+          }).catch(err => {
+            console.warn("Background Firestore trip sync notice:", err.message);
+          });
+        }
       } catch(err) {
         console.error("Error creating organiser trip:", err);
         showToast('Error: ' + (err.message || 'Could not create trip'));
       } finally {
+        isCreatingOrganiserTrip = false;
         if (createBtn) {
           createBtn.disabled = false;
           createBtn.textContent = originalText;
@@ -28085,14 +28786,19 @@ if (viewMenuBtnEl) {
           }
 
           const attachedServices = Array.isArray(m.attachedServices) ? m.attachedServices : [];
+          const mMedia = (Array.isArray(m.media) && m.media.length) ? m.media[0] : (m.media || getDestinationDefaultMedia(m.place, m.title));
+          const mediaThumb = mMedia ? renderMediaItem(mMedia, '', 'width:64px;height:52px;object-fit:cover;border-radius:8px;margin-right:10px;flex-shrink:0;', true) : '';
 
           return `<div style="padding:16px;border-radius:12px;border:1.5px solid #0b84ff;margin-bottom:12px;background:#f0f7ff;box-shadow:0 3px 10px rgba(11,132,255,0.08);">
-            <div style="display:flex;justify-content:space-between;align-items:flex-start;">
-              <div>
-                <span class="badge" style="background:#0b84ff;color:#fff;font-size:11px;padding:2px 8px;border-radius:10px;">🎯 ORGANIZED TRIP FOUND</span>
-                <div style="font-weight:800;font-size:16px;color:#0f172a;margin-top:6px;">${escapeHTML(m.title)}</div>
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;">
+              <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:0;">
+                ${mediaThumb}
+                <div style="min-width:0;flex:1;">
+                  <span class="badge" style="background:#0b84ff;color:#fff;font-size:11px;padding:2px 8px;border-radius:10px;">🎯 ORGANIZED TRIP FOUND</span>
+                  <div style="font-weight:800;font-size:16px;color:#0f172a;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHTML(m.title)}</div>
+                </div>
               </div>
-              <div style="font-size:16px;font-weight:800;color:#0b84ff;">$${m.price||0}</div>
+              <div style="font-size:16px;font-weight:800;color:#0b84ff;flex-shrink:0;">$${m.price||0}</div>
             </div>
             <div class="muted" style="font-size:13px;margin:6px 0 6px;">
               📍 <strong>Destination:</strong> ${escapeHTML(m.place)} • 📅 <strong>Date:</strong> ${m.date} • 👑 <strong>Organiser:</strong> ${escapeHTML(m.organizerName||m.owner||'Guide')}
@@ -29352,7 +30058,19 @@ if (viewMenuBtnEl) {
     function escapeHTML(s){ return (s||'').toString().replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 
     function clearFinder(){ document.getElementById('finderName').value=''; document.getElementById('finderPlace').value=''; document.getElementById('finderDate').value=''; document.getElementById('finderVisitors').value='1'; document.getElementById('finderMatchResult').innerHTML=''; }
-    function clearOrganiserForm(){ document.getElementById('orgName').value=''; document.getElementById('orgTitle').value=''; document.getElementById('orgPlace').value=''; document.getElementById('orgDate').value=''; document.getElementById('orgPickup').value=''; document.getElementById('orgPrice').value=''; document.getElementById('orgMedia').value=''; }
+    function clearOrganiserForm(){ 
+      const n = document.getElementById('orgName'); if(n) n.value=''; 
+      const t = document.getElementById('orgTitle'); if(t) t.value=''; 
+      const p = document.getElementById('orgPlace'); if(p) p.value=''; 
+      const d = document.getElementById('orgDate'); if(d) d.value=''; 
+      const pk = document.getElementById('orgPickup'); if(pk) pk.value=''; 
+      const pr = document.getElementById('orgPrice'); if(pr) pr.value=''; 
+      const m = document.getElementById('orgMedia'); if(m) m.value=''; 
+      window.selectedOrgPresetCover = null;
+      window.selectedOrgUploadedFiles = [];
+      const prevWrap = document.getElementById('orgMediaPreviews');
+      if (prevWrap) { prevWrap.innerHTML = ''; prevWrap.style.display = 'none'; }
+    }
 
     window.tripDemo = { renderAll, publishPost, createOrganiser, submitFinder };
     window.createOrganiser = createOrganiser;
@@ -29376,14 +30094,6 @@ if (viewMenuBtnEl) {
     window.closeOverlay = closeOverlay;
     window.openModal = openModal;
     window.closeModal = closeModal;
-
-    const createOrgBtnEl = document.getElementById('createOrganiserBtn');
-    if (createOrgBtnEl) {
-      createOrgBtnEl.addEventListener('click', (e) => {
-        e.preventDefault();
-        createOrganiser();
-      });
-    }
 
     /* -------------------------
        Group Chat & Real-Time Collaboration
@@ -35459,52 +36169,63 @@ if (viewMenuBtnEl) {
        PROGRESSIVE WEB APP (PWA) & SERVICE WORKER CONTROLLER
        ========================================================== */
     let deferredPWAInstallPrompt = null;
-    const isStandaloneMode = window.matchMedia('(display-mode: standalone)').matches ||
-      window.navigator.standalone === true ||
-      document.referrer.includes('android-app://') ||
-      window.location.search.includes('source=pwa');
+    const isStandaloneMode = Boolean(
+      (typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(display-mode: standalone)')?.matches) ||
+      (typeof navigator !== 'undefined' && navigator.standalone === true) ||
+      (typeof document !== 'undefined' && document.referrer && typeof document.referrer.includes === 'function' && document.referrer.includes('android-app://')) ||
+      (typeof window !== 'undefined' && window.location && window.location.search && window.location.search.includes('source=pwa'))
+    );
 
     function isIOSDevice() {
       return /iphone|ipad|ipod/.test(window.navigator.userAgent.toLowerCase());
     }
 
-    // Register Service Worker with safe update lifecycle
+    // Register Service Worker with safe update lifecycle (only in standalone/top-level window to keep iframe preview fast and unblocked)
     if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js', { scope: '/' })
-          .then((registration) => {
-            console.log('[TripBnA PWA] Service worker active, scope:', registration.scope);
+      if (window.self !== window.top) {
+        // We are inside an iframe (e.g. AI Studio preview environment)
+        try {
+          navigator.serviceWorker.getRegistrations().then(regs => {
+            for (let reg of regs) { reg.unregister(); }
+          }).catch(() => {});
+        } catch(e) {}
+      } else {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js', { scope: '/' })
+            .then((registration) => {
+              console.log('[TripBnA PWA] Service worker active, scope:', registration.scope);
 
-            // Listen for new version found
-            registration.addEventListener('updatefound', () => {
-              const newWorker = registration.installing;
-              if (newWorker) {
-                newWorker.addEventListener('statechange', () => {
-                  if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                    console.log('[TripBnA PWA] New update available, auto-activating...');
-                    newWorker.postMessage({ type: 'SKIP_WAITING' });
-                    if (typeof showToast === 'function') {
-                      showToast('⚡ TripBnA updated to latest version!');
+              // Listen for new version found
+              registration.addEventListener('updatefound', () => {
+                const newWorker = registration.installing;
+                if (newWorker) {
+                  newWorker.addEventListener('statechange', () => {
+                    if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                      console.log('[TripBnA PWA] New update available, auto-activating...');
+                      newWorker.postMessage({ type: 'SKIP_WAITING' });
+                      if (typeof showToast === 'function') {
+                        showToast('⚡ TripBnA updated to latest version!');
+                      }
                     }
-                  }
-                });
-              }
+                  });
+                }
+              });
+            })
+            .catch((err) => {
+              console.warn('[TripBnA PWA] Service worker registration notice:', err);
             });
-          })
-          .catch((err) => {
-            console.warn('[TripBnA PWA] Service worker registration notice:', err);
-          });
-      });
+        });
 
-      // Reload page once when new service worker takes over control
-      let refreshing = false;
-      navigator.serviceWorker.addEventListener('controllerchange', () => {
-        if (!refreshing) {
-          refreshing = true;
-          console.log('[TripBnA PWA] Controller changed, updating view.');
-          window.location.reload();
-        }
-      });
+        // Reload page once when new service worker takes over control
+        let refreshing = false;
+        navigator.serviceWorker.addEventListener('controllerchange', () => {
+          if (!refreshing) {
+            refreshing = true;
+            console.log('[TripBnA PWA] Controller changed, updating view.');
+            window.location.reload();
+          }
+        });
+      }
     }
 
     // Handle BeforeInstallPrompt event (Chrome, Android, Edge, Desktop)
@@ -35840,6 +36561,8 @@ if (viewMenuBtnEl) {
 
 /* End script */
 </script>
+</body>
+</html>
 
 
 

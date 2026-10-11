@@ -1560,6 +1560,10 @@ app.get('/api/users/registered', async (req, res) => {
 });
 
 app.get('*', (req, res) => {
+  // If the request has a file extension (e.g., .jpg, .png, .js, .css), return 404 instead of index.html
+  if (path.extname(req.path)) {
+    return res.status(404).type('text/plain').send('Not found');
+  }
   res.sendFile(path.join(__dirname, 'index.html'));
 });
 

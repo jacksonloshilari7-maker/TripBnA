@@ -115,32 +115,52 @@ window.fileToDataUrl = function(file, maxDimension = 1200, quality = 0.8) {
   });
 };
 
-// Helper to upload a file to Firebase Storage with timeout & Data URL fallback
+// Helper to upload a file with multipart server storage and resilient fallback
 window.uploadFileToStorage = async function(path, file) {
   if (!file) return null;
-  
-  // Fast DataURL conversion first so we never lose media
-  const fallbackDataUrl = await window.fileToDataUrl(file);
+  if (typeof file === 'string' && (file.startsWith('http') || file.startsWith('/') || file.startsWith('data:'))) return file;
+  if (file._uploadedUrl && !file._uploadedUrl.startsWith('blob:')) return file._uploadedUrl;
 
-  try {
-    const storageLocation = ref(storage, path);
-    
-    // Attempt upload with a strict 3-second timeout so user never waits too long
-    const uploadPromise = (async () => {
-      const snapshot = await uploadBytes(storageLocation, file);
-      return await getDownloadURL(snapshot.ref);
-    })();
-
-    const timeoutPromise = new Promise((_, reject) => 
-      setTimeout(() => reject(new Error("Storage upload timed out")), 3000)
-    );
-
-    const downloadUrl = await Promise.race([uploadPromise, timeoutPromise]);
-    return downloadUrl || fallbackDataUrl;
-  } catch (err) {
-    console.warn("Storage upload failed/timed out, using fast encoded media:", err.message);
-    return fallbackDataUrl;
+  // Pre-compress image client-side to minimize upload payload and latency
+  let toUpload = file;
+  if (typeof window.compressImageFile === 'function' && file instanceof Blob && file.type && file.type.startsWith('image/')) {
+    try {
+      toUpload = await window.compressImageFile(file, 1600, 0.82);
+    } catch(e) {}
   }
+
+  // 1. Try high-speed server multipart upload first
+  try {
+    const fd = new FormData();
+    fd.append('file', toUpload, toUpload.name || (toUpload.type?.startsWith('video') ? 'video.mp4' : 'photo.jpg'));
+    const resp = await fetch('/api/upload-file', { method: 'POST', body: fd });
+    if (resp.ok) {
+      const data = await resp.json();
+      if (data && data.success && data.url) {
+        file._uploadedUrl = data.url;
+        if (data.type === 'video' && window.triplineVideoUrls) window.triplineVideoUrls.add(data.url);
+        return data.url;
+      }
+    }
+  } catch (srvErr) {
+    console.warn("Multipart server upload notice:", srvErr.message);
+  }
+
+  // 2. Reliable permanent compressed base64 fallback (never expires like transient blob URLs)
+  try {
+    const base64Url = await new Promise((res) => {
+      const r = new FileReader();
+      r.onload = ev => res(ev.target.result);
+      r.onerror = () => res(null);
+      r.readAsDataURL(toUpload);
+    });
+    if (base64Url) {
+      file._uploadedUrl = base64Url;
+      return base64Url;
+    }
+  } catch(e) {}
+
+  return null;
 };
 
 window.isFirebaseReady = true;

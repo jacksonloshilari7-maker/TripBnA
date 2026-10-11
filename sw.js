@@ -45,7 +45,9 @@ const BYPASS_PATTERNS = [
   'firebasestorage.googleapis.com',
   'googleapis.com',
   'firebaseapp.com/__/auth',
-  '/api/ai/'
+  '/api/',
+  '_aistudio',
+  '__aistudio'
 ];
 
 // Install Event - Precache App Shell
@@ -115,7 +117,7 @@ self.addEventListener('fetch', (event) => {
   }
 
   // 2. Static same-origin assets (JS, CSS, icons, manifests) -> Stale-While-Revalidate
-  if (url.origin === self.location.origin) {
+  if (url.origin === self.location.origin && !url.pathname.startsWith('/api/')) {
     event.respondWith(
       caches.match(req).then((cachedRes) => {
         const fetchPromise = fetch(req).then((networkRes) => {
