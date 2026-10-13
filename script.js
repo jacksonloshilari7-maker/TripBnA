@@ -138,6 +138,10 @@ window.uploadFileToStorage = async function(path, file) {
       const data = await resp.json();
       if (data && data.success && data.url) {
         file._uploadedUrl = data.url;
+        if (data.coverUrl) {
+          file._coverUrl = data.coverUrl;
+          file.poster = data.coverUrl;
+        }
         if (data.type === 'video' && window.triplineVideoUrls) window.triplineVideoUrls.add(data.url);
         return data.url;
       }

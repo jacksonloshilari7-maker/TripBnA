@@ -5,7 +5,11 @@ import { promises as fsp } from 'fs';
 import { fileURLToPath } from 'url';
 import multer from 'multer';
 import sharp from 'sharp';
+import { exec } from 'child_process';
+import util from 'util';
 import { GoogleGenAI } from '@google/genai';
+
+const execAsync = util.promisify(exec);
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -18,6 +22,64 @@ const uploadsDir = path.join(__dirname, 'uploads', 'tripline');
 if (!fs.existsSync(uploadsDir)) {
   fs.mkdirSync(uploadsDir, { recursive: true });
 }
+
+// Extract exact video cover/poster frame using ffmpeg
+async function generateVideoCover(videoFilePath, videoFilename) {
+  try {
+    const ext = path.extname(videoFilename);
+    const baseName = path.basename(videoFilename, ext);
+    const coverFilename = `cover_${baseName}.jpg`;
+    const coverPath = path.join(uploadsDir, coverFilename);
+
+    // Try extracting frame using multiple seek strategies for maximum compatibility (mp4, mov, webm, mkv)
+    try {
+      await execAsync(`ffmpeg -y -ss 00:00:00.500 -i "${videoFilePath}" -vframes 1 -q:v 2 "${coverPath}"`);
+    } catch (e1) {
+      try {
+        await execAsync(`ffmpeg -y -i "${videoFilePath}" -ss 00:00:00.500 -vframes 1 -q:v 2 "${coverPath}"`);
+      } catch (e2) {
+        try {
+          await execAsync(`ffmpeg -y -i "${videoFilePath}" -vframes 1 -q:v 2 "${coverPath}"`);
+        } catch (e3) {
+          // Last resort: extract at 0s with fast seek
+          await execAsync(`ffmpeg -y -ss 0 -i "${videoFilePath}" -frames:v 1 -q:v 2 "${coverPath}"`);
+        }
+      }
+    }
+
+    if (fs.existsSync(coverPath) && fs.statSync(coverPath).size > 0) {
+      return `/uploads/tripline/${coverFilename}`;
+    }
+  } catch (err) {
+    console.warn('Video cover generation notice:', err.message);
+  }
+  return '';
+}
+
+// On-the-fly cover retriever/generator if requested
+app.get('/api/video-cover', async (req, res) => {
+  try {
+    const videoUrl = req.query.url;
+    if (!videoUrl) return res.status(400).json({ success: false, error: 'No URL provided' });
+    const filename = path.basename(videoUrl.split('?')[0]);
+    const ext = path.extname(filename);
+    const baseName = path.basename(filename, ext);
+    const coverFilename = `cover_${baseName}.jpg`;
+    const coverPath = path.join(uploadsDir, coverFilename);
+    const videoPath = path.join(uploadsDir, filename);
+
+    if (fs.existsSync(coverPath) && fs.statSync(coverPath).size > 0) {
+      return res.json({ success: true, coverUrl: `/uploads/tripline/${coverFilename}` });
+    }
+    if (fs.existsSync(videoPath)) {
+      const coverUrl = await generateVideoCover(videoPath, filename);
+      if (coverUrl) return res.json({ success: true, coverUrl });
+    }
+    return res.status(404).json({ success: false, error: 'Cover not found' });
+  } catch (e) {
+    return res.status(500).json({ success: false, error: e.message });
+  }
+});
 
 // Multer in-memory storage for high-speed streaming and transcoding of photos and videos
 const upload = multer({
@@ -83,10 +145,17 @@ app.post('/api/upload-file', upload.single('file'), async (req, res) => {
 
     await fsp.writeFile(targetPath, finalBuffer);
 
+    let coverUrl = '';
+    if (isVideo) {
+      coverUrl = await generateVideoCover(targetPath, uniqueFilename);
+    }
+
     const publicUrl = `/uploads/tripline/${uniqueFilename}`;
     return res.json({
       success: true,
       url: publicUrl,
+      coverUrl: coverUrl,
+      poster: coverUrl,
       filename: uniqueFilename,
       type: isVideo ? 'video' : 'image',
       mimeType: isVideo ? (mime || 'video/mp4') : (ext === '.webp' ? 'image/webp' : (ext === '.png' ? 'image/png' : 'image/jpeg')),
@@ -138,9 +207,16 @@ app.post('/api/upload-files', upload.array('files', 20), async (req, res) => {
       const targetPath = path.join(uploadsDir, uniqueFilename);
       await fsp.writeFile(targetPath, finalBuffer);
 
+      let coverUrl = '';
+      if (isVideo) {
+        coverUrl = await generateVideoCover(targetPath, uniqueFilename);
+      }
+
       return {
         success: true,
         url: `/uploads/tripline/${uniqueFilename}`,
+        coverUrl: coverUrl,
+        poster: coverUrl,
         filename: uniqueFilename,
         type: isVideo ? 'video' : 'image',
         size: finalBuffer.length
@@ -198,10 +274,17 @@ app.post('/api/upload', async (req, res) => {
 
     await fsp.writeFile(targetPath, buffer);
 
+    let coverUrl = '';
+    if (isVideo) {
+      coverUrl = await generateVideoCover(targetPath, uniqueFilename);
+    }
+
     const publicUrl = `/uploads/tripline/${uniqueFilename}`;
     return res.json({
       success: true,
       url: publicUrl,
+      coverUrl: coverUrl,
+      poster: coverUrl,
       filename: uniqueFilename,
       type: isVideo ? 'video' : 'image',
       mimeType: detectedMime || (isVideo ? 'video/mp4' : 'image/jpeg'),

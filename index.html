@@ -237,12 +237,8 @@
       }
       if (!element) return;
       element.onerror = null;
-      const tag = (element.tagName || '').toLowerCase();
-      if (tag === 'video') {
-        element.src = '/uploads/tripline/serengeti_safari_video.mp4';
-        try { element.load(); } catch(e) {}
-      } else {
-        element.src = 'https://images.unsplash.com/photo-1516426122078-c23e76319801?auto=format&fit=crop&w=1200&q=80';
+      if (element.tagName && element.tagName.toLowerCase() === 'video') {
+        element.style.background = '#0f172a';
       }
     };
     var handleMediaError = window.handleMediaError;
@@ -303,10 +299,83 @@
       });
     };
 
+    // Client-side video cover frame extractor using HTML5 canvas
+    window.extractVideoCoverClient = function(videoFileOrUrl) {
+      return new Promise((resolve) => {
+        try {
+          const v = document.createElement('video');
+          v.muted = true;
+          v.playsInline = true;
+          v.crossOrigin = 'anonymous';
+          const isFile = videoFileOrUrl instanceof Blob;
+          const srcUrl = isFile ? URL.createObjectURL(videoFileOrUrl) : videoFileOrUrl;
+          v.src = srcUrl;
+          v.preload = 'metadata';
+          const cleanup = () => { if (isFile) URL.revokeObjectURL(srcUrl); };
+          v.onloadeddata = () => {
+            v.currentTime = Math.min(0.5, v.duration ? v.duration / 4 : 0);
+          };
+          v.onseeked = () => {
+            try {
+              const c = document.createElement('canvas');
+              c.width = v.videoWidth || 640;
+              c.height = v.videoHeight || 360;
+              const ctx = c.getContext('2d');
+              if (ctx) {
+                ctx.drawImage(v, 0, 0, c.width, c.height);
+                const dataUrl = c.toDataURL('image/jpeg', 0.82);
+                cleanup();
+                return resolve(dataUrl);
+              }
+            } catch(e) {}
+            cleanup();
+            resolve('');
+          };
+          v.onerror = () => { cleanup(); resolve(''); };
+          setTimeout(() => { cleanup(); resolve(''); }, 2000);
+        } catch(e) {
+          resolve('');
+        }
+      });
+    };
+
+    // Universal helper to reliably retrieve cover/poster for any video item or URL
+    window.getVideoCover = function(url, item) {
+      if (item && typeof item === 'object') {
+        if (item.coverUrl) return item.coverUrl;
+        if (item.cover) return item.cover;
+        if (item.poster) return item.poster;
+      }
+      const str = (typeof url === 'string' ? url : (item?.url || '')).trim();
+      if (!str) return '';
+      if (str.startsWith('data:image')) return str;
+      if (str.includes('/uploads/tripline/') && /\.(mp4|webm|mov|ogg|mkv|avi|3gp|m4v)($|\?)/i.test(str)) {
+        const filename = str.split('?')[0].split('/').pop();
+        const baseName = filename.replace(/\.[^.]+$/, '');
+        return `/uploads/tripline/cover_${baseName}.jpg`;
+      }
+      return '';
+    };
+
+    window.isVideoUrl = function(url, item) {
+      if (item && (item.type === 'video' || (item.mimeType && item.mimeType.startsWith('video')))) return true;
+      if (!url) return false;
+      if (typeof url === 'object') {
+        if (url.type === 'video' || (url.mimeType && url.mimeType.startsWith('video'))) return true;
+        url = url.url || '';
+      }
+      const str = String(url).trim().toLowerCase();
+      if (window.triplineVideoUrls && window.triplineVideoUrls.has(url)) return true;
+      if (str.startsWith('data:video')) return true;
+      return /\.(mp4|webm|mov|ogg|mkv|avi|m4v|3gp)($|\?)/i.test(str) ||
+             str.includes('/video/') ||
+             str.includes('video=true');
+    };
+
     // Universal high-speed direct multipart binary uploader with pre-upload caching
     window.uploadFileToStorage = async function(pathOrName, file) {
       if (!file) return '';
-      if (typeof file === 'string' && (file.startsWith('http') || file.startsWith('/'))) return file;
+      if (typeof file === 'string' && (file.startsWith('http') || file.startsWith('/') || file.startsWith('data:'))) return file;
       if (file._uploadedUrl && !file._uploadedUrl.startsWith('blob:')) return file._uploadedUrl;
       if (file._preUploadPromise) {
         try {
@@ -315,28 +384,37 @@
         } catch(e) {}
       }
 
+      const isVid = (file.type && file.type.startsWith('video/')) || /\.(mp4|mov|webm|mkv|avi|3gp)$/i.test(file.name || '');
       let toUpload = file;
-      if (file instanceof Blob && file.type && file.type.startsWith('image/')) {
-        toUpload = await window.compressImageFile(file);
+      if (!isVid && file instanceof Blob && file.type && file.type.startsWith('image/')) {
+        try {
+          toUpload = await window.compressImageFile(file, 1600, 0.85);
+        } catch(e) {}
       }
 
+      // 1. Direct binary multipart server upload
       try {
         const fd = new FormData();
-        fd.append('file', toUpload, toUpload.name || (toUpload.type?.startsWith('video') ? 'video.mp4' : 'photo.jpg'));
+        fd.append('file', toUpload, file.name || (isVid ? 'video.mp4' : 'photo.jpg'));
         const resp = await fetch('/api/upload-file', { method: 'POST', body: fd });
         if (resp.ok) {
           const data = await resp.json();
           if (data && data.success && data.url) {
             file._uploadedUrl = data.url;
-            if (data.type === 'video' && window.triplineVideoUrls) window.triplineVideoUrls.add(data.url);
+            const cov = data.coverUrl || window.getVideoCover(data.url, data);
+            if (cov) {
+              file._coverUrl = cov;
+              file.poster = cov;
+            }
+            if (isVid && window.triplineVideoUrls) window.triplineVideoUrls.add(data.url);
             return data.url;
           }
         }
       } catch(err) {
-        console.warn('Multipart upload fallback:', err);
+        console.warn('Multipart upload notice:', err.message);
       }
 
-      // Fallback to base64
+      // 2. Fallback via /api/upload with base64 payload
       try {
         const base64 = await new Promise((res) => {
           const r = new FileReader();
@@ -345,25 +423,36 @@
           r.readAsDataURL(toUpload);
         });
         if (base64) {
-          const isVid = (toUpload.type && toUpload.type.startsWith('video/')) || /\.(mp4|mov|webm|mkv)$/i.test(toUpload.name || '');
           const bResp = await fetch('/api/upload', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              filename: toUpload.name || 'media',
-              mimeType: toUpload.type || (isVid ? 'video/mp4' : 'image/jpeg'),
+              filename: file.name || (isVid ? 'video.mp4' : 'photo.jpg'),
+              mimeType: file.type || (isVid ? 'video/mp4' : 'image/jpeg'),
               mediaType: isVid ? 'video' : 'image',
               data: base64
             })
           });
           if (bResp.ok) {
             const bJson = await bResp.json();
-            if (bJson && bJson.success && bJson.url) return bJson.url;
+            if (bJson && bJson.success && bJson.url) {
+              file._uploadedUrl = bJson.url;
+              const cov = bJson.coverUrl || window.getVideoCover(bJson.url, bJson);
+              if (cov) {
+                file._coverUrl = cov;
+                file.poster = cov;
+              }
+              if (isVid && window.triplineVideoUrls) window.triplineVideoUrls.add(bJson.url);
+              return bJson.url;
+            }
           }
+          // Permanent base64 fallback (never expires like transient blob URLs)
+          file._uploadedUrl = base64;
+          return base64;
         }
       } catch(e) {}
 
-      return (file instanceof Blob) ? URL.createObjectURL(file) : file;
+      return '';
     };
   </script>
   <!-- TripBnA Firebase SDK Module -->
@@ -4681,7 +4770,7 @@ body { font-family: Arial, sans-serif; margin:0; padding:20px; background:#f0f2f
           </div>
 
           <div style="display:flex; gap:8px; margin-top:12px;">
-            <button id="createOrganiserBtn" class="btn primary" onclick="createOrganiser()">Create Trip</button>
+            <button id="createOrganiserBtn" class="btn primary" onclick="createOrganiser()" style="background:#2563eb; color:#fff; font-weight:800; border:none; padding:10px 22px; border-radius:10px; box-shadow:0 2px 8px rgba(37,99,235,0.3); cursor:pointer;">🚀 Publish Trip</button>
             <button class="btn ghost" onclick="clearOrganiserForm()">Clear</button>
           </div>
 
@@ -12317,6 +12406,11 @@ Last Updated: April 2026 | Version 2.0 | TripBnA Platform Policies
           if (userCredential && userCredential.user) {
             loginSuccess = true;
             authenticatedUser = userCredential.user;
+            window.currentUser = authenticatedUser;
+            try {
+              localStorage.setItem('tripbna_account_uid', authenticatedUser.uid);
+              localStorage.setItem('tripbna_account_email', (authenticatedUser.email || email).toLowerCase().trim());
+            } catch(e) {}
           }
         } catch (firebaseErr) {
           console.warn("Direct Firebase SDK login error:", firebaseErr);
@@ -12385,6 +12479,8 @@ Last Updated: April 2026 | Version 2.0 | TripBnA Platform Policies
                 profile: userProfile,
                 timestamp: Date.now()
               }));
+              localStorage.setItem('tripbna_account_uid', u.uid);
+              localStorage.setItem('tripbna_account_email', u.email.toLowerCase().trim());
             } catch(e) {}
 
             updateAuthUI(true, userProfile);
@@ -12421,6 +12517,8 @@ Last Updated: April 2026 | Version 2.0 | TripBnA Platform Policies
                 profile: adminUser,
                 timestamp: Date.now()
               }));
+              localStorage.setItem('tripbna_account_uid', adminUser.uid);
+              localStorage.setItem('tripbna_account_email', adminUser.email.toLowerCase().trim());
             } catch(e) {}
             updateAuthUI(true, adminUser);
             loginSuccess = true;
@@ -12448,6 +12546,16 @@ Last Updated: April 2026 | Version 2.0 | TripBnA Platform Policies
 
       closeModal('loginModal');
       showToast('Login successful! Welcome back.');
+
+      if (typeof setupFirestoreDataListeners === 'function' && (authenticatedUser || window.currentUserProfile)) {
+        setupFirestoreDataListeners(window.currentUserProfile || authenticatedUser);
+      }
+      if (typeof renderOrganisers === 'function') {
+        renderOrganisers();
+      }
+      if (typeof updateOrgNotifCount === 'function') {
+        updateOrgNotifCount();
+      }
 
       const isMaster = email.toLowerCase().trim() === 'jacksonloshilari7@gmail.com';
       if (isMaster) {
@@ -12600,8 +12708,19 @@ Last Updated: April 2026 | Version 2.0 | TripBnA Platform Policies
         window.currentUserProfile = null;
         try {
           localStorage.removeItem('tripbna_auth_session');
+          localStorage.removeItem('tripbna_account_uid');
+          localStorage.removeItem('tripbna_account_email');
+          localStorage.removeItem('tripbna_my_created_trip_ids');
         } catch(e) {}
+        window.myOrganiserRequests = [];
+        window.myFinderRequests = [];
         updateAuthUI(false, null);
+        if (typeof renderOrganisers === 'function') {
+          renderOrganisers();
+        }
+        if (typeof updateOrgNotifCount === 'function') {
+          updateOrgNotifCount();
+        }
         if (window.auth && window.signOut) {
           await window.signOut(window.auth);
         }
@@ -12691,6 +12810,12 @@ Last Updated: April 2026 | Version 2.0 | TripBnA Platform Policies
       }
       if (typeof renderTables === 'function') {
         renderTables();
+      }
+      if (typeof renderOrganisers === 'function') {
+        renderOrganisers();
+      }
+      if (typeof updateOrgNotifCount === 'function') {
+        updateOrgNotifCount();
       }
     }
 
@@ -24813,22 +24938,15 @@ if (viewMenuBtnEl) {
       if (Array.isArray(val)) {
         return val.slice(0, 50).map(item => {
           if (!item || typeof item !== 'object') return item;
+          // Deep clone item while preserving original media URLs intact
           const clone = { ...item };
           if (Array.isArray(clone.media)) {
             clone.media = clone.media.map(m => {
-              if (typeof m === 'string' && m.startsWith('data:') && m.length > 500) {
-                return (typeof getDestinationDefaultMedia === 'function' && clone.place)
-                  ? getDestinationDefaultMedia(clone.place, clone.title)
-                  : 'https://images.unsplash.com/photo-1516426122078-c23e76319801?auto=format&fit=crop&w=1200&q=80';
-              }
-              if (m && typeof m === 'object' && typeof m.url === 'string' && m.url.startsWith('data:') && m.url.length > 500) {
-                return { ...m, url: (typeof getDestinationDefaultMedia === 'function' && clone.place) ? getDestinationDefaultMedia(clone.place, clone.title) : 'https://images.unsplash.com/photo-1516426122078-c23e76319801?auto=format&fit=crop&w=1200&q=80' };
+              if (m && typeof m === 'object') {
+                return { ...m };
               }
               return m;
             });
-          }
-          if (typeof clone.mediaUrl === 'string' && clone.mediaUrl.startsWith('data:') && clone.mediaUrl.length > 500) {
-            clone.mediaUrl = 'https://images.unsplash.com/photo-1516426122078-c23e76319801?auto=format&fit=crop&w=1200&q=80';
           }
           return clone;
         });
@@ -24878,6 +24996,30 @@ if (viewMenuBtnEl) {
         }
       });
     } catch(e) {}
+
+    function cleanFirestorePayload(obj) {
+      if (obj === undefined) return null;
+      if (obj === null) return null;
+      if (typeof obj !== 'object') return obj;
+      if (obj && (obj._methodName || (obj.constructor && (obj.constructor.name === 'FieldValue' || obj.constructor.name === 'Timestamp')))) {
+        return obj;
+      }
+      if (Array.isArray(obj)) {
+        return obj.map(item => cleanFirestorePayload(item === undefined ? null : item));
+      }
+      const cleaned = {};
+      for (const [k, v] of Object.entries(obj)) {
+        if (v === undefined) {
+          cleaned[k] = null;
+        } else if (v && typeof v === 'object') {
+          cleaned[k] = cleanFirestorePayload(v);
+        } else {
+          cleaned[k] = v;
+        }
+      }
+      return cleaned;
+    }
+    window.cleanFirestorePayload = cleanFirestorePayload;
 
     function getCurrentUserName() {
       if (window.currentUser) {
@@ -25005,6 +25147,19 @@ if (viewMenuBtnEl) {
     }
     window.isSameTrip = isSameTrip;
 
+    function isRealUserMedia(m) {
+      if (!m) return false;
+      const u = (typeof m === 'object' && m.url) ? m.url : (typeof m === 'string' ? m : '');
+      if (!u || u.startsWith('blob:')) return false;
+      if (u.includes('/uploads/tripline/') || u.startsWith('data:')) return true;
+      return !u.includes('photo-1516426122078-c23e76319801') &&
+             !u.includes('photo-1586861635167-e5223aadc9fe') &&
+             !u.includes('photo-1589553416260-f586c8f1514f') &&
+             !u.includes('photo-1547471080-7cc2caa01a7e') &&
+             !u.includes('photo-1534567153574-2b12153a87f0') &&
+             !u.includes('photo-1544620347-c4fd4a3d5957');
+    }
+
     function deduplicateTrips(tripsList) {
       if (!Array.isArray(tripsList)) return [];
       const result = [];
@@ -25018,8 +25173,19 @@ if (viewMenuBtnEl) {
           const existingIsTemp = String(existing.id || '').startsWith('org_') || String(existing.id || '').startsWith('temp_');
           const newIsTemp = String(t.id || '').startsWith('org_') || String(t.id || '').startsWith('temp_');
 
-          // Always preserve non-empty media, attached services, and fields
-          const bestMedia = (t.media && Array.isArray(t.media) && t.media.length) ? t.media : (existing.media || []);
+          // Always give absolute priority to real user-uploaded media over generic presets
+          const tMedia = Array.isArray(t.media) ? t.media.filter(Boolean) : (t.media ? [t.media] : []);
+          const exMedia = Array.isArray(existing.media) ? existing.media.filter(Boolean) : (existing.media ? [existing.media] : []);
+          const tHasReal = tMedia.some(isRealUserMedia);
+          const exHasReal = exMedia.some(isRealUserMedia);
+
+          let bestMedia = exMedia;
+          if (tHasReal && !exHasReal) bestMedia = tMedia;
+          else if (exHasReal && !tHasReal) bestMedia = exMedia;
+          else if (tMedia.length && !exMedia.length) bestMedia = tMedia;
+          else if (exMedia.length && !tMedia.length) bestMedia = exMedia;
+          else bestMedia = tMedia.length ? tMedia : exMedia;
+
           const bestServices = (t.attachedServices && Array.isArray(t.attachedServices) && t.attachedServices.length) ? t.attachedServices : (existing.attachedServices || []);
           const bestPlace = t.place || existing.place;
           const bestDate = t.date || existing.date;
@@ -25038,8 +25204,8 @@ if (viewMenuBtnEl) {
               price: bestPrice
             };
           } else {
-            // Keep existing representation but ensure media and fields are never lost
-            if (!existing.media || !existing.media.length) existing.media = bestMedia;
+            // Keep existing representation but ensure real media and fields are never lost
+            result[existingIdx].media = bestMedia;
             if (!existing.attachedServices || !existing.attachedServices.length) existing.attachedServices = bestServices;
             if (Array.isArray(t.memberIds) && Array.isArray(existing.memberIds)) {
               existing.memberIds = Array.from(new Set([...existing.memberIds, ...t.memberIds]));
@@ -25067,116 +25233,128 @@ if (viewMenuBtnEl) {
         tarangire: 'https://images.unsplash.com/photo-1534567153574-2b12153a87f0?auto=format&fit=crop&w=1200&q=80'
       };
       const url = presets[presetKey] || presets.serengeti;
-      window.selectedOrgPresetCover = url;
-      const prevWrap = document.getElementById('orgMediaPreviews');
-      if (prevWrap) {
-        prevWrap.style.display = 'flex';
-        prevWrap.innerHTML = `
-          <div style="position:relative; width:80px; height:60px; border-radius:8px; overflow:hidden; border:2px solid #0b84ff; box-shadow:0 2px 6px rgba(0,0,0,0.15); flex-shrink:0;">
-            <img src="${url}" style="width:100%; height:100%; object-fit:cover;" />
-            <button type="button" onclick="removeOrgPresetCover()" style="position:absolute; top:2px; right:2px; background:rgba(0,0,0,0.6); color:#fff; border:none; border-radius:50%; width:18px; height:18px; font-size:11px; display:flex; align-items:center; justify-content:center; cursor:pointer;" title="Remove cover">✕</button>
-            <span style="position:absolute; bottom:2px; left:2px; background:rgba(11,132,255,0.85); color:#fff; font-size:9px; padding:1px 4px; border-radius:4px; font-weight:700;">Cover</span>
-          </div>
-        `;
+      // Only set preset cover if user has not uploaded their own files
+      if (window.selectedOrgUploadedFiles && window.selectedOrgUploadedFiles.length > 0) {
+        showToast('ℹ️ Your uploaded photos/videos take precedence over preset covers.');
+        return;
       }
+      window.selectedOrgPresetCover = url;
+      renderOrgMediaPreviews();
       showToast('📸 Destination cover photo selected!');
     }
     window.selectOrgPresetCover = selectOrgPresetCover;
 
     function removeOrgPresetCover() {
       window.selectedOrgPresetCover = null;
-      const prevWrap = document.getElementById('orgMediaPreviews');
-      if (prevWrap) {
-        prevWrap.innerHTML = '';
-        prevWrap.style.display = 'none';
-      }
+      renderOrgMediaPreviews();
     }
     window.removeOrgPresetCover = removeOrgPresetCover;
 
-    function handleOrgMediaSelection(e) {
-      const files = e.target.files;
+    function removeOrgUploadedFile(index) {
+      if (!window.selectedOrgUploadedFiles) return;
+      window.selectedOrgUploadedFiles.splice(index, 1);
+      renderOrgMediaPreviews();
+    }
+    window.removeOrgUploadedFile = removeOrgUploadedFile;
+
+    function renderOrgMediaPreviews() {
       const prevWrap = document.getElementById('orgMediaPreviews');
       if (!prevWrap) return;
-      if (!files || !files.length) {
-        if (!window.selectedOrgPresetCover) {
-          prevWrap.innerHTML = '';
-          prevWrap.style.display = 'none';
-        }
+      const files = window.selectedOrgUploadedFiles || [];
+
+      if (!files.length && !window.selectedOrgPresetCover) {
+        prevWrap.innerHTML = '';
+        prevWrap.style.display = 'none';
         return;
       }
-      window.selectedOrgUploadedFiles = Array.from(files);
+
       prevWrap.style.display = 'flex';
       prevWrap.innerHTML = '';
 
-      // If preset was selected, keep it as first cover
-      if (window.selectedOrgPresetCover) {
-        const coverBox = document.createElement('div');
-        coverBox.style.cssText = 'position:relative; width:80px; height:60px; border-radius:8px; overflow:hidden; border:2px solid #0b84ff; box-shadow:0 2px 6px rgba(0,0,0,0.15); flex-shrink:0;';
-        coverBox.innerHTML = `
+      // If user uploaded files, display them with preview and remove button
+      if (files.length > 0) {
+        files.forEach((file, idx) => {
+          const itemBox = document.createElement('div');
+          itemBox.style.cssText = 'position:relative; width:92px; height:68px; border-radius:8px; overflow:hidden; border:1.5px solid #0b84ff; background:#000; box-shadow:0 2px 6px rgba(0,0,0,0.12); flex-shrink:0;';
+
+          const isVideo = (file.type && file.type.startsWith('video')) || /\.(mp4|mov|webm|mkv|avi|3gp)$/i.test(file.name || '');
+          let url = file._uploadedUrl || '';
+          if (!url || url.startsWith('blob:')) {
+            try { url = URL.createObjectURL(file); } catch(e) { url = ''; }
+          }
+          const cover = file._coverUrl || file.poster || '';
+
+          if (isVideo) {
+            itemBox.innerHTML = `
+              ${cover ? `<img src="${cover}" style="width:100%; height:100%; object-fit:cover;" />` : `<video src="${url}" style="width:100%; height:100%; object-fit:cover;" muted playsinline preload="metadata"></video>`}
+              <div style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center; color:#fff; font-size:14px; background:rgba(0,0,0,0.25);">▶</div>
+              <span style="position:absolute; bottom:2px; left:2px; background:rgba(0,0,0,0.75); color:#fff; font-size:9px; padding:1px 4px; border-radius:4px; font-weight:700;">🎥 Video</span>
+            `;
+          } else {
+            itemBox.innerHTML = `
+              <img src="${url}" style="width:100%; height:100%; object-fit:cover;" alt="preview" />
+              <span style="position:absolute; bottom:2px; left:2px; background:rgba(0,0,0,0.75); color:#fff; font-size:9px; padding:1px 4px; border-radius:4px; font-weight:700;">📸 Photo</span>
+            `;
+          }
+
+          const removeBtn = document.createElement('button');
+          removeBtn.type = 'button';
+          removeBtn.style.cssText = 'position:absolute; top:2px; right:2px; width:18px; height:18px; border-radius:50%; background:rgba(220,38,38,0.9); color:#fff; border:none; font-size:10px; font-weight:900; cursor:pointer; display:flex; align-items:center; justify-content:center; line-height:1; box-shadow:0 1px 3px rgba(0,0,0,0.4);';
+          removeBtn.textContent = '✕';
+          removeBtn.title = 'Remove media';
+          removeBtn.onclick = () => removeOrgUploadedFile(idx);
+          itemBox.appendChild(removeBtn);
+
+          prevWrap.appendChild(itemBox);
+        });
+      } else if (window.selectedOrgPresetCover) {
+        // Only if user uploaded ZERO files, show preset cover
+        const presetBox = document.createElement('div');
+        presetBox.style.cssText = 'position:relative; width:92px; height:68px; border-radius:8px; overflow:hidden; border:2px solid #0b84ff; box-shadow:0 2px 6px rgba(0,0,0,0.15); flex-shrink:0;';
+        presetBox.innerHTML = `
           <img src="${window.selectedOrgPresetCover}" style="width:100%; height:100%; object-fit:cover;" />
-          <button type="button" onclick="removeOrgPresetCover()" style="position:absolute; top:2px; right:2px; background:rgba(0,0,0,0.6); color:#fff; border:none; border-radius:50%; width:18px; height:18px; font-size:11px; display:flex; align-items:center; justify-content:center; cursor:pointer;">✕</button>
-          <span style="position:absolute; bottom:2px; left:2px; background:rgba(11,132,255,0.85); color:#fff; font-size:9px; padding:1px 4px; border-radius:4px; font-weight:700;">Cover</span>
+          <button type="button" onclick="removeOrgPresetCover()" style="position:absolute; top:2px; right:2px; background:rgba(0,0,0,0.6); color:#fff; border:none; border-radius:50%; width:18px; height:18px; font-size:11px; display:flex; align-items:center; justify-content:center; cursor:pointer;" title="Remove cover">✕</button>
+          <span style="position:absolute; bottom:2px; left:2px; background:rgba(11,132,255,0.85); color:#fff; font-size:9px; padding:1px 4px; border-radius:4px; font-weight:700;">Preset</span>
         `;
-        prevWrap.appendChild(coverBox);
+        prevWrap.appendChild(presetBox);
       }
+    }
+    window.renderOrgMediaPreviews = renderOrgMediaPreviews;
+
+    function handleOrgMediaSelection(e) {
+      const files = e.target.files;
+      if (!files || !files.length) return;
       
-      Array.from(files).forEach((file, idx) => {
-        // Start immediate background upload so trip creation is instantaneous
-        if (!file._preUploadPromise) {
-          file._preUploadPromise = (async () => {
-            try {
-              let toUpload = file;
-              if (file instanceof Blob && file.type && file.type.startsWith('image/') && typeof window.compressImageFile === 'function') {
-                toUpload = await window.compressImageFile(file, 1600, 0.82);
+      if (!window.selectedOrgUploadedFiles) window.selectedOrgUploadedFiles = [];
+      Array.from(files).forEach(f => {
+        const exists = window.selectedOrgUploadedFiles.some(existing => existing.name === f.name && existing.size === f.size);
+        if (!exists) {
+          window.selectedOrgUploadedFiles.push(f);
+          // Immediate background pre-upload so trip creation is instantaneous
+          if (!f._preUploadPromise) {
+            f._preUploadPromise = window.uploadFileToStorage(f.name, f).then(u => {
+              if (u && !u.startsWith('blob:')) f._uploadedUrl = u;
+              return u;
+            }).catch(() => null);
+          }
+          // If video, extract cover client-side as well
+          const isVid = (f.type && f.type.startsWith('video/')) || /\.(mp4|mov|webm|mkv|avi|3gp)$/i.test(f.name || '');
+          if (isVid && typeof window.extractVideoCoverClient === 'function') {
+            window.extractVideoCoverClient(f).then(cov => {
+              if (cov && !f._coverUrl) {
+                f._coverUrl = cov;
+                f.poster = cov;
+                renderOrgMediaPreviews();
               }
-              const fd = new FormData();
-              fd.append('file', toUpload, toUpload.name || (toUpload.type?.startsWith('video') ? 'video.mp4' : 'photo.jpg'));
-              const resp = await fetch('/api/upload-file', { method: 'POST', body: fd });
-              if (resp.ok) {
-                const data = await resp.json();
-                if (data && data.success && data.url) {
-                  file._uploadedUrl = data.url;
-                  return data.url;
-                }
-              }
-            } catch(e) {}
-            // Compressed base64 permanent fallback
-            try {
-              return await new Promise((res) => {
-                const r = new FileReader();
-                r.onload = ev => res(ev.target.result);
-                r.onerror = () => res(null);
-                r.readAsDataURL(file);
-              });
-            } catch(e) {
-              return null;
-            }
-          })();
+            }).catch(()=>{});
+          }
         }
-
-        const itemBox = document.createElement('div');
-        itemBox.style.cssText = 'position:relative; width:80px; height:60px; border-radius:8px; overflow:hidden; border:1px solid #cbd5e1; background:#000; box-shadow:0 2px 6px rgba(0,0,0,0.1); flex-shrink:0;';
-        
-        const isVideo = file.type && file.type.startsWith('video');
-        const url = URL.createObjectURL(file);
-        
-        if (isVideo) {
-          itemBox.innerHTML = `
-            <video src="${url}" style="width:100%; height:100%; object-fit:cover;" muted playsinline></video>
-            <div style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center; color:#fff; font-size:14px; background:rgba(0,0,0,0.25);">▶</div>
-          `;
-        } else {
-          itemBox.innerHTML = `<img src="${url}" style="width:100%; height:100%; object-fit:cover;" />`;
-        }
-        
-        const badge = document.createElement('span');
-        badge.style.cssText = 'position:absolute; bottom:2px; left:2px; background:rgba(0,0,0,0.7); color:#fff; font-size:9px; padding:1px 4px; border-radius:4px;';
-        badge.textContent = isVideo ? 'Video' : 'Photo';
-        itemBox.appendChild(badge);
-
-        prevWrap.appendChild(itemBox);
       });
-      showToast(`📸 ${files.length} media item(s) selected for trip!`);
+
+      // User's actual uploaded files strictly clear any preset cover!
+      window.selectedOrgPresetCover = null;
+      renderOrgMediaPreviews();
+      showToast(`📸 ${files.length} media item(s) attached to trip!`);
     }
     window.handleOrgMediaSelection = handleOrgMediaSelection;
 
@@ -25259,6 +25437,8 @@ if (viewMenuBtnEl) {
         if(selected === "organiser"){
           const el = document.getElementById("organiserContent");
           if (el) { el.classList.add("active"); el.style.display = 'block'; }
+          if (typeof renderOrganisers === 'function') renderOrganisers();
+          if (typeof updateOrgNotifCount === 'function') updateOrgNotifCount();
         }
         if(selected === "finder"){
           const el = document.getElementById("finderContent");
@@ -25571,7 +25751,7 @@ if (viewMenuBtnEl) {
     }
     window.isVideoUrl = isVideoUrl;
 
-    // Graceful error recovery for media elements
+    // Graceful error recovery for media elements without replacing user media with stock images
     async function handleMediaError(element, postId, index) {
       if (!element) return;
       const posts = (window.allPosts && window.allPosts.length) ? window.allPosts : lsLoad(LS_KEYS.POSTS);
@@ -25579,7 +25759,7 @@ if (viewMenuBtnEl) {
       const mediaList = post ? (Array.isArray(post.media) ? post.media : [post.media]) : [];
       const item = mediaList[index];
 
-      if (item && item.idbId) {
+      if (item && item.idbId && window.TriplineMediaDB) {
         const record = await TriplineMediaDB.get(item.idbId);
         if (record && record.blob) {
           const freshUrl = URL.createObjectURL(record.blob);
@@ -25593,12 +25773,9 @@ if (viewMenuBtnEl) {
       }
 
       element.onerror = null;
-      const tag = (element.tagName || '').toLowerCase();
-      if (tag === 'video') {
-        element.src = '/uploads/tripline/serengeti_safari_video.mp4';
-        try { element.load(); } catch(e) {}
-      } else {
-        element.src = 'https://images.unsplash.com/photo-1516426122078-c23e76319801?auto=format&fit=crop&w=1200&q=80';
+      // Do NOT replace user's media with generic stock photos or stock videos
+      if (element.tagName && element.tagName.toLowerCase() === 'video') {
+        element.style.background = '#0f172a';
       }
     }
     window.handleMediaError = handleMediaError;
@@ -25757,9 +25934,22 @@ if (viewMenuBtnEl) {
       if (!url) return '<div class="muted" style="display:flex;align-items:center;justify-content:center;height:100%;font-size:12px;">No Media</div>';
       const actualUrl = (typeof url === 'object' && url.url) ? url.url : url;
       const isVideo = isVideoUrl(actualUrl, url);
+      let videoCover = (typeof url === 'object' && (url.coverUrl || url.cover || url.poster)) ? (url.coverUrl || url.cover || url.poster) : '';
+      if (isVideo && !videoCover && typeof window.getVideoCover === 'function') {
+        videoCover = window.getVideoCover(actualUrl, url);
+      }
 
       if (isVideo) {
         if (isThumb) {
+          if (videoCover) {
+            return `
+              <div style="position:relative;display:inline-block;${style}">
+                <img src="${videoCover}" style="width:100%;height:100%;object-fit:cover;border-radius:inherit;" onerror="this.onerror=null;this.style.display='none';if(this.nextElementSibling)this.nextElementSibling.style.display='block';" />
+                <video src="${actualUrl}" muted playsinline preload="metadata" style="display:none;width:100%;height:100%;object-fit:cover;border-radius:inherit;background:#000;"></video>
+                <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.3);border-radius:inherit;color:#fff;font-size:14px;pointer-events:none;">▶</div>
+              </div>
+            `;
+          }
           return `
             <div style="position:relative;display:inline-block;${style}">
               <video src="${actualUrl}" muted playsinline preload="metadata" style="width:100%;height:100%;object-fit:cover;border-radius:inherit;background:#000;"></video>
@@ -25767,10 +25957,11 @@ if (viewMenuBtnEl) {
             </div>
           `;
         }
-        return `<video src="${actualUrl}" controls playsinline preload="metadata" class="${className}" style="${style || 'width:100%;height:100%;object-fit:cover;background:#000;'}" onclick="this.paused?this.play():this.pause()"></video>`;
+        const posterAttr = videoCover ? `poster="${videoCover}"` : '';
+        return `<video src="${actualUrl}" controls playsinline preload="metadata" ${posterAttr} class="${className}" style="${style || 'width:100%;height:100%;object-fit:cover;background:#000;'}" onclick="this.paused?this.play():this.pause()"></video>`;
       }
 
-      return `<img src="${actualUrl}" class="${className}" style="${style || 'width:100%;height:100%;object-fit:cover;'}" alt="Trip Media" onerror="this.src='https://images.unsplash.com/photo-1549924231-f129b911e442?auto=format&fit=crop&w=600&q=80'" loading="lazy" />`;
+      return `<img src="${actualUrl}" class="${className}" style="${style || 'width:100%;height:100%;object-fit:cover;'}" alt="Trip Media" loading="lazy" />`;
     }
 
     /* -------------------------
@@ -25787,10 +25978,14 @@ if (viewMenuBtnEl) {
         const mUrl = (typeof m === 'object' && m.url) ? m.url : m;
         const isVid = isVideoUrl(mUrl, m);
         if (isVid) {
-          const videoPoster = 'https://images.unsplash.com/photo-1516426122078-c23e76319801?auto=format&fit=crop&w=1200&q=80';
+          let videoCover = (typeof m === 'object' && (m.coverUrl || m.cover || m.poster)) ? (m.coverUrl || m.cover || m.poster) : '';
+          if (!videoCover && typeof window.getVideoCover === 'function') {
+            videoCover = window.getVideoCover(mUrl, m);
+          }
+          const posterAttr = videoCover ? `poster="${videoCover}"` : '';
           return `
             <div style="position:relative; width:100%; border-radius:14px; overflow:hidden; background:#000; box-shadow:0 4px 14px rgba(0,0,0,0.15);">
-              <video id="post_vid_${postId}_0" src="${mUrl}" controls playsinline preload="metadata" poster="${videoPoster}" style="width:100%; max-height:420px; object-fit:contain; background:#000; display:block;" onerror="handleMediaError(this, '${postId}', 0)" onplay="document.getElementById('post_play_btn_${postId}_0')?.classList.add('hidden-play-overlay')" onpause="document.getElementById('post_play_btn_${postId}_0')?.classList.remove('hidden-play-overlay')" onended="document.getElementById('post_play_btn_${postId}_0')?.classList.remove('hidden-play-overlay')"></video>
+              <video id="post_vid_${postId}_0" src="${mUrl}" controls playsinline preload="metadata" ${posterAttr} style="width:100%; max-height:420px; object-fit:contain; background:#000; display:block;" onerror="handleMediaError(this, '${postId}', 0)" onplay="document.getElementById('post_play_btn_${postId}_0')?.classList.add('hidden-play-overlay')" onpause="document.getElementById('post_play_btn_${postId}_0')?.classList.remove('hidden-play-overlay')" onended="document.getElementById('post_play_btn_${postId}_0')?.classList.remove('hidden-play-overlay')"></video>
               <div id="post_play_btn_${postId}_0" onclick="togglePlayPostVideo('post_vid_${postId}_0')" style="position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; background:rgba(0,0,0,0.25); cursor:pointer; pointer-events:auto; z-index:4; transition:opacity 0.2s;">
                 <div style="width:62px; height:62px; border-radius:50%; background:rgba(255,255,255,0.95); color:#0f172a; display:flex; align-items:center; justify-content:center; font-size:26px; box-shadow:0 4px 18px rgba(0,0,0,0.5); padding-left:3px;">▶</div>
                 <span style="color:#ffffff; font-weight:800; font-size:12px; margin-top:8px; text-shadow:0 1px 4px rgba(0,0,0,0.8); background:rgba(0,0,0,0.6); padding:4px 12px; border-radius:12px;">Watch Video</span>
@@ -25814,10 +26009,14 @@ if (viewMenuBtnEl) {
         const mUrl = (typeof m === 'object' && m.url) ? m.url : m;
         const isVid = isVideoUrl(mUrl, m);
         if (isVid) {
-          const videoPoster = 'https://images.unsplash.com/photo-1516426122078-c23e76319801?auto=format&fit=crop&w=1200&q=80';
+          let videoCover = (typeof m === 'object' && (m.coverUrl || m.cover || m.poster)) ? (m.coverUrl || m.cover || m.poster) : '';
+          if (!videoCover && typeof window.getVideoCover === 'function') {
+            videoCover = window.getVideoCover(mUrl, m);
+          }
+          const posterAttr = videoCover ? `poster="${videoCover}"` : '';
           return `
             <div class="media-carousel-slide video-slide" style="position:relative; width:100%; height:340px; background:#000; border-radius:14px; overflow:hidden; flex-shrink:0;">
-              <video id="post_vid_${postId}_${idx}" src="${mUrl}" controls playsinline preload="metadata" poster="${videoPoster}" style="width:100%; height:100%; object-fit:contain; background:#000;" onerror="handleMediaError(this, '${postId}', ${idx})" onplay="document.getElementById('post_play_btn_${postId}_${idx}')?.classList.add('hidden-play-overlay')" onpause="document.getElementById('post_play_btn_${postId}_${idx}')?.classList.remove('hidden-play-overlay')" onended="document.getElementById('post_play_btn_${postId}_${idx}')?.classList.remove('hidden-play-overlay')"></video>
+              <video id="post_vid_${postId}_${idx}" src="${mUrl}" controls playsinline preload="metadata" ${posterAttr} style="width:100%; height:100%; object-fit:contain; background:#000;" onerror="handleMediaError(this, '${postId}', ${idx})" onplay="document.getElementById('post_play_btn_${postId}_${idx}')?.classList.add('hidden-play-overlay')" onpause="document.getElementById('post_play_btn_${postId}_${idx}')?.classList.remove('hidden-play-overlay')" onended="document.getElementById('post_play_btn_${postId}_${idx}')?.classList.remove('hidden-play-overlay')"></video>
               <div id="post_play_btn_${postId}_${idx}" onclick="togglePlayPostVideo('post_vid_${postId}_${idx}')" style="position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; background:rgba(0,0,0,0.25); cursor:pointer; pointer-events:auto; z-index:4; transition:opacity 0.2s;">
                 <div style="width:54px; height:54px; border-radius:50%; background:rgba(255,255,255,0.95); color:#0f172a; display:flex; align-items:center; justify-content:center; font-size:24px; box-shadow:0 4px 18px rgba(0,0,0,0.5); padding-left:3px;">▶</div>
                 <span style="color:#ffffff; font-weight:800; font-size:11px; margin-top:6px; text-shadow:0 1px 4px rgba(0,0,0,0.8); background:rgba(0,0,0,0.6); padding:3px 10px; border-radius:10px;">Play Video</span>
@@ -25840,10 +26039,15 @@ if (viewMenuBtnEl) {
       const thumbsHtml = items.map((m, idx) => {
         const mUrl = (typeof m === 'object' && m.url) ? m.url : m;
         const isVid = isVideoUrl(mUrl, m);
+        let videoCover = (typeof m === 'object' && (m.coverUrl || m.cover || m.poster)) ? (m.coverUrl || m.cover || m.poster) : '';
+        if (isVid && !videoCover && typeof window.getVideoCover === 'function') {
+          videoCover = window.getVideoCover(mUrl, m);
+        }
         return `
           <div class="media-thumb-item ${idx === 0 ? 'active' : ''}" id="thumb_${postId}_${idx}" onclick="scrollPostToSlide('${postId}', ${idx})">
             ${isVid ? `
-              <video src="${mUrl}" muted preload="metadata" style="width:100%; height:100%; object-fit:cover;"></video>
+              ${videoCover ? `<img src="${videoCover}" style="width:100%; height:100%; object-fit:cover;" onerror="this.onerror=null;this.style.display='none';if(this.nextElementSibling)this.nextElementSibling.style.display='block';" />` : ''}
+              <video src="${mUrl}" muted preload="metadata" style="${videoCover ? 'display:none;' : ''}width:100%; height:100%; object-fit:cover;"></video>
               <div style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center; background:rgba(0,0,0,0.35); color:#fff; font-size:12px; font-weight:bold;">▶</div>
             ` : `
               <img src="${mUrl}" style="width:100%; height:100%; object-fit:cover;" loading="lazy" onerror="handleMediaError(this, '${postId}', ${idx})" />
@@ -25950,13 +26154,11 @@ if (viewMenuBtnEl) {
     window.handleLightboxVideoError = function(element, postId, index) {
       if (!element) return;
       element.onerror = null;
-      element.src = '/uploads/tripline/serengeti_safari_video.mp4';
-      try { element.load(); } catch(e) {}
       const overlay = document.getElementById('lightboxVideoOverlayPlay');
       if (overlay) {
         overlay.style.display = 'flex';
         const txt = overlay.querySelector('span');
-        if (txt) txt.textContent = '▶ Tap to Play Safari Video';
+        if (txt) txt.textContent = '▶ Tap to Play Video';
       }
     };
 
@@ -25972,7 +26174,12 @@ if (viewMenuBtnEl) {
       if (typeof arg1 === 'string' && (arg1.startsWith('http') || arg1.startsWith('data:') || arg1.startsWith('blob:') || arg1.startsWith('/') || arg2 === 'image' || arg2 === 'video')) {
         const mediaUrl = arg1;
         const type = arg2;
-        const title = arg3;
+        const title = typeof arg3 === 'string' ? arg3 : (arg3?.title || 'Shared Media');
+        let videoCover = (typeof arg3 === 'object' && (arg3.coverUrl || arg3.cover || arg3.poster)) ? (arg3.coverUrl || arg3.cover || arg3.poster) : '';
+        if ((type === 'video' || isVideoUrl(mediaUrl)) && !videoCover && typeof window.getVideoCover === 'function') {
+          videoCover = window.getVideoCover(mediaUrl, arg3);
+        }
+        const posterAttr = videoCover ? `poster="${videoCover}"` : '';
 
         if (titleEl) titleEl.textContent = title || 'Shared Media';
         if (counterEl) counterEl.textContent = '1 / 1';
@@ -25983,8 +26190,8 @@ if (viewMenuBtnEl) {
           if (type === 'video' || isVideoUrl(mediaUrl)) {
             viewport.innerHTML = `
               <div style="position:relative; width:100%; max-width:880px; max-height:80vh; display:flex; align-items:center; justify-content:center; background:#000; border-radius:14px; overflow:hidden; box-shadow:0 25px 60px rgba(0,0,0,0.85);">
-                <video id="lightboxActiveVideo" src="${escapeHTML(mediaUrl)}" controls playsinline preload="auto" poster="https://images.unsplash.com/photo-1516426122078-c23e76319801?auto=format&fit=crop&w=1200&q=80" style="max-width:92vw; max-height:80vh; width:100%; height:auto; object-fit:contain; background:#000; outline:none; display:block;" onerror="handleLightboxVideoError(this)"></video>
-                <div id="lightboxVideoOverlayPlay" onclick="playLightboxActiveVideo()" style="position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; background:rgba(0,0,0,0.35); cursor:pointer; z-index:10; transition:opacity 0.2s;">
+                <video id="lightboxActiveVideo" src="${escapeHTML(mediaUrl)}" controls playsinline preload="metadata" ${posterAttr} style="max-width:92vw; max-height:80vh; width:100%; height:auto; object-fit:contain; background:#000; outline:none; display:block;" onerror="handleLightboxVideoError(this)"></video>
+                <div id="lightboxVideoOverlayPlay" onclick="playLightboxActiveVideo()" style="position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; background:rgba(0,0,0,0.25); cursor:pointer; z-index:10; transition:opacity 0.2s;">
                   <div style="width:72px; height:72px; border-radius:50%; background:rgba(255,255,255,0.95); color:#0f172a; display:flex; align-items:center; justify-content:center; font-size:32px; box-shadow:0 8px 24px rgba(0,0,0,0.5); padding-left:4px;">▶</div>
                   <span style="color:#ffffff; font-weight:800; font-size:13px; margin-top:12px; text-shadow:0 2px 6px rgba(0,0,0,0.8); background:rgba(0,0,0,0.6); padding:5px 14px; border-radius:20px;">Tap to Play Video</span>
                 </div>
@@ -25999,7 +26206,7 @@ if (viewMenuBtnEl) {
               }
             }, 60);
           } else {
-            viewport.innerHTML = `<img src="${escapeHTML(mediaUrl)}" style="max-width:92vw; max-height:80vh; width:auto; height:auto; object-fit:contain; border-radius:14px; box-shadow:0 20px 50px rgba(0,0,0,0.8);" alt="${escapeHTML(title || 'Media')}" onerror="this.src='https://images.unsplash.com/photo-1516426122078-c23e76319801?auto=format&fit=crop&w=1200&q=80'" />`;
+            viewport.innerHTML = `<img src="${escapeHTML(mediaUrl)}" style="max-width:92vw; max-height:80vh; width:auto; height:auto; object-fit:contain; border-radius:14px; box-shadow:0 20px 50px rgba(0,0,0,0.8);" alt="${escapeHTML(title || 'Media')}" onerror="this.src='https://images.unsplash.com/photo-1549924231-f129b911e442?auto=format&fit=crop&w=800&q=80'" />`;
           }
         }
         modal.style.display = 'flex';
@@ -26013,14 +26220,10 @@ if (viewMenuBtnEl) {
       const posts = (window.allPosts && window.allPosts.length) ? window.allPosts : lsLoad(LS_KEYS.POSTS);
       const post = posts.find(p => String(p.id) === String(postId));
       if (!post) {
-        if (postId) {
-          openTriplineMediaLightbox('/uploads/tripline/serengeti_safari_video.mp4', 'video', 'Tripline Video');
-        }
         return;
       }
       const allMedia = Array.isArray(post.media) ? post.media.filter(Boolean) : (post.media ? [post.media] : []);
       if (!allMedia.length) {
-        openTriplineMediaLightbox('/uploads/tripline/serengeti_safari_video.mp4', 'video', post.title || 'Safari Experience Video');
         return;
       }
 
@@ -26041,9 +26244,14 @@ if (viewMenuBtnEl) {
       const mediaItem = allMedia[idx];
       let mUrl = (typeof mediaItem === 'object' && mediaItem.url) ? mediaItem.url : mediaItem;
       if (!mUrl || (typeof mUrl === 'string' && !mUrl.trim())) {
-        mUrl = '/uploads/tripline/serengeti_safari_video.mp4';
+        return;
       }
       const isVid = isVideoUrl(mUrl, mediaItem);
+      let videoCover = (typeof mediaItem === 'object' && (mediaItem.coverUrl || mediaItem.cover || mediaItem.poster)) ? (mediaItem.coverUrl || mediaItem.cover || mediaItem.poster) : '';
+      if (isVid && !videoCover && typeof window.getVideoCover === 'function') {
+        videoCover = window.getVideoCover(mUrl, mediaItem);
+      }
+      const posterAttr = videoCover ? `poster="${videoCover}"` : '';
 
       const titleEl = document.getElementById('lightboxPostTitle');
       if (titleEl) titleEl.textContent = post.title || 'Experience Media';
@@ -26056,8 +26264,8 @@ if (viewMenuBtnEl) {
         if (isVid) {
           viewport.innerHTML = `
             <div style="position:relative; width:100%; max-width:880px; max-height:80vh; display:flex; align-items:center; justify-content:center; background:#000; border-radius:14px; overflow:hidden; box-shadow:0 25px 60px rgba(0,0,0,0.85);">
-              <video id="lightboxActiveVideo" src="${mUrl}" controls playsinline preload="auto" poster="https://images.unsplash.com/photo-1516426122078-c23e76319801?auto=format&fit=crop&w=1200&q=80" style="max-width:92vw; max-height:80vh; width:100%; height:auto; object-fit:contain; background:#000; outline:none; display:block;" onerror="handleLightboxVideoError(this, '${post.id}', ${idx})"></video>
-              <div id="lightboxVideoOverlayPlay" onclick="playLightboxActiveVideo()" style="position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; background:rgba(0,0,0,0.35); cursor:pointer; z-index:10; transition:opacity 0.2s;">
+              <video id="lightboxActiveVideo" src="${mUrl}" controls playsinline preload="metadata" ${posterAttr} style="max-width:92vw; max-height:80vh; width:100%; height:auto; object-fit:contain; background:#000; outline:none; display:block;" onerror="handleLightboxVideoError(this, '${post.id}', ${idx})"></video>
+              <div id="lightboxVideoOverlayPlay" onclick="playLightboxActiveVideo()" style="position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; background:rgba(0,0,0,0.25); cursor:pointer; z-index:10; transition:opacity 0.2s;">
                 <div style="width:72px; height:72px; border-radius:50%; background:rgba(255,255,255,0.95); color:#0f172a; display:flex; align-items:center; justify-content:center; font-size:32px; box-shadow:0 8px 24px rgba(0,0,0,0.5); padding-left:4px;">▶</div>
                 <span style="color:#ffffff; font-weight:800; font-size:13px; margin-top:12px; text-shadow:0 2px 6px rgba(0,0,0,0.8); background:rgba(0,0,0,0.6); padding:5px 14px; border-radius:20px;">Tap to Play Video</span>
               </div>
@@ -26150,7 +26358,7 @@ if (viewMenuBtnEl) {
       const el = document.getElementById('postsList');
       if (!el) return;
 
-      // Restore any IndexedDB media for local posts if blob URLs expired
+      // Restore any IndexedDB media for local posts if blob URLs need recreation
       if (Array.isArray(posts) && posts.length && window.TriplineMediaDB && !window._triplineHydratedOnce) {
         (async () => {
           let updated = false;
@@ -26161,26 +26369,14 @@ if (viewMenuBtnEl) {
               if (!m) continue;
               const mUrl = (typeof m === 'object' && m.url) ? m.url : (typeof m === 'string' ? m : '');
               if (mUrl && mUrl.startsWith('blob:')) {
-                let restored = false;
                 if (m && typeof m === 'object' && m.idbId) {
                   const rec = await TriplineMediaDB.get(m.idbId);
                   if (rec && rec.blob) {
                     const newBlobUrl = URL.createObjectURL(rec.blob);
                     if (rec.type === 'video') window.triplineVideoUrls.add(newBlobUrl);
                     m.url = newBlobUrl;
-                    restored = true;
                     updated = true;
                   }
-                }
-                if (!restored) {
-                  const isVid = (p.mediaType === 'video') || isVideoUrl(mUrl, m);
-                  const safeUrl = isVid ? '/uploads/tripline/serengeti_safari_video.mp4' : 'https://images.unsplash.com/photo-1516426122078-c23e76319801?auto=format&fit=crop&w=1200&q=80';
-                  if (typeof m === 'object') {
-                    m.url = safeUrl;
-                  } else {
-                    p.media[idx] = { url: safeUrl, type: isVid ? 'video' : 'image', name: isVid ? 'safari.mp4' : 'safari.jpg' };
-                  }
-                  updated = true;
                 }
               }
             }
@@ -26561,11 +26757,11 @@ if (viewMenuBtnEl) {
       const progressText = document.getElementById('postUploadProgressText');
       if (btn) {
         btn.disabled = true;
-        btn.innerHTML = '⏳ Publishing...';
+        btn.innerHTML = '⏳ Uploading & Publishing...';
       }
       if (progressBanner) {
         progressBanner.style.display = 'flex';
-        if (progressText) progressText.textContent = items.length ? `Preparing ${items.length} media item(s)...` : 'Publishing experience...';
+        if (progressText) progressText.textContent = items.length ? `Uploading ${items.length} media item(s)...` : 'Publishing experience...';
       }
 
       const currentUid = window.currentUser ? window.currentUser.uid : (localStorage.getItem('tripbna_account_uid') || localStorage.getItem('tripbna_guest_uid') || ('traveler_' + Math.random().toString(36).substring(2, 8)));
@@ -26576,146 +26772,180 @@ if (viewMenuBtnEl) {
       const processedMediaItems = [];
       let hasAnyVideo = false;
 
-      // Process each attached photo / playable video
-      for (let i = 0; i < items.length; i++) {
-        const item = items[i];
-        if (item && item.isUrlOnly) {
-          const isVid = (item.type === 'video') || isVideoUrl(item.url);
-          if (isVid) {
-            hasAnyVideo = true;
-            if (window.triplineVideoUrls) window.triplineVideoUrls.add(item.url);
+      try {
+        // Upload each attached photo / playable video directly to server
+        for (let i = 0; i < items.length; i++) {
+          const item = items[i];
+          if (item && item.isUrlOnly) {
+            const isVid = (item.type === 'video') || isVideoUrl(item.url);
+            if (isVid) {
+              hasAnyVideo = true;
+              if (window.triplineVideoUrls) window.triplineVideoUrls.add(item.url);
+            }
+            processedMediaItems.push({
+              url: item.url,
+              type: isVid ? 'video' : 'image',
+              name: item.name || (isVid ? 'video.mp4' : 'photo.jpg'),
+              coverUrl: item.coverUrl || item.poster || '',
+              poster: item.coverUrl || item.poster || ''
+            });
+            continue;
           }
-          processedMediaItems.push({
-            url: item.url,
-            type: isVid ? 'video' : 'image',
-            name: item.name || (isVid ? 'video.mp4' : 'photo.jpg')
-          });
-          continue;
-        }
 
-        const file = item;
-        const isVid = (file.type && file.type.startsWith('video')) || /\.(mp4|mov|webm|mkv|avi|ogg|3gp)$/i.test(file.name);
-        if (isVid) hasAnyVideo = true;
+          const file = item;
+          const isVid = (file.type && file.type.startsWith('video')) || /\.(mp4|mov|webm|mkv|avi|ogg|3gp)$/i.test(file.name || '');
+          if (isVid) hasAnyVideo = true;
 
-        let localBlobUrl = '';
-        try {
-          localBlobUrl = URL.createObjectURL(file);
-          if (isVid && window.triplineVideoUrls) window.triplineVideoUrls.add(localBlobUrl);
-        } catch(e) {}
+          // Declare variables properly within loop scope
+          let uploadedUrl = file._uploadedUrl || '';
+          let coverUrl = file._coverUrl || file.poster || '';
 
-        const idbId = `media_${tempId}_${i}`;
-        // Save to IndexedDB non-blocking in background
-        TriplineMediaDB.save(idbId, file, {
-          name: file.name,
-          type: isVid ? 'video' : 'image',
-          mimeType: file.type
-        }).catch(()=>{});
+          if (progressText) {
+            progressText.textContent = `Uploading ${file.name || 'media'} (${i + 1}/${items.length})...`;
+          }
 
-        processedMediaItems.push({
-          url: localBlobUrl,
-          idbId,
-          type: isVid ? 'video' : 'image',
-          name: file.name,
-          mimeType: file.type,
-          _fileObj: file
-        });
-      }
-
-      // If no media attached, provide a high-quality authentic African safari landscape photo
-      if (!processedMediaItems.length) {
-        processedMediaItems.push({
-          url: 'https://images.unsplash.com/photo-1516426122078-c23e76319801?auto=format&fit=crop&w=1200&q=80',
-          type: 'image',
-          name: 'safari.jpg'
-        });
-      }
-
-      const initialCleanMedia = processedMediaItems.map(({ _fileObj, ...rest }) => rest);
-
-      const newPostObj = {
-        id: tempId,
-        authorId: currentUid,
-        authorName: authorName,
-        authorEmail: authorEmail || '',
-        title,
-        desc: desc || '',
-        location,
-        price,
-        publisherWhatsApp: publisherWhatsApp || '',
-        media: initialCleanMedia,
-        mediaType: hasAnyVideo ? 'video' : 'image',
-        likes: 0,
-        likedBy: [],
-        shares: 0,
-        created: Date.now(),
-        createdAt: new Date().toISOString()
-      };
-
-      // 1. Instant Optimistic Render: User sees their media and post right away in 2ms!
-      if (!window.allPosts) window.allPosts = [];
-      window.allPosts.unshift(newPostObj);
-
-      const posts = lsLoad(LS_KEYS.POSTS) || [];
-      posts.unshift(newPostObj);
-      lsSave(LS_KEYS.POSTS, posts);
-
-      clearPostForm();
-      renderPosts();
-      showToast(`⚡ Experience published! ${hasAnyVideo ? '🎥 Video and photos live.' : '📸 Live in Tripline.'}`);
-
-      // 2. High-Speed Parallel Upload & Cloud Firestore Sync in Background
-      (async () => {
-        try {
-          let hasPermanentUpdates = false;
-
-          // Upload all media items concurrently in parallel
-          await Promise.all(processedMediaItems.map(async (m) => {
-            const file = m._fileObj;
-            if (!file) return;
-
+          // Await any background pre-upload initiated when file was selected
+          if (file._preUploadPromise) {
             try {
-              const uploadedUrl = await window.uploadFileToStorage(m.name, file);
-              if (uploadedUrl && !uploadedUrl.startsWith('blob:')) {
-                m.url = uploadedUrl;
-                if (m.type === 'video' && window.triplineVideoUrls) window.triplineVideoUrls.add(uploadedUrl);
-                hasPermanentUpdates = true;
+              const preRes = await file._preUploadPromise;
+              if (preRes && !preRes.startsWith('blob:')) {
+                uploadedUrl = preRes;
+                file._uploadedUrl = preRes;
+              }
+            } catch(e) {}
+          }
+          if (file._coverUrl) coverUrl = file._coverUrl;
+
+          // 1. Direct fast upload to server
+          if (!uploadedUrl || uploadedUrl.startsWith('blob:')) {
+            try {
+              let toUpload = file;
+              if (!isVid && file instanceof Blob && file.type && file.type.startsWith('image/') && typeof window.compressImageFile === 'function') {
+                toUpload = await window.compressImageFile(file, 1600, 0.85);
+              }
+              const fd = new FormData();
+              fd.append('file', toUpload, file.name || (isVid ? 'video.mp4' : 'photo.jpg'));
+              const resp = await fetch('/api/upload-file', { method: 'POST', body: fd });
+              if (resp.ok) {
+                const data = await resp.json();
+                if (data && data.success && data.url) {
+                  uploadedUrl = data.url;
+                  file._uploadedUrl = data.url;
+                  if (data.coverUrl) {
+                    coverUrl = data.coverUrl;
+                    file._coverUrl = data.coverUrl;
+                    file.poster = data.coverUrl;
+                  }
+                }
               }
             } catch(upErr) {
-              console.warn("Direct upload item notice:", upErr);
+              console.warn('Upload attempt notice:', upErr);
             }
-          }));
-
-          const cleanMedia = processedMediaItems.map(({ _fileObj, ...rest }) => rest);
-          newPostObj.media = cleanMedia;
-
-          if (hasPermanentUpdates) {
-            const lp = lsLoad(LS_KEYS.POSTS) || [];
-            const idx = lp.findIndex(p => p.id === tempId);
-            if (idx !== -1) { lp[idx].media = cleanMedia; lsSave(LS_KEYS.POSTS, lp); }
-            const memIdx = (window.allPosts || []).findIndex(p => p.id === tempId);
-            if (memIdx !== -1) { window.allPosts[memIdx].media = cleanMedia; }
           }
 
-          // Background Cloud Firestore sync
-          if (window.db && window.addDoc && window.collection) {
-            const postData = {
-              authorId: currentUid,
-              authorName: authorName,
-              authorEmail: authorEmail || '',
-              title,
-              desc: desc || '',
-              location,
-              price: Number(price) || 0,
-              publisherWhatsApp: publisherWhatsApp || '',
-              media: cleanMedia,
-              mediaType: hasAnyVideo ? 'video' : 'image',
-              likes: 0,
-              likedBy: [],
-              shares: 0,
-              createdAt: window.serverTimestamp ? window.serverTimestamp() : new Date().toISOString()
-            };
-            const safePostData = (typeof cleanFirestorePayload === 'function') ? cleanFirestorePayload(postData) : postData;
-            const docRef = await window.addDoc(window.collection(window.db, "posts"), safePostData);
+          // 2. Fallback to uploadFileToStorage
+          if (!uploadedUrl || uploadedUrl.startsWith('blob:')) {
+            try {
+              uploadedUrl = await window.uploadFileToStorage(file.name, file);
+              if (file._coverUrl) coverUrl = file._coverUrl;
+            } catch(e) {}
+          }
+
+          // 3. Fallback to base64 if network is offline or server upload unavailable
+          if (!uploadedUrl || uploadedUrl.startsWith('blob:')) {
+            try {
+              uploadedUrl = await new Promise((res) => {
+                const r = new FileReader();
+                r.onload = ev => res(ev.target.result);
+                r.onerror = () => res(null);
+                r.readAsDataURL(file);
+              });
+            } catch(e) {}
+          }
+
+          // 4. If video and cover frame not yet extracted, extract client-side or derive server cover
+          if (isVid && !coverUrl) {
+            if (typeof window.extractVideoCoverClient === 'function') {
+              try {
+                coverUrl = await window.extractVideoCoverClient(file);
+              } catch(e) {}
+            }
+            if (!coverUrl && uploadedUrl && typeof window.getVideoCover === 'function') {
+              coverUrl = window.getVideoCover(uploadedUrl);
+            }
+          }
+
+          if (uploadedUrl) {
+            if (isVid && window.triplineVideoUrls) window.triplineVideoUrls.add(uploadedUrl);
+            processedMediaItems.push({
+              url: uploadedUrl,
+              type: isVid ? 'video' : 'image',
+              name: file.name || (isVid ? 'video.mp4' : 'photo.jpg'),
+              coverUrl: coverUrl || '',
+              poster: coverUrl || ''
+            });
+          }
+        }
+
+        // Only if user attached ZERO media, provide an authentic safari photo
+        if (!processedMediaItems.length && !items.length) {
+          processedMediaItems.push({
+            url: 'https://images.unsplash.com/photo-1516426122078-c23e76319801?auto=format&fit=crop&w=1200&q=80',
+            type: 'image',
+            name: 'safari.jpg'
+          });
+        }
+
+        const newPostObj = {
+          id: tempId,
+          authorId: currentUid,
+          authorName: authorName,
+          authorEmail: authorEmail || '',
+          title,
+          desc: desc || '',
+          location,
+          price,
+          publisherWhatsApp: publisherWhatsApp || '',
+          media: processedMediaItems,
+          mediaType: hasAnyVideo ? 'video' : 'image',
+          likes: 0,
+          likedBy: [],
+          shares: 0,
+          created: Date.now(),
+          createdAt: new Date().toISOString()
+        };
+
+        if (!window.allPosts) window.allPosts = [];
+        window.allPosts.unshift(newPostObj);
+
+        const posts = lsLoad(LS_KEYS.POSTS) || [];
+        posts.unshift(newPostObj);
+        lsSave(LS_KEYS.POSTS, posts);
+
+        clearPostForm();
+        renderPosts();
+        showToast(`⚡ Experience published! ${hasAnyVideo ? '🎥 Video and cover live.' : '📸 Photos live in Tripline.'}`);
+
+        // Cloud Firestore sync in background
+        if (window.db && window.addDoc && window.collection) {
+          const postData = {
+            authorId: currentUid,
+            authorName: authorName,
+            authorEmail: authorEmail || '',
+            title,
+            desc: desc || '',
+            location,
+            price: Number(price) || 0,
+            publisherWhatsApp: publisherWhatsApp || '',
+            media: processedMediaItems,
+            mediaType: hasAnyVideo ? 'video' : 'image',
+            likes: 0,
+            likedBy: [],
+            shares: 0,
+            createdAt: window.serverTimestamp ? window.serverTimestamp() : new Date().toISOString()
+          };
+          const safePostData = (typeof cleanFirestorePayload === 'function') ? cleanFirestorePayload(postData) : postData;
+          window.addDoc(window.collection(window.db, "posts"), safePostData).then(docRef => {
             if (docRef && docRef.id) {
               newPostObj.id = docRef.id;
               const lp = lsLoad(LS_KEYS.POSTS) || [];
@@ -26726,7 +26956,6 @@ if (viewMenuBtnEl) {
                 lp.unshift(newPostObj);
               }
               lsSave(LS_KEYS.POSTS, lp);
-
               if (!window.allPosts) window.allPosts = [];
               const memIdx = window.allPosts.findIndex(p => p.id === tempId || p.id === docRef.id);
               if (memIdx !== -1) {
@@ -26736,13 +26965,19 @@ if (viewMenuBtnEl) {
               }
               renderPosts();
             }
-          }
-        } catch(e) {
-          console.warn("Background post sync notice:", e.message);
-        } finally {
-          isPublishingTriplinePost = false;
+          }).catch(err => console.warn("Firestore post write notice:", err));
         }
-      })();
+      } catch(err) {
+        console.error("Publish post error:", err);
+        showToast('Error publishing experience: ' + (err.message || ''));
+      } finally {
+        isPublishingTriplinePost = false;
+        if (btn) {
+          btn.disabled = false;
+          btn.innerHTML = '🚀 Publish Experience';
+        }
+        if (progressBanner) progressBanner.style.display = 'none';
+      }
     }
     window.publishPost = publishPost;
 
@@ -27413,6 +27648,145 @@ if (viewMenuBtnEl) {
     }
     window.confirmAndSendTriplineBooking = confirmAndSendTriplineBooking;
 
+    async function handleOrganiserInlineLogin() {
+      const emailInput = document.getElementById('orgInlineEmail');
+      const passwordInput = document.getElementById('orgInlinePassword');
+      const errEl = document.getElementById('orgInlineErrorStatus');
+      const btn = document.getElementById('orgInlineLoginBtn');
+
+      if (errEl) { errEl.style.display = 'none'; errEl.textContent = ''; }
+
+      const email = emailInput ? emailInput.value.trim() : '';
+      const password = passwordInput ? passwordInput.value : '';
+
+      if (!email || !password) {
+        if (errEl) {
+          errEl.textContent = 'Please enter both your email address and password.';
+          errEl.style.display = 'block';
+        } else {
+          showToast('⚠️ Please enter email and password.');
+        }
+        return;
+      }
+
+      if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '⏳ Verifying...';
+      }
+
+      let loginSuccess = false;
+      let authenticatedUser = null;
+
+      // 1. Try Firebase Client SDK
+      if (window.auth && window.signInWithEmailAndPassword) {
+        try {
+          const userCredential = await window.signInWithEmailAndPassword(window.auth, email, password);
+          if (userCredential && userCredential.user) {
+            loginSuccess = true;
+            authenticatedUser = userCredential.user;
+          }
+        } catch (firebaseErr) {
+          console.warn("Organiser inline login Firebase error:", firebaseErr);
+          if (firebaseErr.code === "auth/wrong-password" || firebaseErr.code === "auth/invalid-credential") {
+            if (errEl) {
+              errEl.textContent = "Invalid email or password. Please check your credentials.";
+              errEl.style.display = 'block';
+            }
+            showToast('⚠️ Invalid email or password.');
+            if (btn) { btn.disabled = false; btn.innerHTML = 'Log In with Email & Password'; }
+            return;
+          }
+          if (firebaseErr.code === "auth/invalid-email") {
+            if (errEl) {
+              errEl.textContent = "Please enter a valid email address.";
+              errEl.style.display = 'block';
+            }
+            showToast('⚠️ Invalid email address.');
+            if (btn) { btn.disabled = false; btn.innerHTML = 'Log In with Email & Password'; }
+            return;
+          }
+        }
+      }
+
+      // 2. Server Proxy Fallback
+      if (!loginSuccess) {
+        try {
+          const proxyRes = await fetch('/api/auth/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password })
+          });
+          const proxyData = await proxyRes.json();
+          if (proxyData.success && proxyData.user) {
+            loginSuccess = true;
+            const u = proxyData.user;
+            authenticatedUser = {
+              uid: u.uid,
+              email: u.email,
+              displayName: u.displayName || u.email.split('@')[0],
+              getIdToken: async () => u.idToken || 'token_' + Date.now(),
+              isAnonymous: false,
+              emailVerified: true
+            };
+          } else {
+            const errMsg = proxyData.error || 'Invalid email or password.';
+            if (errEl) {
+              errEl.textContent = errMsg;
+              errEl.style.display = 'block';
+            }
+            showToast(`⚠️ ${errMsg}`);
+            if (btn) { btn.disabled = false; btn.innerHTML = 'Log In with Email & Password'; }
+            return;
+          }
+        } catch (netErr) {
+          console.error("Organiser proxy auth error:", netErr);
+          if (errEl) {
+            errEl.textContent = "Network error. Please check your internet connection.";
+            errEl.style.display = 'block';
+          }
+          showToast('⚠️ Network connection error.');
+          if (btn) { btn.disabled = false; btn.innerHTML = 'Log In with Email & Password'; }
+          return;
+        }
+      }
+
+      if (loginSuccess && authenticatedUser) {
+        const userProfile = {
+          uid: authenticatedUser.uid,
+          email: authenticatedUser.email,
+          name: authenticatedUser.displayName,
+          role: (authenticatedUser.email || '').toLowerCase().trim() === 'jacksonloshilari7@gmail.com' ? 'admin' : 'user'
+        };
+
+        window.currentUser = authenticatedUser;
+        window.currentUserProfile = userProfile;
+        try {
+          localStorage.setItem('tripbna_auth_session', JSON.stringify({
+            user: { uid: authenticatedUser.uid, email: authenticatedUser.email, displayName: authenticatedUser.displayName },
+            profile: userProfile,
+            timestamp: Date.now()
+          }));
+          localStorage.setItem('tripbna_account_uid', authenticatedUser.uid);
+          localStorage.setItem('tripbna_account_email', authenticatedUser.email.toLowerCase().trim());
+        } catch(e) {}
+
+        updateAuthUI(true, userProfile);
+        renderUserProfile();
+        if (typeof setupFirestoreDataListeners === 'function') {
+          setupFirestoreDataListeners(userProfile);
+        }
+        renderOrganisers();
+        updateOrgNotifCount();
+        showToast(`🎉 Logged in as ${authenticatedUser.email}! Displaying your private trips.`);
+      }
+
+      if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = 'Log In with Email & Password';
+      }
+    }
+    window.handleOrganiserInlineLogin = handleOrganiserInlineLogin;
+
     /* -------------------------
        Organiser creation + manage requests
        ------------------------- */
@@ -27421,24 +27795,54 @@ if (viewMenuBtnEl) {
       if(!wrap) return;
 
       const currentUser = window.currentUser || window.auth?.currentUser;
-      const currentUid = currentUser?.uid || getCurrentUserUid();
+      const currentEmail = (getCurrentUserEmail() || '').toLowerCase().trim();
+      let currentUid = currentUser?.uid || getCurrentUserUid();
+      const currentName = (getCurrentUserName() || '').toLowerCase().trim();
 
-      // Rule 1: If user is not logged in, do not load private "Your Trips" data. Show login prompt.
-      if (!currentUid) {
+      const isLoggedIn = !!(currentEmail && currentUid && (currentUser || window.currentUserProfile || localStorage.getItem('tripbna_auth_session')));
+
+      // Strict Authentication: If user is not logged in with email and password, show secure login card
+      if (!isLoggedIn) {
         wrap.innerHTML = `
-          <div style="padding:28px 20px;background:#f8fafc;border:1.5px dashed #cbd5e1;border-radius:12px;text-align:center;">
-            <div style="font-size:32px;margin-bottom:8px;">🔒</div>
-            <div style="font-weight:700;font-size:15px;color:#0f172a;margin-bottom:4px;">Log In to View Your Trips</div>
-            <p class="muted" style="font-size:13px;margin:0 0 16px 0;max-width:320px;margin-inline:auto;">
-              Your organised trips and accepted group trips are private to your account. Log in or create an account to view and manage them.
+          <div style="background:#ffffff;border:1.5px solid #cbd5e1;border-radius:14px;padding:24px 20px;text-align:center;box-shadow:0 4px 14px rgba(0,0,0,0.04);margin-top:6px;">
+            <div style="width:48px;height:48px;border-radius:50%;background:#eff6ff;color:#2563eb;font-size:24px;display:flex;align-items:center;justify-content:center;margin:0 auto 10px auto;">
+              🔐
+            </div>
+            <h4 style="margin:0 0 6px 0;font-size:16px;font-weight:800;color:#0f172a;">Trip Organiser Login</h4>
+            <p class="muted" style="font-size:13px;line-height:1.45;max-width:340px;margin:0 auto 16px auto;">
+              Log in with your email and password to access your organised trips and trips you have been accepted into.
             </p>
-            <button type="button" class="btn primary" onclick="openModal('loginModal')" style="padding:8px 22px;font-weight:700;border-radius:8px;">
-              Log In / Sign Up
-            </button>
+            <div style="max-width:320px;margin:0 auto;text-align:left;">
+              <label style="font-size:12px;font-weight:700;color:#334155;display:block;margin-bottom:4px;">Email Address</label>
+              <input id="orgInlineEmail" type="email" placeholder="you@example.com" class="input" style="width:100%;box-sizing:border-box;margin-bottom:10px;font-size:13px;padding:8px 10px;border:1px solid #cbd5e1;border-radius:8px;" onkeydown="if(event.key==='Enter') handleOrganiserInlineLogin()" />
+              
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+                <label style="font-size:12px;font-weight:700;color:#334155;">Password</label>
+                <a href="#" onclick="openForgotPassword(); return false;" style="font-size:11px;color:#2563eb;font-weight:700;text-decoration:none;">Forgot Password?</a>
+              </div>
+              <input id="orgInlinePassword" type="password" placeholder="••••••••" class="input" style="width:100%;box-sizing:border-box;margin-bottom:12px;font-size:13px;padding:8px 10px;border:1px solid #cbd5e1;border-radius:8px;" onkeydown="if(event.key==='Enter') handleOrganiserInlineLogin()" />
+
+              <div id="orgInlineErrorStatus" style="display:none;font-size:12px;padding:8px 10px;border-radius:8px;margin-bottom:10px;background:#fef2f2;border:1px solid #fecaca;color:#b91c1c;line-height:1.4;"></div>
+
+              <button id="orgInlineLoginBtn" type="button" class="btn primary" onclick="handleOrganiserInlineLogin()" style="width:100%;padding:10px;font-weight:800;font-size:13px;border-radius:8px;background:#2563eb;color:#fff;cursor:pointer;border:none;box-shadow:0 2px 6px rgba(37,99,235,0.25);">
+                Log In with Email &amp; Password
+              </button>
+
+              <div style="margin-top:14px;text-align:center;font-size:12px;" class="muted">
+                Don't have an account? <a href="#" onclick="openModal('signupModal'); return false;" style="color:#0b84ff;font-weight:700;">Create Free Account</a>
+              </div>
+            </div>
           </div>
         `;
         return;
       }
+
+      const getMyCreatedTripIds = () => {
+        try {
+          return JSON.parse(localStorage.getItem('tripbna_my_created_trip_ids') || '[]');
+        } catch(e) { return []; }
+      };
+      const myCreatedIds = new Set(getMyCreatedTripIds().map(String));
 
       // Trips pool from memory/Firestore, combined with local storage, strictly deduplicated
       const rawPool = (window.allTrips && window.allTrips.length) ? window.allTrips : (lsLoad(LS_KEYS.ORGANISERS) || []);
@@ -27462,51 +27866,83 @@ if (viewMenuBtnEl) {
         return 0;
       });
 
-      // Helper: precisely detect if a trip is organized by the current user
+      // Helper: precisely detect if a trip was organised by the current user
       const isMyOrganisedTrip = (t) => {
         if (!t) return false;
-        if (currentUid) {
-          if (t.organizerId && String(t.organizerId) === String(currentUid)) return true;
-          if (t.ownerId && String(t.ownerId) === String(currentUid)) return true;
-        }
-        const curName = (getCurrentUserName() || '').trim().toLowerCase();
-        if (curName && curName !== 'guest traveler') {
-          if (t.organizerName && t.organizerName.trim().toLowerCase() === curName) return true;
-          if (t.owner && t.owner.trim().toLowerCase() === curName) return true;
-        }
-        const curEmail = (getCurrentUserEmail() || '').trim().toLowerCase();
-        if (curEmail && t.organizerEmail && t.organizerEmail.trim().toLowerCase() === curEmail) return true;
+        const tripId = String(t.id || '');
+        const orgId = String(t.organizerId || t.ownerId || '');
+        const orgEmail = (t.organizerEmail || '').toLowerCase().trim();
+
+        // 1. Explicit ID match with current authenticated account UID
+        if (currentUid && orgId && orgId === String(currentUid)) return true;
+
+        // 2. Explicit email match with current authenticated email
+        if (currentEmail && orgEmail && orgEmail === currentEmail) return true;
+
+        // 3. Explicitly created by this user in current session
+        if (tripId && myCreatedIds.has(tripId)) return true;
+
+        // 4. Strict exclusion: other organizers' trips never qualify
         return false;
       };
+      window.isMyOrganisedTrip = isMyOrganisedTrip;
+
+      // Helper: precisely detect if current user is an accepted member of this trip
+      const isAcceptedTrip = (t) => {
+        if (!t) return false;
+        if (isMyOrganisedTrip(t)) return false; // Host's own trips never appear in accepted trips
+
+        const tripId = String(t.id || '');
+        const myUidStr = currentUid ? String(currentUid) : '';
+        const myEmailStr = currentEmail;
+
+        // Check memberIds array on trip
+        const memberIds = Array.isArray(t.memberIds) ? t.memberIds.map(String) : [];
+        const isInMemberIds = myUidStr ? memberIds.includes(myUidStr) : false;
+
+        // Check members object array on trip
+        const membersList = Array.isArray(t.members) ? t.members : [];
+        const isInMembersList = membersList.some(m => {
+          if (!m) return false;
+          if (typeof m === 'string') return myUidStr && String(m) === myUidStr;
+          const mId = String(m.id || m.uid || '');
+          const mEmail = (m.email || '').toLowerCase().trim();
+          if (myUidStr && mId && mId === myUidStr) return true;
+          if (myEmailStr && mEmail && mEmail === myEmailStr) return true;
+          return false;
+        });
+
+        // Check join requests (from live Firestore requests or cached trip.requests)
+        const allCandidateRequests = [
+          ...(window.myFinderRequests || []),
+          ...(Array.isArray(t.requests) ? t.requests : [])
+        ];
+        const myRequestsForTrip = allCandidateRequests.filter(r => {
+          if (!r) return false;
+          const reqTripId = String(r.tripId || '');
+          if (reqTripId && tripId && reqTripId !== tripId) return false;
+          const rUid = String(r.requesterId || r.userId || '');
+          const rEmail = (r.requesterEmail || r.email || '').toLowerCase().trim();
+          return (myUidStr && rUid === myUidStr) || (myEmailStr && rEmail === myEmailStr);
+        });
+
+        const hasAcceptedRequest = myRequestsForTrip.some(r => r.status === 'accepted' || r.accepted === true);
+        const hasLeftOrRejected = myRequestsForTrip.some(r => (r.status === 'left' || r.status === 'rejected') && !r.accepted) && !hasAcceptedRequest;
+
+        if (hasLeftOrRejected) return false;
+
+        return hasAcceptedRequest || isInMemberIds || isInMembersList;
+      };
+      window.isAcceptedTrip = isAcceptedTrip;
 
       // Filter:
-      // A. "Organised by You": trip.organizerId === currentUid || trip.ownerId === currentUid
+      // A. "Organised by You": ONLY trips organized by the current user
       const organizedList = allTripsPool.filter(isMyOrganisedTrip);
 
-      // B. "Accepted Trips": Trips organized by another user where the current user has been successfully accepted as a member.
-      // Must NEVER appear under Accepted Trips if organized by the current user.
+      // B. "Accepted Trips": ONLY trips organized by another user where the current user has been accepted
       const acceptedList = [];
       allTripsPool.forEach(t => {
-        // Skip if organized by the current user (prevents duplicate appearance)
-        if (isMyOrganisedTrip(t)) return;
-
-        // Check join requests for current user
-        const myRequestsForTrip = (window.myFinderRequests || []).filter(r => 
-          String(r.tripId) === String(t.id) && (r.requesterId === currentUid || r.userId === currentUid)
-        );
-
-        // Check explicit statuses
-        const hasAcceptedRequest = myRequestsForTrip.some(r => r.status === 'accepted');
-        const hasLeftOrRejected = myRequestsForTrip.some(r => r.status === 'left' || r.status === 'rejected') && !hasAcceptedRequest;
-
-        // Check memberIds
-        const isInMemberIds = Array.isArray(t.memberIds) && t.memberIds.includes(currentUid);
-
-        // User is an accepted member ONLY IF:
-        // (hasAcceptedRequest OR isInMemberIds) AND NOT (hasLeftOrRejected) AND (if memberIds exists, must be in memberIds)
-        const isAccepted = (hasAcceptedRequest || isInMemberIds) && !hasLeftOrRejected && (!t.memberIds || t.memberIds.includes(currentUid));
-
-        if (isAccepted) {
+        if (isAcceptedTrip(t)) {
           if (!acceptedList.some(existing => isSameTrip(existing, t))) {
             acceptedList.push(t);
           }
@@ -27645,7 +28081,23 @@ if (viewMenuBtnEl) {
         `;
       };
 
-      let html = '';
+      let html = `
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;background:#f0fdf4;border:1px solid #bbf7d0;padding:8px 12px;border-radius:10px;margin-bottom:14px;font-size:12px;">
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#16a34a;"></span>
+            <span style="color:#166534;font-weight:700;">Signed in:</span>
+            <strong style="color:#0f172a;">${escapeHTML(currentEmail || currentName)}</strong>
+          </div>
+          <div style="display:flex;align-items:center;gap:6px;">
+            <button type="button" class="btn ghost" onclick="openModal('loginModal')" style="padding:3px 9px;font-size:11px;font-weight:700;color:#1d4ed8;border:1px solid #bfdbfe;background:#fff;border-radius:6px;cursor:pointer;" title="Switch account using Email & Password">
+              🔄 Switch Account
+            </button>
+            <button type="button" class="btn ghost" onclick="handleLogout()" style="padding:3px 9px;font-size:11px;font-weight:700;color:#dc2626;border:1px solid #fecaca;background:#fff;border-radius:6px;cursor:pointer;" title="Sign out of TripBnA">
+              🚪 Sign Out
+            </button>
+          </div>
+        </div>
+      `;
 
       // Section 1: Organised by You
       html += `
@@ -28079,22 +28531,30 @@ if (viewMenuBtnEl) {
     async function createOrganiser(){
       if (isCreatingOrganiserTrip) return;
 
-      // Authentication validation requirement
+      const createBtn = document.getElementById('createOrganiserBtn') || document.getElementById('publishTripBtn');
+      const originalText = createBtn ? createBtn.textContent : 'Publish Trip';
+
+      // Require email and password authentication to publish a trip
       const currentUser = window.currentUser || window.auth?.currentUser;
-      const currentUid = currentUser?.uid || getCurrentUserUid();
-      if (!currentUid) {
-        openModal('loginModal');
-        showToast('Please log in before creating the trip.');
+      const currentEmail = (getCurrentUserEmail() || '').toLowerCase().trim();
+      let currentUid = currentUser?.uid || getCurrentUserUid();
+
+      if ((!currentUser && !currentEmail) || !currentUid) {
+        showToast('🔒 Please log in with your email and password to publish a trip.');
+        const inlineEmail = document.getElementById('orgInlineEmail');
+        if (inlineEmail) {
+          inlineEmail.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          inlineEmail.focus();
+        } else {
+          openModal('loginModal');
+        }
         return;
       }
 
-      const createBtn = document.getElementById('createOrganiserBtn');
-      const originalText = createBtn ? createBtn.textContent : 'Create Trip';
-
-      const name = document.getElementById('orgName')?.value.trim() || getCurrentUserName();
+      const name = document.getElementById('orgName')?.value.trim() || getCurrentUserName() || 'Trip Organiser';
       const title = document.getElementById('orgTitle')?.value.trim();
       const place = document.getElementById('orgPlace')?.value.trim();
-      const date = document.getElementById('orgDate')?.value;
+      let date = document.getElementById('orgDate')?.value;
       const pickup = document.getElementById('orgPickup')?.value.trim();
       const price = parseFloat(document.getElementById('orgPrice')?.value) || 0;
       const files = document.getElementById('orgMedia')?.files;
@@ -28110,20 +28570,23 @@ if (viewMenuBtnEl) {
         return;
       }
       if(!date) {
-        showToast('⚠️ Please select a date for your trip');
-        document.getElementById('orgDate')?.focus();
-        return;
+        // Default to 7 days from today so publication never fails due to empty date
+        const defaultD = new Date();
+        defaultD.setDate(defaultD.getDate() + 7);
+        date = defaultD.toISOString().split('T')[0];
+        const dEl = document.getElementById('orgDate');
+        if (dEl) dEl.value = date;
       }
 
       isCreatingOrganiserTrip = true;
       try {
         if (createBtn) {
           createBtn.disabled = true;
-          createBtn.textContent = 'Creating...';
+          createBtn.textContent = 'Publishing...';
         }
-        showToast('Creating organised trip...');
+        showToast('🚀 Publishing organised trip...');
 
-        // Process files in parallel with fast cache & permanent fallback
+        // Process files in parallel and upload directly to server
         let mediaUrls = [];
         let mediaType = 'image';
 
@@ -28131,47 +28594,95 @@ if (viewMenuBtnEl) {
 
         if (rawFiles && rawFiles.length > 0) {
           const uploadPromises = rawFiles.map(async (file, idx) => {
-            if (file.type && file.type.startsWith('video')) mediaType = 'video';
-            if (file._uploadedUrl && !file._uploadedUrl.startsWith('blob:')) return file._uploadedUrl;
+            if (!file) return null;
+            if (typeof file === 'string') return file;
+            if (file.url && typeof file.url === 'string') return file.url;
+
+            const isVid = (file.type && file.type.startsWith('video')) || /\.(mp4|mov|webm|mkv|avi|3gp)$/i.test(file.name || '');
+            if (isVid) mediaType = 'video';
+
+            let uploadedUrl = file._uploadedUrl;
+            let coverUrl = file._coverUrl || file.poster || '';
+
+            // Await background pre-upload if started
             if (file._preUploadPromise) {
               try {
-                const pre = await Promise.race([
-                  file._preUploadPromise,
-                  new Promise(res => setTimeout(() => res(null), 2500))
-                ]);
-                if (pre && !pre.startsWith('blob:')) return pre;
+                const preRes = await file._preUploadPromise;
+                if (preRes && !preRes.startsWith('blob:')) {
+                  uploadedUrl = preRes;
+                  file._uploadedUrl = preRes;
+                }
+              } catch(e) {}
+            }
+            if (file._coverUrl) coverUrl = file._coverUrl;
+
+            // Direct fast upload to server
+            if (!uploadedUrl || uploadedUrl.startsWith('blob:')) {
+              try {
+                let toUpload = file;
+                if (!isVid && file instanceof Blob && file.type && file.type.startsWith('image/') && typeof window.compressImageFile === 'function') {
+                  toUpload = await window.compressImageFile(file, 1600, 0.85);
+                }
+                const fd = new FormData();
+                fd.append('file', toUpload, file.name || (isVid ? 'video.mp4' : 'photo.jpg'));
+                const resp = await fetch('/api/upload-file', { method: 'POST', body: fd });
+                if (resp.ok) {
+                  const data = await resp.json();
+                  if (data && data.success && data.url) {
+                    uploadedUrl = data.url;
+                    file._uploadedUrl = data.url;
+                    if (data.coverUrl) {
+                      coverUrl = data.coverUrl;
+                      file._coverUrl = data.coverUrl;
+                      file.poster = data.coverUrl;
+                    }
+                  }
+                }
               } catch(e) {}
             }
 
-            // Direct fast upload
-            try {
-              let toUpload = file;
-              if (file instanceof Blob && file.type && file.type.startsWith('image/') && typeof window.compressImageFile === 'function') {
-                toUpload = await window.compressImageFile(file, 1600, 0.82);
-              }
-              const fd = new FormData();
-              fd.append('file', toUpload, toUpload.name || (toUpload.type?.startsWith('video') ? 'video.mp4' : 'photo.jpg'));
-              const resp = await fetch('/api/upload-file', { method: 'POST', body: fd });
-              if (resp.ok) {
-                const data = await resp.json();
-                if (data && data.success && data.url) {
-                  file._uploadedUrl = data.url;
-                  return data.url;
+            // Fallback via uploadFileToStorage
+            if (!uploadedUrl || uploadedUrl.startsWith('blob:')) {
+              try {
+                const u = await window.uploadFileToStorage(file.name, file);
+                if (u && !u.startsWith('blob:')) {
+                  uploadedUrl = u;
+                  if (file._coverUrl) coverUrl = file._coverUrl;
                 }
-              }
-            } catch(e) {}
-
-            // Permanent base64 fallback so image NEVER fails to display
-            try {
-              return await new Promise((res) => {
-                const r = new FileReader();
-                r.onload = ev => res(ev.target.result);
-                r.onerror = () => res(null);
-                r.readAsDataURL(file);
-              });
-            } catch(e) {
-              return null;
+              } catch(e) {}
             }
+
+            // Fallback to base64
+            if (!uploadedUrl || uploadedUrl.startsWith('blob:')) {
+              try {
+                uploadedUrl = await new Promise((res) => {
+                  const r = new FileReader();
+                  r.onload = ev => res(ev.target.result);
+                  r.onerror = () => res(null);
+                  r.readAsDataURL(file);
+                });
+              } catch(e) {}
+            }
+
+            // Ensure video cover extraction
+            if (isVid && !coverUrl) {
+              if (typeof window.extractVideoCoverClient === 'function') {
+                try {
+                  coverUrl = await window.extractVideoCoverClient(file);
+                } catch(e) {}
+              }
+              if (!coverUrl && uploadedUrl && typeof window.getVideoCover === 'function') {
+                coverUrl = window.getVideoCover(uploadedUrl);
+              }
+            }
+
+            if (uploadedUrl) {
+              if (isVid && window.triplineVideoUrls) window.triplineVideoUrls.add(uploadedUrl);
+              return isVid
+                ? { url: uploadedUrl, type: 'video', coverUrl: coverUrl, poster: coverUrl, name: file.name || 'video.mp4' }
+                : uploadedUrl;
+            }
+            return null;
           });
 
           const results = await Promise.all(uploadPromises);
@@ -28183,11 +28694,11 @@ if (viewMenuBtnEl) {
 
         // Ensure every trip comes with images:
         // Priority 1: User uploaded files (strictly preserved!)
-        // Priority 2: Selected preset destination cover
+        // Priority 2: Selected preset destination cover ONLY if user attached no files
         if (!mediaUrls.length && window.selectedOrgPresetCover) {
           mediaUrls.push(window.selectedOrgPresetCover);
         }
-        // Priority 3: First attached service image
+        // Priority 3: First attached service image ONLY if user attached no files
         if (!mediaUrls.length && attachedServices.length) {
           const svcWithImg = attachedServices.find(s => s.images && s.images.length > 0);
           if (svcWithImg && svcWithImg.images[0]) {
@@ -28235,6 +28746,9 @@ if (viewMenuBtnEl) {
         try {
           localStorage.setItem('tripbna_account_uid', currentUid);
           if (tripData.organizerEmail) localStorage.setItem('tripbna_account_email', tripData.organizerEmail);
+          const myIds = JSON.parse(localStorage.getItem('tripbna_my_created_trip_ids') || '[]');
+          if (!myIds.includes(savedId)) myIds.push(savedId);
+          localStorage.setItem('tripbna_my_created_trip_ids', JSON.stringify(myIds));
         } catch(e) {}
 
         // Reset attached services and picker
@@ -28245,17 +28759,20 @@ if (viewMenuBtnEl) {
         if (mediaInput) mediaInput.value = '';
         clearOrganiserForm();
         renderOrganisers();
-        showToast('🎉 Organiser trip created with cover image & published live!');
+        showToast('🎉 Trip published live & synced to your trips!');
 
-        // 2. Non-blocking asynchronous Firestore background write (does not stall UI!)
+        // 2. Non-blocking asynchronous Firestore background write with safe payload cleaning
         if (window.db && window.addDoc && window.collection) {
-          Promise.race([
-            window.addDoc(window.collection(window.db, "trips"), tripData),
-            new Promise((_, reject) => setTimeout(() => reject(new Error('Firestore write timeout')), 3500))
-          ]).then(docRef => {
+          const safeData = (typeof cleanFirestorePayload === 'function') ? cleanFirestorePayload(tripData) : tripData;
+          window.addDoc(window.collection(window.db, "trips"), safeData).then(docRef => {
             if (docRef && docRef.id) {
               const finalId = docRef.id;
               newTripObj.id = finalId;
+              try {
+                const myIds = JSON.parse(localStorage.getItem('tripbna_my_created_trip_ids') || '[]');
+                if (!myIds.includes(finalId)) myIds.push(finalId);
+                localStorage.setItem('tripbna_my_created_trip_ids', JSON.stringify(myIds));
+              } catch(e) {}
               if (window.allTrips) {
                 const idx = window.allTrips.findIndex(t => t.id === savedId);
                 if (idx !== -1) window.allTrips[idx].id = finalId;
@@ -28266,6 +28783,7 @@ if (viewMenuBtnEl) {
                 curOrgs[oIdx].id = finalId;
                 lsSave(LS_KEYS.ORGANISERS, curOrgs);
               }
+              renderOrganisers();
             }
           }).catch(err => {
             console.warn("Background Firestore trip sync notice:", err.message);
@@ -28273,7 +28791,7 @@ if (viewMenuBtnEl) {
         }
       } catch(err) {
         console.error("Error creating organiser trip:", err);
-        showToast('Error: ' + (err.message || 'Could not create trip'));
+        showToast('Error: ' + (err.message || 'Could not publish trip'));
       } finally {
         isCreatingOrganiserTrip = false;
         if (createBtn) {
@@ -28282,6 +28800,7 @@ if (viewMenuBtnEl) {
         }
       }
     }
+    window.publishTrip = createOrganiser;
 
     async function deleteOrganiser(id){
       const currentUser = window.currentUser || window.auth?.currentUser;
@@ -28301,7 +28820,7 @@ if (viewMenuBtnEl) {
       }
 
       // Security check: Only the organiser can delete their own trip!
-      const isOwner = (trip.organizerId === myUid || trip.ownerId === myUid);
+      const isOwner = (trip.organizerId === myUid || trip.ownerId === myUid || (currentUser.email && trip.organizerEmail && trip.organizerEmail.toLowerCase().trim() === currentUser.email.toLowerCase().trim()));
       if (!isOwner) {
         alert('Permission Denied: You can only delete trips that you personally organized.');
         return;
@@ -28345,6 +28864,12 @@ if (viewMenuBtnEl) {
         let orgs = lsLoad(LS_KEYS.ORGANISERS);
         orgs = orgs.filter(o => String(o.id) !== String(id));
         lsSave(LS_KEYS.ORGANISERS, orgs);
+
+        try {
+          let myIds = JSON.parse(localStorage.getItem('tripbna_my_created_trip_ids') || '[]');
+          myIds = myIds.filter(x => String(x) !== String(id));
+          localStorage.setItem('tripbna_my_created_trip_ids', JSON.stringify(myIds));
+        } catch(e) {}
 
         // 4. Update UI immediately
         renderOrganisers();
@@ -30044,8 +30569,10 @@ if (viewMenuBtnEl) {
       if (window.myOrganiserRequests && window.myOrganiserRequests.length) {
         count = window.myOrganiserRequests.filter(r => r.status === 'pending').length;
       } else {
-        const orgs = (window.allTrips && window.allTrips.length) ? window.allTrips : lsLoad(LS_KEYS.ORGANISERS);
-        orgs.forEach(o => { count += (o.requests || []).filter(r => !r.accepted).length; });
+        const orgs = (window.allTrips && window.allTrips.length) ? window.allTrips : (lsLoad(LS_KEYS.ORGANISERS) || []);
+        const checkFn = (typeof isMyOrganisedTrip === 'function') ? isMyOrganisedTrip : (typeof window.isMyOrganisedTrip === 'function' ? window.isMyOrganisedTrip : null);
+        const myOrgs = checkFn ? orgs.filter(checkFn) : [];
+        myOrgs.forEach(o => { count += (o.requests || []).filter(r => !r.accepted && r.status !== 'rejected' && r.status !== 'left').length; });
       }
       const el = document.getElementById('orgNotif');
       if(el){
@@ -30072,8 +30599,9 @@ if (viewMenuBtnEl) {
       if (prevWrap) { prevWrap.innerHTML = ''; prevWrap.style.display = 'none'; }
     }
 
-    window.tripDemo = { renderAll, publishPost, createOrganiser, submitFinder };
+    window.tripDemo = { renderAll, publishPost, createOrganiser, publishTrip: createOrganiser, submitFinder };
     window.createOrganiser = createOrganiser;
+    window.publishTrip = createOrganiser;
     window.clearOrganiserForm = clearOrganiserForm;
     window.openEditTripModal = openEditTripModal;
     window.saveEditTrip = saveEditTrip;
@@ -30108,8 +30636,21 @@ if (viewMenuBtnEl) {
       const trip = (window.allTrips || []).find(t => t.id === orgId) || (lsLoad(LS_KEYS.ORGANISERS)).find(t => t.id === orgId);
       if (!trip) return showToast('Trip not found');
 
-      const isOwner = trip.organizerId === window.currentUser.uid || trip.ownerId === window.currentUser.uid;
-      const isMember = isOwner || (trip.memberIds && trip.memberIds.includes(window.currentUser.uid));
+      const myUid = String(window.currentUser?.uid || getCurrentUserUid() || '');
+      const myEmail = (window.currentUser?.email || getCurrentUserEmail() || '').toLowerCase().trim();
+      const isOwner = (trip.organizerId && String(trip.organizerId) === myUid) || 
+                      (trip.ownerId && String(trip.ownerId) === myUid) || 
+                      (myEmail && trip.organizerEmail && trip.organizerEmail.toLowerCase().trim() === myEmail);
+      const memberIds = Array.isArray(trip.memberIds) ? trip.memberIds.map(String) : [];
+      const isAcceptedReq = (window.myFinderRequests || []).some(r => String(r.tripId) === String(orgId) && (r.status === 'accepted' || r.accepted === true));
+      const isInMembersObj = Array.isArray(trip.members) && trip.members.some(m => {
+        if (!m) return false;
+        if (typeof m === 'string') return myUid && String(m) === myUid;
+        const mId = String(m.id || m.uid || '');
+        const mEmail = (m.email || '').toLowerCase().trim();
+        return (myUid && mId === myUid) || (myEmail && mEmail === myEmail);
+      });
+      const isMember = isOwner || memberIds.includes(myUid) || isAcceptedReq || isInMembersObj;
 
       if (!isMember) {
         showToast('Access denied: Only accepted trip members can access this private group.');
@@ -34735,7 +35276,9 @@ if (viewMenuBtnEl) {
       const myOrganisedTrips = [];
       allSources.forEach(t => {
         if (t && t.id && !seen.has(t.id)) {
-          const isOwner = currentUid && (t.organizerId === currentUid || t.ownerId === currentUid);
+          const isOwner = (typeof isMyOrganisedTrip === 'function') 
+            ? isMyOrganisedTrip(t) 
+            : (currentUid && (t.organizerId === currentUid || t.ownerId === currentUid));
           if (isOwner) {
             seen.add(t.id);
             myOrganisedTrips.push(t);
