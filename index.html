@@ -12407,10 +12407,24 @@ Last Updated: April 2026 | Version 2.0 | TripBnA Platform Policies
             loginSuccess = true;
             authenticatedUser = userCredential.user;
             window.currentUser = authenticatedUser;
+            const userProfile = {
+              uid: authenticatedUser.uid,
+              email: authenticatedUser.email || email,
+              name: authenticatedUser.displayName || (authenticatedUser.email ? authenticatedUser.email.split('@')[0] : 'Traveler'),
+              role: ((authenticatedUser.email || email).toLowerCase().trim() === 'jacksonloshilari7@gmail.com') ? 'admin' : 'user'
+            };
+            window.currentUserProfile = userProfile;
             try {
+              localStorage.setItem('tripbna_auth_session', JSON.stringify({
+                user: { uid: authenticatedUser.uid, email: authenticatedUser.email || email, displayName: userProfile.name },
+                profile: userProfile,
+                timestamp: Date.now()
+              }));
               localStorage.setItem('tripbna_account_uid', authenticatedUser.uid);
               localStorage.setItem('tripbna_account_email', (authenticatedUser.email || email).toLowerCase().trim());
             } catch(e) {}
+            updateAuthUI(true, userProfile);
+            renderUserProfile();
           }
         } catch (firebaseErr) {
           console.warn("Direct Firebase SDK login error:", firebaseErr);
